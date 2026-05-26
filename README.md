@@ -424,6 +424,182 @@ PH_CORE_PATIENT:        "http://fhir.ph/StructureDefinition/ph-core-patient"
 
 ---
 
+## ❓ Defense Q&A — System Flow Diagrams <a name="defense-qa"></a>
+
+The following flowcharts address key questions raised during system evaluation. Each diagram uses standard flowchart notation: **rectangles** = process steps, **diamonds** = decision points, **ovals** = start/end, **parallelograms** = input/output.
+
+---
+
+### Q1 — "Does automation remove humans? How do you prevent Garbage-In-Garbage-Out?"
+
+> Automation replaces **format conversion** (HL7v2 ↔ FHIR), not clinical judgment. Two human checkpoints remain: data entry and inbox review. The FHIR Validator acts as a digital immune system — quarantining bad transformations before they reach the network.
+
+```mermaid
+flowchart TD
+    A([START]) --> B[Clinician enters patient data\nin iHOMIS\n📋 Demographics · Vitals · ICD-10]
+    B --> C[iHOMIS auto-encodes\nto HL7v2 Message\nMSH · PID · PV1 · OBX · DG1 · RF1]
+    C --> D[POST to iPaaS /api/ingest\nHL7v2 + original JSON]
+    D --> E[/Gemini AI transforms\nHL7v2 → FHIR R4 Bundle\ntemp=0.1 · structured JSON output/]
+    E --> F{FHIR Validator\nPasses?}
+    F -- NO --> G[🚫 QUARANTINE\nStatus = QUARANTINED\nAdmin alerted · Never forwarded]
+    F -- YES --> H[(Log Transaction\nadapt_transaction_logs\nUUID · status=SUCCESS · both payloads)]
+    H --> I[POST to WAH /api/webhook\nFHIR Bundle forwarded]
+    I --> J[(WAH DB stores record\nstatus = RECEIVED\nsource = RECEIVED)]
+    J --> K[WAH Clinician reviews Inbox\n🔍 Field Summary · Compare · Source]
+    K --> L{Clinician\nAccepts?}
+    L -- REJECT --> M[🚫 Record deleted\nLog updated]
+    L -- ACCEPT --> N[✅ Record active in WAH\nCare continues]
+    N --> O([END])
+
+    style G fill:#2d1010,stroke:#f85149,color:#f85149
+    style M fill:#2d1010,stroke:#f85149,color:#f85149
+    style N fill:#0d2818,stroke:#3fb950,color:#3fb950
+    style H fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style J fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style E fill:#130d1f,stroke:#bc8cff,color:#e6edf3
+```
+
+**Key Safeguards:**
+| Safeguard | How It Works |
+|-----------|-------------|
+| **Structured AI Output** | `responseMimeType: 'application/json'` prevents hallucination — output must match schema |
+| **FHIR Validator** | Checks for required resource types (Patient, Encounter, Observation) before forwarding |
+| **Quarantine** | Failed records are blocked — never reach the destination network |
+| **Source Preserved** | `raw_source_payload` always stored alongside transformed record for comparison |
+| **Human Gate #1** | Clinician enters data — system cannot fabricate clinical decisions |
+| **Human Gate #2** | WAH clinician must explicitly Accept before record enters their system |
+
+---
+
+### Q2 — "How will you manage patient consent? Implied consent is a legal nightmare."
+
+> ADAPT targets **referral-based consent** — the patient consents once when agreeing to the referral, and that consent event (tracked via the RF1 segment + transaction UUID) covers the data transfer. No per-move waivers. No pure implied consent.
+
+```mermaid
+flowchart TD
+    A([START\nPatient seeks care at DOH]) --> B[Patient registers in iHOMIS\nDemographics · PhilHealth ID]
+    B --> C{Consent flag\nalready on file?}
+    C -- NO --> D[Obtain broad consent\nOne-time · Covers network referrals\nper RA 10173 / UHC Act RA 11223]
+    D --> E[(Consent flag stored in\npatient record\nconsent = TRUE)]
+    C -- YES --> E
+    E --> F[Clinician issues referral\nHL7v2 RF1 segment generated\nReferral = specific consent event]
+    F --> G{Consent flag = TRUE\nAND destination\nfacility authorized?}
+    G -- NO --> H[🚫 Transfer BLOCKED\nLog denial · Alert clinician]
+    G -- YES --> I[/iPaaS transforms &\nforwards data\nRF1 segment = consent evidence/]
+    I --> J[(Transaction logged\nadapt_transaction_logs\nconsent_ref = referral UUID)]
+    J --> K[WAH Clinician reviews\nHuman confirmation #2]
+    K --> L[✅ Transfer legally auditable\nConsent → Referral → Log chain]
+    L --> M([END])
+
+    style H fill:#2d1010,stroke:#f85149,color:#f85149
+    style L fill:#0d2818,stroke:#3fb950,color:#3fb950
+    style J fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style I fill:#130d1f,stroke:#bc8cff,color:#e6edf3
+```
+
+**Consent Model Comparison:**
+| Model | Risk | ADAPT Stance |
+|-------|------|-------------|
+| Per-transfer waiver | Blocks emergency care | ❌ Not adopted |
+| Implied consent | RA 10173 violation risk | ❌ Not adopted |
+| **Referral-based consent** | Patient agrees to referral = data follows | ✅ Target model |
+| Broad registration consent | One-time, covers network | ✅ Complementary layer |
+
+---
+
+### Q3 — "Where does data live? Centralized = single point of failure. Decentralized = uneven security."
+
+> ADAPT uses a **federated hub-and-spoke** model. Patient data stays at the source hospital's own database. The iPaaS (hub) only holds transaction logs — it is a **router, not a vault**. A breach of the hub exposes metadata only.
+
+```mermaid
+flowchart TD
+    A([WHERE DOES THE DATA LIVE?]) --> B{Architecture\nType?}
+    B --> C[(iHOMIS DB\nDOH Supabase\nihomis_patients\nHL7v2 JSON)]
+    B --> D[(iPaaS DB\nADAPT Supabase\nadapt_transaction_logs\nNO PHI stored permanently)]
+    B --> E[(WAH DB\nWAH Supabase\nwah_patients\nFHIR R4 Bundle)]
+
+    C & D & E --> F[Each DB = separate project\nSeparate credentials · Separate RLS policies\nSeparate API keys]
+
+    F --> G{Scenario:\niPaaS hub\ncompromised?}
+    G -- Impact? --> H[✅ DOH & WAH DBs unaffected\nSeparate keys\nNo cross-access]
+    G -- What leaks? --> I[⚠️ Transaction logs only\nNo PHI in logs\nMetadata exposed at worst]
+
+    F --> J{Scenario:\nHospital DB\ncompromised?}
+    J -- Impact? --> K[✅ Other hospital DB unaffected\nIsolated Supabase instances]
+    J -- Hub impact? --> L[⚠️ iPaaS logs show\nonly metadata\nNo PHI in hub]
+
+    F --> M[Production hardening required\nbefore clinical use]
+    M --> N{Hardening\napplied?}
+    N -- NO --> O[🚫 Prototype only\nDo not use real PHI]
+    N -- YES --> P[RLS row-level security\nTLS in transit\nWebhook HMAC auth\nJWT bearer tokens]
+    P --> Q[✅ Clinical use ready\nper DICT eHealth Standards]
+    Q --> R([END])
+
+    style O fill:#2d1010,stroke:#f85149,color:#f85149
+    style Q fill:#0d2818,stroke:#3fb950,color:#3fb950
+    style C fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style D fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style E fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+```
+
+**Architecture Tradeoffs:**
+| Risk | Fully Centralized | Fully Decentralized | ADAPT Federated |
+|------|:-----------------:|:-------------------:|:---------------:|
+| Single point of failure | 🔴 High | 🟢 Low | 🟡 Medium — hub holds no PHI |
+| Security consistency | 🟢 Easy | 🔴 Hard | 🟡 3 isolated systems |
+| Data ownership | 🔴 Unclear | 🟢 Clear | 🟢 Each hospital owns its DB |
+| Availability | 🔴 Low | 🟢 High | 🟡 iPaaS outage pauses transfers only |
+
+---
+
+### Q4 — "What if a patient from DOH switched to WAH? How will the data flow?"
+
+> The DOH clinician clicks **"Send to WAH"** — this triggers the entire pipeline. The patient's PhilHealth number serves as the cross-system unique identifier. Their complete clinical record (demographics, vitals, diagnosis, visit info) is automatically converted from HL7v2 to FHIR R4 and delivered to WAH's Inbox for clinical review.
+
+```mermaid
+flowchart TD
+    A([START\nPatient leaves DOH → transfers to WAH]) --> B[(iHOMIS — Existing Patient Record\nMaria Santos · PhilHealth 0102-0304-0506\nVitals · Diagnosis · Visit history)]
+    B --> C[DOH Clinician clicks\n'Send to WAH'\nHuman-initiated trigger]
+    C --> D[/Build HL7v2 Message\nMSH · PID · PV1 · OBX · DG1 · RF1/]
+    D --> E[POST → iPaaS /api/ingest\nHL7v2 payload + original JSON]
+    E --> F[/Gemini AI transforms\nPID → Patient resource · PhilHealth ID preserved\nOBX → Observation · LOINC codes\nDG1 → Condition · ICD-10\nPV1 → Encounter/]
+    F --> G{FHIR Bundle\nValid?}
+    G -- INVALID --> H[🚫 QUARANTINE\nAdmin notified\nNot forwarded to WAH]
+    G -- VALID --> I[(Log: source=iHOMIS\ndest=WAH · status=SUCCESS\nUUID timestamp)]
+    I --> J[POST → WAH /api/webhook\nFHIR R4 Bundle + original source]
+    J --> K[(WAH DB — wah_patients\nstatus = RECEIVED\nsource = RECEIVED)]
+    K --> L[WAH Inbox — Clinician reviews\nField Summary · Side-by-side Compare\nOriginal Source view]
+    L --> M{WAH Clinician\nAccepts?}
+    M -- REJECT --> N[Record removed from Inbox\nLog noted]
+    M -- ACCEPT --> O[✅ Maria is now a WAH patient\nFull history in FHIR R4\nNo re-entry needed]
+    O --> P[WAH updates record later\nSends back to DOH]
+    P --> Q[/Reverse flow:\nFHIR R4 → Gemini AI → iHOMIS JSON\nPOST → iHOMIS /api/webhook/]
+    Q --> R[(DOH Inbox receives update\nBidirectional sync complete)]
+    R --> S([END — Bidirectional care record])
+
+    style H fill:#2d1010,stroke:#f85149,color:#f85149
+    style N fill:#2d1010,stroke:#f85149,color:#f85149
+    style O fill:#0d2818,stroke:#3fb950,color:#3fb950
+    style B fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style I fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style K fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style R fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style F fill:#130d1f,stroke:#bc8cff,color:#e6edf3
+    style Q fill:#130d1f,stroke:#bc8cff,color:#e6edf3
+```
+
+**What Data Successfully Transfers:**
+| Data Type | HL7v2 Source | FHIR R4 Target | Status |
+|-----------|-------------|----------------|--------|
+| Patient Identity | `PID` — Name, DOB, PhilHealth ID | `Patient` resource + PhilHealth identifier | ✅ Full |
+| Vitals | `OBX` — BP, HR, Temp (LOINC coded) | `Observation` resources with LOINC + units | ✅ Full |
+| Diagnosis | `DG1` — ICD-10 code + description | `Condition` resource with ICD-10 system | ✅ Full |
+| Visit Info | `PV1` — Physician, facility, visit class | `Encounter` resource with practitioner ref | ✅ Full |
+| Referral Reason | `RF1` — Priority, reason, destination | `ServiceRequest` / Encounter note | ⚡ Partial |
+| Extended History | Not in current segments | Requires AllergyIntolerance, MedicationRequest | 🔲 Future scope |
+
+---
+
 ## ⚠️ Limitations & Disclaimers
 
 - **Prototype Only**: This system is built for academic/capstone demonstration purposes
