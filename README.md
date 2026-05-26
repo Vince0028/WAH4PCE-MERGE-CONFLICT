@@ -426,30 +426,30 @@ PH_CORE_PATIENT:        "http://fhir.ph/StructureDefinition/ph-core-patient"
 
 ## ❓ Defense Q&A — System Flow Diagrams <a name="defense-qa"></a>
 
-The following flowcharts address key questions raised during system evaluation. Each diagram uses standard flowchart notation: **rectangles** = process steps, **diamonds** = decision points, **ovals** = start/end, **parallelograms** = input/output.
+The following flowcharts answer the key questions about how ADAPT works. Each one uses standard notation: **rectangles** = steps, **diamonds** = yes/no decisions, **ovals** = start/end.
 
 ---
 
-### Q1 — "Does automation remove humans? How do you prevent Garbage-In-Garbage-Out?"
+### Q1 — "Does automation mean humans are removed? How do you prevent bad data from spreading?"
 
-> Automation replaces **format conversion** (HL7v2 ↔ FHIR), not clinical judgment. Two human checkpoints remain: data entry and inbox review. The FHIR Validator acts as a digital immune system — quarantining bad transformations before they reach the network.
+> **Short answer:** No — the system automates the *format conversion*, not the clinical decisions. A doctor still enters the data and another doctor at the other end still reviews and approves it. Bad data gets caught by a validator and blocked before it can spread.
 
 ```mermaid
 flowchart TD
-    A([START]) --> B[Clinician enters patient data\nin iHOMIS\n📋 Demographics · Vitals · ICD-10]
-    B --> C[iHOMIS auto-encodes\nto HL7v2 Message\nMSH · PID · PV1 · OBX · DG1 · RF1]
-    C --> D[POST to iPaaS /api/ingest\nHL7v2 + original JSON]
-    D --> E[/Gemini AI transforms\nHL7v2 → FHIR R4 Bundle\ntemp=0.1 · structured JSON output/]
-    E --> F{FHIR Validator\nPasses?}
-    F -- NO --> G[🚫 QUARANTINE\nStatus = QUARANTINED\nAdmin alerted · Never forwarded]
-    F -- YES --> H[(Log Transaction\nadapt_transaction_logs\nUUID · status=SUCCESS · both payloads)]
-    H --> I[POST to WAH /api/webhook\nFHIR Bundle forwarded]
-    I --> J[(WAH DB stores record\nstatus = RECEIVED\nsource = RECEIVED)]
-    J --> K[WAH Clinician reviews Inbox\n🔍 Field Summary · Compare · Source]
-    K --> L{Clinician\nAccepts?}
-    L -- REJECT --> M[🚫 Record deleted\nLog updated]
-    L -- ACCEPT --> N[✅ Record active in WAH\nCare continues]
-    N --> O([END])
+    A([🟢 START]) --> B["👨‍⚕️ Doctor enters patient data\nin the DOH system"]
+    B --> C["📋 System packages data\ninto a standard message format"]
+    C --> D["📤 Message sent to\nthe middleware iPaaS"]
+    D --> E[/"🤖 AI converts the message\nfrom DOH format → WAH format"/]
+    E --> F{"🛡️ Is the converted\ndata valid?"}
+    F -- "❌ No" --> G["🚫 BLOCKED\nBad data is quarantined\nAdmin is notified"]
+    F -- "✅ Yes" --> H[("📝 Transaction logged\nwith full audit trail")]
+    H --> I["📨 Converted data sent\nto WAH Hospital"]
+    I --> J[("💾 WAH stores the\nreceived record")]
+    J --> K["👩‍⚕️ WAH Doctor reviews\nthe record in their Inbox"]
+    K --> L{"Does the WAH Doctor\naccept the record?"}
+    L -- "❌ Reject" --> M["🗑️ Record discarded"]
+    L -- "✅ Accept" --> N["✅ Record is now active\nin WAH — care continues"]
+    N --> O([🔴 END])
 
     style G fill:#2d1010,stroke:#f85149,color:#f85149
     style M fill:#2d1010,stroke:#f85149,color:#f85149
@@ -459,123 +459,123 @@ flowchart TD
     style E fill:#130d1f,stroke:#bc8cff,color:#e6edf3
 ```
 
-**Key Safeguards:**
-| Safeguard | How It Works |
+**How we prevent bad data from spreading:**
+| Safeguard | What it does |
 |-----------|-------------|
-| **Structured AI Output** | `responseMimeType: 'application/json'` prevents hallucination — output must match schema |
-| **FHIR Validator** | Checks for required resource types (Patient, Encounter, Observation) before forwarding |
-| **Quarantine** | Failed records are blocked — never reach the destination network |
-| **Source Preserved** | `raw_source_payload` always stored alongside transformed record for comparison |
-| **Human Gate #1** | Clinician enters data — system cannot fabricate clinical decisions |
-| **Human Gate #2** | WAH clinician must explicitly Accept before record enters their system |
+| **AI is strictly controlled** | The AI only converts formats — it cannot make up data or change medical facts |
+| **Validator blocks bad output** | If the converted data is incomplete or malformed, it gets quarantined — never sent |
+| **Original data is always kept** | The raw original is saved alongside every conversion so it can always be checked |
+| **Doctor enters the data (Gate #1)** | The system doesn't generate clinical info — a real doctor types it in |
+| **Another doctor reviews it (Gate #2)** | The receiving doctor must manually Accept before it enters their system |
+| **Full audit trail** | Every conversion is logged — who sent it, when, what went in, what came out |
 
 ---
 
-### Q2 — "How will you manage patient consent? Implied consent is a legal nightmare."
+### Q2 — "How do you manage patient consent? Does the patient sign a waiver every time?"
 
-> ADAPT targets **referral-based consent** — the patient consents once when agreeing to the referral, and that consent event (tracked via the RF1 segment + transaction UUID) covers the data transfer. No per-move waivers. No pure implied consent.
+> **Short answer:** No per-transfer waivers — that would block emergency care. No assumed/implied consent — that's a legal risk. Instead, the patient **consents once when they agree to a referral**, and that referral event becomes the documented proof of consent.
 
 ```mermaid
 flowchart TD
-    A([START\nPatient seeks care at DOH]) --> B[Patient registers in iHOMIS\nDemographics · PhilHealth ID]
-    B --> C{Consent flag\nalready on file?}
-    C -- NO --> D[Obtain broad consent\nOne-time · Covers network referrals\nper RA 10173 / UHC Act RA 11223]
-    D --> E[(Consent flag stored in\npatient record\nconsent = TRUE)]
-    C -- YES --> E
-    E --> F[Clinician issues referral\nHL7v2 RF1 segment generated\nReferral = specific consent event]
-    F --> G{Consent flag = TRUE\nAND destination\nfacility authorized?}
-    G -- NO --> H[🚫 Transfer BLOCKED\nLog denial · Alert clinician]
-    G -- YES --> I[/iPaaS transforms &\nforwards data\nRF1 segment = consent evidence/]
-    I --> J[(Transaction logged\nadapt_transaction_logs\nconsent_ref = referral UUID)]
-    J --> K[WAH Clinician reviews\nHuman confirmation #2]
-    K --> L[✅ Transfer legally auditable\nConsent → Referral → Log chain]
-    L --> M([END])
+    A([🟢 START\nPatient visits DOH hospital]) --> B["📝 Patient registers\nwith PhilHealth ID"]
+    B --> C{"Has the patient\nalready given consent?"}
+    C -- "❌ No" --> D["📋 Patient signs a\none-time consent form\ncovering referrals within the network"]
+    D --> E[("✅ Consent recorded\nin patient file")]
+    C -- "✅ Yes" --> E
+    E --> F["👨‍⚕️ Doctor creates a referral\nto send patient to WAH"]
+    F --> G{"Is consent on file\nAND is WAH an\nauthorized facility?"}
+    G -- "❌ No" --> H["🚫 Transfer BLOCKED\nDoctor is notified"]
+    G -- "✅ Yes" --> I[/"🤖 System converts and\nsends the data to WAH"/]
+    I --> J[("📝 Transfer logged\nwith referral ID as\nconsent evidence")]
+    J --> K["👩‍⚕️ WAH Doctor reviews\nthe incoming record"]
+    K --> L["✅ Transfer is complete\nand legally traceable"]
+    L --> M([🔴 END])
 
     style H fill:#2d1010,stroke:#f85149,color:#f85149
     style L fill:#0d2818,stroke:#3fb950,color:#3fb950
     style J fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
+    style E fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
     style I fill:#130d1f,stroke:#bc8cff,color:#e6edf3
 ```
 
-**Consent Model Comparison:**
-| Model | Risk | ADAPT Stance |
-|-------|------|-------------|
-| Per-transfer waiver | Blocks emergency care | ❌ Not adopted |
-| Implied consent | RA 10173 violation risk | ❌ Not adopted |
-| **Referral-based consent** | Patient agrees to referral = data follows | ✅ Target model |
-| Broad registration consent | One-time, covers network | ✅ Complementary layer |
+**Consent models compared:**
+| Model | Problem | Our approach |
+|-------|---------|-------------|
+| Sign a waiver every time | Too slow — blocks emergency referrals | ❌ Not used |
+| Implied consent (assume yes) | Legal risk under Data Privacy Act | ❌ Not used |
+| **Referral-based consent** | Patient agrees to the referral = agrees to data following them | ✅ What we use |
+| One-time registration consent | Broad coverage for the network | ✅ Used as base layer |
 
 ---
 
-### Q3 — "Where does data live? Centralized = single point of failure. Decentralized = uneven security."
+### Q3 — "Where does the data live? Centralized = hackable. Decentralized = uneven security."
 
-> ADAPT uses a **federated hub-and-spoke** model. Patient data stays at the source hospital's own database. The iPaaS (hub) only holds transaction logs — it is a **router, not a vault**. A breach of the hub exposes metadata only.
+> **Short answer:** Neither fully centralized nor fully decentralized. Each hospital keeps its own database. The middleware in the middle (iPaaS) **only stores activity logs — not patient records**. It is a router, not a storage vault. So hacking the middle doesn't expose patient data.
 
 ```mermaid
 flowchart TD
-    A([WHERE DOES THE DATA LIVE?]) --> B{Architecture\nType?}
-    B --> C[(iHOMIS DB\nDOH Supabase\nihomis_patients\nHL7v2 JSON)]
-    B --> D[(iPaaS DB\nADAPT Supabase\nadapt_transaction_logs\nNO PHI stored permanently)]
-    B --> E[(WAH DB\nWAH Supabase\nwah_patients\nFHIR R4 Bundle)]
+    A([🟢 WHERE DOES DATA LIVE?]) --> B["3 separate databases\neach independently secured"]
+    B --> C[("🏛️ DOH Database\nOwned by DOH\nStores DOH patient records")]
+    B --> D[("🔀 iPaaS Database\nMiddleware logs only\nNO patient records stored")]
+    B --> E[("🏥 WAH Database\nOwned by WAH\nStores WAH patient records")]
 
-    C & D & E --> F[Each DB = separate project\nSeparate credentials · Separate RLS policies\nSeparate API keys]
+    C & D & E --> F["Each database has its own\npasswords, keys, and access rules"]
 
-    F --> G{Scenario:\niPaaS hub\ncompromised?}
-    G -- Impact? --> H[✅ DOH & WAH DBs unaffected\nSeparate keys\nNo cross-access]
-    G -- What leaks? --> I[⚠️ Transaction logs only\nNo PHI in logs\nMetadata exposed at worst]
+    F --> G{"What if the middleware\nis hacked?"}
+    G -- "Patient data?" --> H["✅ Safe — the middleware\ndoes not store patient records"]
+    G -- "What's exposed?" --> I["⚠️ Only activity logs\nno medical information"]
 
-    F --> J{Scenario:\nHospital DB\ncompromised?}
-    J -- Impact? --> K[✅ Other hospital DB unaffected\nIsolated Supabase instances]
-    J -- Hub impact? --> L[⚠️ iPaaS logs show\nonly metadata\nNo PHI in hub]
+    F --> J{"What if one hospital\nis hacked?"}
+    J -- "Other hospital?" --> K["✅ Unaffected\ncompletely separate database"]
 
-    F --> M[Production hardening required\nbefore clinical use]
-    M --> N{Hardening\napplied?}
-    N -- NO --> O[🚫 Prototype only\nDo not use real PHI]
-    N -- YES --> P[RLS row-level security\nTLS in transit\nWebhook HMAC auth\nJWT bearer tokens]
-    P --> Q[✅ Clinical use ready\nper DICT eHealth Standards]
-    Q --> R([END])
+    F --> L["For real clinical use\nsecurity upgrades are needed"]
+    L --> M{"Security upgrades\ndone?"}
+    M -- "❌ Not yet" --> N["🚫 Prototype only\nDo not use real patient data"]
+    M -- "✅ Yes" --> O["Access controls\nEncrypted connections\nAuthenticated transfers"]
+    O --> P["✅ Ready for clinical use"]
+    P --> Q([🔴 END])
 
-    style O fill:#2d1010,stroke:#f85149,color:#f85149
-    style Q fill:#0d2818,stroke:#3fb950,color:#3fb950
+    style N fill:#2d1010,stroke:#f85149,color:#f85149
+    style P fill:#0d2818,stroke:#3fb950,color:#3fb950
     style C fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
     style D fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
     style E fill:#0c1a2e,stroke:#79c0ff,color:#79c0ff
 ```
 
-**Architecture Tradeoffs:**
-| Risk | Fully Centralized | Fully Decentralized | ADAPT Federated |
-|------|:-----------------:|:-------------------:|:---------------:|
-| Single point of failure | 🔴 High | 🟢 Low | 🟡 Medium — hub holds no PHI |
-| Security consistency | 🟢 Easy | 🔴 Hard | 🟡 3 isolated systems |
-| Data ownership | 🔴 Unclear | 🟢 Clear | 🟢 Each hospital owns its DB |
-| Availability | 🔴 Low | 🟢 High | 🟡 iPaaS outage pauses transfers only |
+**How does our approach compare?**
+| Concern | If fully centralized | If fully decentralized | Our approach (federated) |
+|---------|:---:|:---:|:---:|
+| Single point of failure | 🔴 One breach = all data | 🟢 No central target | 🟡 Hub has no patient data |
+| Equal security | 🟢 One system to secure | 🔴 Every node must be perfect | 🟡 3 isolated systems |
+| Who owns the data? | 🔴 Unclear | 🟢 Each hospital owns theirs | 🟢 Each hospital owns theirs |
+| What if hub goes down? | 🔴 Everything stops | 🟢 Nodes work alone | 🟡 Transfers pause, hospitals still work |
 
 ---
 
-### Q4 — "What if a patient from DOH switched to WAH? How will the data flow?"
+### Q4 — "What if a patient from DOH switches to WAH? How does the data flow?"
 
-> The DOH clinician clicks **"Send to WAH"** — this triggers the entire pipeline. The patient's PhilHealth number serves as the cross-system unique identifier. Their complete clinical record (demographics, vitals, diagnosis, visit info) is automatically converted from HL7v2 to FHIR R4 and delivered to WAH's Inbox for clinical review.
+> **Short answer:** The DOH doctor clicks **"Send to WAH."** The system automatically converts the patient record from the old format to the new format, validates it, logs it, and delivers it to WAH's inbox. The WAH doctor reviews and accepts it. The patient's PhilHealth number links them across both systems — no re-typing needed.
 
 ```mermaid
 flowchart TD
-    A([START\nPatient leaves DOH → transfers to WAH]) --> B[(iHOMIS — Existing Patient Record\nMaria Santos · PhilHealth 0102-0304-0506\nVitals · Diagnosis · Visit history)]
-    B --> C[DOH Clinician clicks\n'Send to WAH'\nHuman-initiated trigger]
-    C --> D[/Build HL7v2 Message\nMSH · PID · PV1 · OBX · DG1 · RF1/]
-    D --> E[POST → iPaaS /api/ingest\nHL7v2 payload + original JSON]
-    E --> F[/Gemini AI transforms\nPID → Patient resource · PhilHealth ID preserved\nOBX → Observation · LOINC codes\nDG1 → Condition · ICD-10\nPV1 → Encounter/]
-    F --> G{FHIR Bundle\nValid?}
-    G -- INVALID --> H[🚫 QUARANTINE\nAdmin notified\nNot forwarded to WAH]
-    G -- VALID --> I[(Log: source=iHOMIS\ndest=WAH · status=SUCCESS\nUUID timestamp)]
-    I --> J[POST → WAH /api/webhook\nFHIR R4 Bundle + original source]
-    J --> K[(WAH DB — wah_patients\nstatus = RECEIVED\nsource = RECEIVED)]
-    K --> L[WAH Inbox — Clinician reviews\nField Summary · Side-by-side Compare\nOriginal Source view]
-    L --> M{WAH Clinician\nAccepts?}
-    M -- REJECT --> N[Record removed from Inbox\nLog noted]
-    M -- ACCEPT --> O[✅ Maria is now a WAH patient\nFull history in FHIR R4\nNo re-entry needed]
-    O --> P[WAH updates record later\nSends back to DOH]
-    P --> Q[/Reverse flow:\nFHIR R4 → Gemini AI → iHOMIS JSON\nPOST → iHOMIS /api/webhook/]
-    Q --> R[(DOH Inbox receives update\nBidirectional sync complete)]
-    R --> S([END — Bidirectional care record])
+    A([🟢 START\nPatient transfers from DOH to WAH]) --> B[("📂 Patient record exists in DOH\nMaria Santos\nPhilHealth ID · Vitals · Diagnosis")]
+    B --> C["👨‍⚕️ DOH Doctor clicks\n'Send to WAH'"]
+    C --> D[/"📋 System packages the record\ninto the old HL7v2 format"/]
+    D --> E["📤 Record sent to\nthe middleware iPaaS"]
+    E --> F[/"🤖 AI converts it\nfrom old DOH format → modern WAH format\nAll fields are mapped automatically"/]
+    F --> G{"Is the converted\nrecord valid?"}
+    G -- "❌ Invalid" --> H["🚫 QUARANTINED\nAdmin notified\nNot sent to WAH"]
+    G -- "✅ Valid" --> I[("📝 Transaction logged\nDOH → WAH")]
+    I --> J["📨 Converted record\nsent to WAH"]
+    J --> K[("💾 WAH stores the\nincoming record")]
+    K --> L["👩‍⚕️ WAH Doctor reviews\nthe record in their Inbox\nCan compare original vs converted"]
+    L --> M{"Accept the\nrecord?"}
+    M -- "❌ Reject" --> N["🗑️ Record removed"]
+    M -- "✅ Accept" --> O["✅ Maria is now a WAH patient\nFull history available\nNo need to re-enter anything"]
+    O --> P["Later: WAH can send\nupdates back to DOH"]
+    P --> Q[/"🤖 Reverse conversion\nWAH format → DOH format"/]
+    Q --> R[("📥 DOH receives the update\nTwo-way sync complete")]
+    R --> S([🔴 END])
 
     style H fill:#2d1010,stroke:#f85149,color:#f85149
     style N fill:#2d1010,stroke:#f85149,color:#f85149
@@ -588,15 +588,15 @@ flowchart TD
     style Q fill:#130d1f,stroke:#bc8cff,color:#e6edf3
 ```
 
-**What Data Successfully Transfers:**
-| Data Type | HL7v2 Source | FHIR R4 Target | Status |
-|-----------|-------------|----------------|--------|
-| Patient Identity | `PID` — Name, DOB, PhilHealth ID | `Patient` resource + PhilHealth identifier | ✅ Full |
-| Vitals | `OBX` — BP, HR, Temp (LOINC coded) | `Observation` resources with LOINC + units | ✅ Full |
-| Diagnosis | `DG1` — ICD-10 code + description | `Condition` resource with ICD-10 system | ✅ Full |
-| Visit Info | `PV1` — Physician, facility, visit class | `Encounter` resource with practitioner ref | ✅ Full |
-| Referral Reason | `RF1` — Priority, reason, destination | `ServiceRequest` / Encounter note | ⚡ Partial |
-| Extended History | Not in current segments | Requires AllergyIntolerance, MedicationRequest | 🔲 Future scope |
+**What patient data gets transferred:**
+| Data | What transfers | Status |
+|------|---------------|--------|
+| Name, birthday, PhilHealth ID | ✅ Fully transferred | ✅ |
+| Blood pressure, heart rate, temperature | ✅ Fully transferred | ✅ |
+| Diagnosis (disease/condition) | ✅ Fully transferred | ✅ |
+| Doctor and visit information | ✅ Fully transferred | ✅ |
+| Referral reason | ⚡ Partially transferred | ⚡ |
+| Full medical history (allergies, medications) | 🔲 Not yet — future feature | 🔲 |
 
 ---
 
