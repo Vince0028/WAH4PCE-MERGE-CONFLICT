@@ -1,0 +1,68 @@
+@startuml External_Dependencies
+' ============================================================
+' WAH4PCE - External Systems and Services
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **WAH4PCE - External Systems and Services**
+
+rectangle "Google Gemini AI\n(Main AI for converting data)" as GEMINI #F3E5F5
+
+rectangle "Groq AI\n(Backup AI when Gemini is busy)" as GROQ #FFF3E0
+
+rectangle "Supabase\n(Cloud database hosting)" as SUPABASE #E8F5E9
+
+rectangle "DOH / NHDR\n(Government health repository\n- future connection)" as DOH #E3F2FD
+
+rectangle "PhilHealth\n(Patient insurance ID)" as PHILHEALTH #E3F2FD
+
+rectangle "HL7 FHIR R4\n(International health data standard)" as FHIR_STANDARD #FFF3E0
+
+rectangle "PH Core IG\n(Philippine version of FHIR)" as PH_CORE #FFF3E0
+
+rectangle "HL7 v2\n(Legacy DOH data format)" as HL7V2 #FFF3E0
+
+rectangle "Proxmox VE\n(Local server for hosting)" as PROXMOX #ECEFF1
+
+rectangle "WAH for Security\n(VPN tunnels and encryption\nby parallel project group)" as WAH_SECURITY #FFEBEE
+
+note bottom of GEMINI
+  Converts patient records between
+  HL7 v2 (old format) and
+  FHIR R4 (new format) using AI
+end note
+
+note bottom of SUPABASE
+  3 separate databases: one for
+  iHOMIS, one for WAH, one for
+  the middleware transaction logs
+end note
+
+note bottom of WAH_SECURITY
+  A different project group handles
+  the VPN tunnels and encryption
+  that secures our system
+end note
+
+@enduml

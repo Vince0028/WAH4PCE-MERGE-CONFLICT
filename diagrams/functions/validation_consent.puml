@@ -1,0 +1,83 @@
+@startuml Validation_Consent_Functions
+' ============================================================
+' Validation and Consent Functions
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam usecase {
+    BackgroundColor #FFCDD2
+    BorderColor #EF5350
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **Validation and Consent Functions**
+
+rectangle "How ADAPT Checks Data Quality and Privacy" {
+
+    usecase "Check if patient\ngave consent\nto share data" as V1
+    usecase "Verify converted data\nhas all required fields" as V2
+    usecase "Check for mandatory info\n(PhilHealth ID, name, etc.)" as V3
+    usecase "Block bad records\nand hold for admin review" as V4
+    usecase "Log what happened\n(without patient data)" as V5
+    usecase "Delete raw patient data\nafter delivery" as V6
+
+}
+
+note right of V1
+  If the patient did NOT sign
+  a consent form, the transfer
+  is immediately blocked.
+  Required by Data Privacy Act
+end note
+
+note right of V2
+  After AI converts the data,
+  the system checks if all
+  required sections exist
+  (Patient, Diagnosis, etc.)
+end note
+
+note right of V4
+  Bad or incomplete records
+  are held in a "quarantine"
+  area. Admin can review
+  and re-send after fixing.
+end note
+
+note right of V5
+  Every transfer is logged.
+  But only timestamps and
+  status are saved - never
+  the actual patient data.
+end note
+
+V1 --> V4 : no consent
+V2 --> V4 : missing data
+V3 --> V4 : missing fields
+V2 --> V5 : log result
+V1 --> V5 : log check
+V4 --> V6 : after resolved
+
+@enduml

@@ -1,0 +1,40 @@
+@startuml System_Context
+' ============================================================
+' WAH4PCE - True System Context Diagram (Level 1)
+' Very simple, high-level view matching the Figma aesthetic
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 14
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #555555
+    FontColor #555555
+    FontSize 11
+}
+
+title **WAH4PCE - High Level System Context**
+
+rectangle "WAH for Interoperability\n(Modern FHIR R4 System)" as WAH #FFFFFF
+rectangle "PAAS for External Interoperability\n(ADAPT Middleware)" as PAAS #FFFFFF
+rectangle "iHOMIS\n(DOH Legacy System)" as IHOMIS #FFFFFF
+
+rectangle "AI AUTOMATION LAYER\n(Gemini 3.1 Flash Lite)" as AI #FFFFFF
+
+WAH <-right-> PAAS : Sends/Receives\nFHIR Format
+PAAS <-right-> IHOMIS : Sends/Receives\nLegacy Format
+PAAS -down-> AI : Sends data for conversion
+AI -up-> PAAS : Returns converted data\n(HL7v2 <-> FHIR)
+
+@enduml

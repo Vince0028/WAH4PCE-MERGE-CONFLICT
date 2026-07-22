@@ -1,0 +1,75 @@
+@startuml Flow_WAH_to_DOH
+' ============================================================
+' Flow: WAH to DOH (Based on Figma Prototype Visualization)
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #555555
+    FontColor #555555
+    FontSize 11
+}
+
+title **Prototype visualization WAH to DOH**
+
+rectangle "WAH for Patients" as WAH_PATIENTS
+rectangle "WAH for Hospitals" as WAH_HOSP
+rectangle "WAH for Interoperability" as WAH_INTEROP
+rectangle "Send data to\nexternal system" as SEND_EXT
+rectangle "PAAS for External Interoperability" as PAAS
+rectangle "Temporary Database" as TEMP_DB
+rectangle "AI AUTOMATION LAYER" as AI_LAYER
+rectangle "GETS CONVERTED TO" as CONVERT
+rectangle "FHIR 4" as FHIR
+rectangle "Verification Layer" as VERIFY
+rectangle "Gemini 3.1 Flash Lite or Preview" as GEMINI
+rectangle "Verification of waiver form" as WAIVER
+rectangle "Verification of FHIR Format" as FORMAT
+rectangle "SENDS THE FHIR FORMAT CONVERTED DATA" as SEND_FHIR
+rectangle "Receive transformed data\nfrom external system" as RECEIVE_TRANS
+rectangle "iHOMIS" as IHOMIS
+
+' Main horizontal flow
+WAH_PATIENTS -right-> WAH_HOSP
+WAH_HOSP -right-> WAH_INTEROP : (1)
+WAH_INTEROP -right-> SEND_EXT : (2)
+SEND_EXT -right-> PAAS : (3)
+PAAS -right-> SEND_FHIR : (12)
+SEND_FHIR -right-> RECEIVE_TRANS : (13)
+RECEIVE_TRANS -right-> IHOMIS : (14)
+
+' Vertical AI Flow
+PAAS -down-> TEMP_DB : (4) Stores for raw data
+TEMP_DB -down-> AI_LAYER : (5) 
+AI_LAYER -down-> CONVERT : (6)
+CONVERT -left-> GEMINI : using
+CONVERT -down-> FHIR : (7)
+FHIR -right-> VERIFY : (8)
+VERIFY -right-> GEMINI : using
+GEMINI -down-> WAIVER
+GEMINI -down-> FORMAT
+VERIFY -up-> AI_LAYER : (9)
+AI_LAYER -up-> TEMP_DB : (10)
+TEMP_DB -up-> PAAS : (11) Return for converted data
+
+note right of TEMP_DB
+  Note: We will train the AI
+  based on the open source
+  code and format of DOH
+  system(iclinic/ihomic)
+end note
+
+@enduml

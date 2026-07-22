@@ -1,0 +1,95 @@
+@startuml External_Actors
+' ============================================================
+' WAH4PCE - ADAPT LHIE: External Actors
+' Organized to match the project UCD layout
+' ============================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #555555
+    FontColor #333333
+    FontSize 12
+}
+
+skinparam rectangle {
+    RoundCorner 15
+    FontSize 12
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+skinparam usecase {
+    BackgroundColor #F3E5F5
+    BorderColor #9575CD
+    FontColor #333333
+    FontSize 11
+}
+
+title **WAH4PCE INTEROPERABILITY - Actors**
+
+' -- Left Side: Admin --
+actor "WAH4PCE Admin" as ADMIN
+note bottom of ADMIN
+  Oversees the interoperability
+  pipeline, monitors dashboard,
+  reviews quarantined records
+end note
+
+' -- System Boundary --
+rectangle "ADAPT iPaaS System" #F3E5F5 {
+    usecase "Administer\nSystem" as UC_ADMIN
+    usecase "Request Health\nData" as UC_REQUEST
+    usecase "Check Request\nStatus" as UC_CHECK
+    usecase "Provide Health\nData" as UC_PROVIDE
+    usecase "Translate Data\nto/from PH Core\nHL7 FHIR R4 / HL7 v2" as UC_TRANSLATE #D1C4E9
+    usecase "Validate Privacy\nConsent" as UC_CONSENT
+}
+
+' -- Right Side: External Actors --
+actor "Requestor" as REQUESTOR
+actor "Provider" as PROVIDER
+actor "WAH4PCE AI" as AI_AGENT
+
+note bottom of REQUESTOR
+  External endpoint (iHOMIS/WAH)
+  requesting health records from
+  another facility
+end note
+
+note bottom of PROVIDER
+  External endpoint (iHOMIS/WAH)
+  providing health records to
+  another facility
+end note
+
+note bottom of AI_AGENT
+  Gemini AI via MCP
+  Translates between HL7 v2
+  and FHIR R4 formats
+end note
+
+' -- Connections --
+ADMIN -right-> UC_ADMIN
+
+REQUESTOR -left-> UC_REQUEST
+REQUESTOR -left-> UC_CHECK
+
+PROVIDER -left-> UC_PROVIDE
+
+UC_PROVIDE .down.> UC_TRANSLATE : <<extend>>
+UC_TRANSLATE .down.> UC_CONSENT : <<include>>
+
+AI_AGENT -left-> UC_TRANSLATE
+
+@enduml

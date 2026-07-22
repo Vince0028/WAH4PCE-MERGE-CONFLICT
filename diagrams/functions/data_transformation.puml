@@ -1,0 +1,76 @@
+@startuml Data_Transformation_Functions
+' ============================================================
+' Data Transformation Functions
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam usecase {
+    BackgroundColor #F3E5F5
+    BorderColor #9575CD
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **Data Conversion Functions**
+
+rectangle "How ADAPT Converts Health Records" {
+
+    usecase "Convert old format (HL7 v2)\nto new format (FHIR R4)" as T1
+    usecase "Convert new format (FHIR R4)\nto old format (HL7 v2)" as T2
+    usecase "Build HL7 v2 message\nfrom patient record" as T3
+    usecase "Build FHIR R4 bundle\nfrom patient record" as T4
+    usecase "If AI is busy,\nswitch to backup model" as T5
+    usecase "Map medical terms\n(LOINC, ICD-10 codes)" as T6
+    usecase "Follow Philippine\nhealth data rules" as T7
+
+}
+
+note right of T1
+  When iHOMIS sends a record:
+  AI reads the old format
+  and creates a new FHIR version
+end note
+
+note right of T2
+  When WAH sends a record:
+  AI reads the FHIR format
+  and creates an iHOMIS version
+end note
+
+note right of T5
+  If the main AI (Gemini) hits
+  its request limit, the system
+  automatically tries backup
+  AI models one by one
+end note
+
+T1 ..> T6 : uses
+T1 ..> T7 : follows
+T2 ..> T6 : uses
+T1 ..> T5 : fallback
+T2 ..> T5 : fallback
+T3 ..> T1 : feeds into
+T4 ..> T2 : feeds into
+
+@enduml

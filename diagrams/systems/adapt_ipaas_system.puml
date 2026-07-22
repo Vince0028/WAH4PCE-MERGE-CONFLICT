@@ -1,0 +1,81 @@
+@startuml ADAPT_iPaaS_System
+' ============================================================
+' ADAPT iPaaS - AI Middleware (Simplified View)
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam component {
+    BackgroundColor #FFFFFF
+    BorderColor #CE93D8
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam database {
+    BackgroundColor #FFFFFF
+    BorderColor #CE93D8
+    FontColor #333333
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **ADAPT iPaaS - AI-Powered Middleware**
+
+rectangle "ADAPT iPaaS" #F3E5F5 {
+
+    component "Admin Dashboard\n(View system health)" as DASHBOARD
+    component "Transaction History\n(View all past transfers)" as TX_VIEWER
+
+    component "Receive Incoming\nHealth Record" as INGEST_API
+    component "Check Patient\nConsent" as CONSENT_CHECK
+    component "AI Format\nConversion Engine" as AI_ENGINE
+    component "Backup AI Models\n(If main AI is busy)" as MODEL_FALLBACK
+    component "Verify Converted\nData is Correct" as VALIDATOR
+    component "Block Bad Records\nfor Admin Review" as QUARANTINE
+
+    database "Transaction Logs\n(Audit Trail)" as IPAAS_DB
+
+    INGEST_API --> CONSENT_CHECK : Step 1
+    CONSENT_CHECK --> AI_ENGINE : Step 2
+    AI_ENGINE --> MODEL_FALLBACK : AI busy
+    AI_ENGINE --> VALIDATOR : Step 3
+    VALIDATOR --> IPAAS_DB : Step 4 - log it
+
+    DASHBOARD --> IPAAS_DB
+    TX_VIEWER --> IPAAS_DB
+    QUARANTINE --> IPAAS_DB
+}
+
+note bottom of IPAAS_DB
+  **What it does:**
+  - Receives health records from iHOMIS or WAH
+  - Checks if patient gave consent
+  - AI converts the data format automatically
+  - Verifies the converted data is valid
+  - Forwards to the destination hospital
+  - Logs everything (but no patient data kept)
+
+  **If main AI is busy:**
+  Automatically switches to a backup AI model
+end note
+
+@enduml

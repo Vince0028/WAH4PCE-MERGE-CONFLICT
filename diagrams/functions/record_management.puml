@@ -1,0 +1,82 @@
+@startuml Record_Management_Functions
+' ============================================================
+' Record Management Functions (iHOMIS and WAH)
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam usecase {
+    BackgroundColor #BBDEFB
+    BorderColor #42A5F5
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **Record Management Functions**
+
+rectangle "How Doctors Manage Patient Records" {
+
+    usecase "Create a new\npatient record" as R1
+    usecase "View all\npatient records" as R2
+    usecase "Edit a\npatient record" as R3
+    usecase "Delete a\npatient record" as R4
+    usecase "Move record to\nSend Queue" as R5
+    usecase "Send record to\nother hospital" as R6
+    usecase "Take record back\nfrom Send Queue" as R7
+    usecase "Re-send a\nrejected record" as R8
+
+}
+
+rectangle "How Doctors Receive Records" #E8F5E9 {
+
+    usecase "Receive incoming\nrecord from\nother hospital" as I1 #C8E6C9
+    usecase "Compare original\nand converted data\n(4 viewing modes)" as I2 #C8E6C9
+    usecase "Accept the\nreceived record" as I3 #C8E6C9
+    usecase "Delete the\nreceived record" as I4 #C8E6C9
+
+}
+
+note right of R1
+  Doctors can auto-fill with
+  test data for demonstration
+  purposes
+end note
+
+note right of I2
+  4 ways to view data:
+  1. Field Summary
+  2. Converted Version
+  3. Original Version
+  4. Side-by-Side Compare
+end note
+
+R1 --> R5 : after saving
+R5 --> R6 : send
+R6 --> R8 : if rejected
+R5 --> R7 : take back
+
+I1 --> I2 : review
+I2 --> I3 : accept
+I2 --> I4 : delete
+
+@enduml

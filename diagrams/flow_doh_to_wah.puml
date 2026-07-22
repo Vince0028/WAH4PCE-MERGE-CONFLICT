@@ -1,0 +1,74 @@
+@startuml Flow_DOH_to_WAH
+' ============================================================
+' Flow: DOH to WAH (Based on Figma Prototype Visualization)
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam arrow {
+    Color #555555
+    FontColor #555555
+    FontSize 11
+}
+
+title **Prototype visualization DOH to WAH**
+
+rectangle "iHOMIS\n(Dummy system using open source)" as IHOMIS
+rectangle "Send data to\nexternal system" as SEND_EXT
+rectangle "PAAS for External Interoperability" as PAAS
+rectangle "Temporary Database" as TEMP_DB
+rectangle "AI AUTOMATION LAYER" as AI_LAYER
+rectangle "GETS CONVERTED TO" as CONVERT
+rectangle "HL7 FHIR" as FHIR
+rectangle "Verification Layer" as VERIFY
+rectangle "Gemini 3.1 Flash Lite or Preview" as GEMINI
+rectangle "Verification of waiver form" as WAIVER
+rectangle "Verification of FHIR Format" as FORMAT
+rectangle "SENDS THE FHIR FORMAT CONVERTED DATA" as SEND_FHIR
+rectangle "Receive transformed data\nfrom external system" as RECEIVE_TRANS
+rectangle "WAH for Interoperability" as WAH_INTEROP
+rectangle "WAH for Hospitals" as WAH_HOSP
+rectangle "WAH for Patients" as WAH_PATIENTS
+
+' Main horizontal flow
+IHOMIS -right-> SEND_EXT : (1)
+SEND_EXT -right-> PAAS : (2)
+PAAS -right-> SEND_FHIR : (11)
+SEND_FHIR -right-> RECEIVE_TRANS : (12)
+RECEIVE_TRANS -right-> WAH_INTEROP : (13)
+WAH_INTEROP -right-> WAH_HOSP : (14)
+WAH_HOSP -right-> WAH_PATIENTS
+
+' Vertical AI Flow
+PAAS -down-> TEMP_DB : (3) Stores data
+TEMP_DB -down-> AI_LAYER : (4) Passes the \nencrypted data
+AI_LAYER -down-> CONVERT : (5)
+CONVERT -left-> GEMINI : using
+CONVERT -down-> FHIR : (6)
+FHIR -right-> VERIFY : (7)
+VERIFY -right-> GEMINI : using
+GEMINI -down-> WAIVER
+GEMINI -down-> FORMAT
+VERIFY -up-> AI_LAYER : (8)
+AI_LAYER -up-> TEMP_DB : (9)
+TEMP_DB -up-> PAAS : (10) Return \nconverted data
+
+note right of TEMP_DB
+  Note: We will train the AI
+  based on the PH core format
+  the Batch 1 gave
+end note
+
+@enduml

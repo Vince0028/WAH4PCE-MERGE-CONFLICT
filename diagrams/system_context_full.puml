@@ -1,0 +1,150 @@
+@startuml System_Context_Full
+' ============================================================
+' WAH4PCE - Full System Context Diagram (All 3 Systems)
+' Simple and understandable version
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam component {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam database {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #555555
+    FontColor #555555
+    FontSize 10
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **WAH4PCE - Full System Overview**\nAI-Driven Interoperability Bridge for iHOMIS\nTeam Merge Conflict | AY 2025-2026
+
+' -- Actors --
+actor "Patient" as PATIENT
+actor "DOH Doctor" as IHOMIS_STAFF
+actor "WAH Doctor" as WAH_STAFF
+actor "System Admin" as ADMIN
+
+' -- External Services --
+rectangle "Google Gemini AI" as GEMINI #F3E5F5
+rectangle "Supabase\n(3 Databases)" as SUPABASE #E8F5E9
+rectangle "DOH / NHDR\n(Future)" as DOH #E3F2FD
+rectangle "PhilHealth\n(Insurance ID)" as PHILHEALTH #E3F2FD
+rectangle "HL7 FHIR R4\nStandard" as FHIR_STD #FFF3E0
+rectangle "Proxmox Server" as PROXMOX #ECEFF1
+rectangle "WAH Security\n(VPN + Encryption)" as WAH_SEC #FFEBEE
+
+' -- System Boundary --
+rectangle "WAH4PCE Platform" as PLATFORM {
+
+    rectangle "iHOMIS\n(DOH Legacy Hospital)" as IHOMIS #E3F2FD {
+        component "Create / Edit\nPatient Records" as I_CRUD
+        component "Build HL7 v2\nMessage" as I_HL7
+        component "Send Queue" as I_QUEUE
+        component "Inbox\n(Receive Records)" as I_INBOX
+        database "iHOMIS Database" as I_DB
+        I_CRUD --> I_DB
+        I_HL7 --> I_QUEUE
+    }
+
+    rectangle "ADAPT iPaaS\n(AI Middleware)" as IPAAS #F3E5F5 {
+        component "Receive\nIncoming Data" as IP_INGEST
+        component "Check\nConsent" as IP_CONSENT
+        component "AI Format\nConversion" as IP_AI
+        component "Backup AI\nModels" as IP_FALLBACK
+        component "Verify\nConverted Data" as IP_VALIDATOR
+        component "Block\nBad Records" as IP_QUARANTINE
+        component "Admin\nDashboard" as IP_DASH
+        component "Save\nTransaction Log" as IP_LOGGER
+        database "Transaction Logs" as IP_DB
+
+        IP_INGEST --> IP_CONSENT : Step 1
+        IP_CONSENT --> IP_AI : Step 2
+        IP_CONSENT --> IP_QUARANTINE : blocked
+        IP_AI --> IP_FALLBACK : busy
+        IP_AI --> IP_VALIDATOR : Step 3
+        IP_VALIDATOR --> IP_QUARANTINE : bad data
+        IP_VALIDATOR --> IP_LOGGER : Step 4
+        IP_LOGGER --> IP_DB
+        IP_QUARANTINE --> IP_DB
+        IP_DASH --> IP_DB
+    }
+
+    rectangle "WAH Hospital\n(Modern FHIR System)" as WAH #E8F5E9 {
+        component "Create / Edit\nPatient Records" as W_CRUD
+        component "Build FHIR R4\nBundle" as W_FHIR
+        component "Send Queue" as W_QUEUE
+        component "Inbox\n(Receive Records)" as W_INBOX
+        database "WAH Database" as W_DB
+        W_CRUD --> W_DB
+        W_FHIR --> W_QUEUE
+    }
+
+}
+
+' -- Actor Connections --
+PATIENT -down-> IHOMIS : registers
+PATIENT -down-> WAH : registers
+IHOMIS_STAFF -down-> IHOMIS : manages records
+WAH_STAFF -down-> WAH : manages records
+ADMIN -down-> IPAAS : monitors system
+
+' -- System-to-System --
+I_QUEUE -right-> IP_INGEST : sends record
+IP_VALIDATOR -right-> W_INBOX : delivers converted data
+
+W_QUEUE -left-> IP_INGEST : sends record
+IP_VALIDATOR -left-> I_INBOX : delivers converted data
+
+' -- External --
+IP_AI -up-> GEMINI : AI conversion
+I_DB -down-> SUPABASE
+IP_DB -down-> SUPABASE
+W_DB -down-> SUPABASE
+
+IPAAS ..> FHIR_STD : follows standard
+IPAAS ..> DOH : future connection
+IHOMIS ..> PHILHEALTH : checks ID
+WAH ..> PHILHEALTH : checks ID
+PLATFORM ..> PROXMOX : runs on server
+PLATFORM ..> WAH_SEC : secured by VPN
+
+legend right
+  |= Color |= System |
+  |<#E3F2FD> | iHOMIS (DOH Legacy) |
+  |<#F3E5F5> | ADAPT iPaaS (Our Middleware) |
+  |<#E8F5E9> | WAH Hospital (Modern) |
+
+  Each hospital keeps its own data.
+  iPaaS only stores transaction logs.
+endlegend
+
+@enduml

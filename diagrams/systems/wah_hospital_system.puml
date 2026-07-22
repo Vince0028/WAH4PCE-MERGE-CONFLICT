@@ -1,0 +1,77 @@
+@startuml WAH_Hospital_System
+' ============================================================
+' WAH Hospital - Modern FHIR R4 System
+' Simple and understandable
+' ============================================================
+
+skinparam backgroundColor #D6EAF8
+skinparam defaultFontColor #333333
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam shadowing true
+
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #BDBDBD
+    FontColor #333333
+    FontSize 12
+    RoundCorner 10
+}
+
+skinparam component {
+    BackgroundColor #FFFFFF
+    BorderColor #A5D6A7
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam database {
+    BackgroundColor #FFFFFF
+    BorderColor #A5D6A7
+    FontColor #333333
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #FBC02D
+    FontColor #333333
+    FontSize 10
+}
+
+title **WAH Hospital - Modern FHIR R4 System**
+
+rectangle "WAH Hospital" #E8F5E9 {
+
+    component "Save New\nPatient Record" as WAH_SAVE
+    component "View / Edit / Delete\nPatient Records" as WAH_RECORDS
+    component "Send Queue\n(Records waiting to send)" as WAH_SEND
+    component "Inbox\n(Received records from iHOMIS)" as WAH_INBOX
+
+    component "Patient Records\nManager" as WAH_PATIENT_API
+    component "FHIR Bundle\nBuilder and Sender" as WAH_SEND_API
+    component "Incoming Data\nReceiver" as WAH_WEBHOOK
+
+    database "WAH Patient\nDatabase" as WAH_DB
+
+    WAH_SAVE --> WAH_PATIENT_API : creates
+    WAH_RECORDS --> WAH_PATIENT_API : views / edits
+    WAH_RECORDS --> WAH_SEND : moves to queue
+    WAH_SEND --> WAH_SEND_API : sends to iHOMIS
+    WAH_INBOX --> WAH_PATIENT_API : views received
+
+    WAH_PATIENT_API --> WAH_DB
+    WAH_SEND_API --> WAH_DB : gets record
+    WAH_WEBHOOK --> WAH_DB : saves received
+}
+
+note bottom of WAH_DB
+  **What it stores:**
+  Patient name, PhilHealth ID,
+  birthday, address, vitals,
+  diagnosis, consent status
+
+  **Data Format:** HL7 FHIR R4
+  (Modern international standard)
+end note
+
+@enduml
