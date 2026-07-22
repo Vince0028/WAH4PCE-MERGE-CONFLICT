@@ -1,429 +1,1939 @@
-  
-
-
  
+MERGE CONFLICT
+WAH4PCE: An AI-Driven Interoperability Bridge for iHOMIS
+AY 2025-2026
+
+
+
+
+
+
+
+
+
+
+AUTHORS:
+Vince Nelmar P. Alobin Qelvin Joseler Nagales Marwin John Gonzales Rick Francis T. Cruz
+CO-AUTHORS:
+Jose Eugenio L. Quesada
+
 Table of Contents
-List of Figures	iv
-List of Tables	v
+
 Introduction	1
-Project Context	1
-Statement of the Problem	1
-Objectives	1
-Significance of the Project	2
-Scope and Limitations	2
-Review of Related Literature / Systems	3
-Current System	4
-Technical Background	4
-List of Processes	4
-SWOT Analysis	5
-Proposed Solution	5
-Technical Background	5
-Feasibility	5
-Operational Feasibility	5
-Economic Feasibility	5
-Technical Feasibility	5
-Schedule Feasibility	5
-Requirements Analysis	5
-Project Vision	5
-Prototype (Mock Flow / Wireframe)	5
-Project Lean Canvas	6
-User Classes and Characteristics	6
-Product Backlog	7
-Product Roadmap	7
-Release Plan	7
-Use Case Diagram	7
-Use Case Full Description	7
-Conclusion	8
-References	9
-Appendices	10
-Appendix A: Roles and Responsibilities	10
-Appendix B: Minutes of the Meetings	11
-Appendix C: Methodology	12
-Appendix D: Project Sharepoint Link	13
-Appendix E: Requirements Traceability Matrix	13
-Appendix F: RACI Matrix	13
+Statement of the Problem	5
+Objectives	6
+Significance of the Project	7
+Scope and Limitations	8
+Scope	8
+Review of Related Literature / Systems	10
+List of Processes	19
+4.1	SWOT Analysis	21
+Proposed Solution	23
+Technical Background	23
+Feasibility	27
+Operational Feasibility	27
+Economic Feasibility	27
+Technical Feasibility	28
+Schedule Feasibility	29
+Requirements Analysis	30
+Prototype (Mock Flow / Wireframe)	31
+Project Lean Canvas	33
+Product Backlog	34
+Project Roadmap	38
+Use Case Diagram	39
+User Stories and Acceptance Criteria	40
+Conclusion	43
+References	45
+Appendices	48
+Appendix A: Roles and Responsibilities	48
+Appendix B: Minutes of the Meetings	51
+APC - WAH Kick Off Meeting 3rd Term 2025–2026	51
+TCG Trio WAH for Interoperability (WAH4PC) B1 and Merge Conflict | WAH4PC B2 Meeting	57
+WAH Kick Of Meeting Batch 2 MNTSDEV T3 2025-2026 Meeting Information	60
+WAHxAPC WAH4PC Interoperability Batch 2	64
+Merge Conflict Meeting with Project Adviser 5	69
+WAH4PCE - Merge Conflict Meeting with WAH Officials Meeting Information	74
+Appendix C: Methodology	79
+Appendix D: Project Sharepoint Link	82
+Appendix E: Requirements Traceability Matrix	82
+Appendix F: RACI Matrix	84
 
- 
-List of Figures
-(
-Add this to your paper if there you have inserted figures; otherwise, delete this section, including the header
-To add a list of figures,
-1.	Ensure that each figure has been properly captioned (Right clickInsert caption)
-2.	Put the cursor below the List of Figures heading, then go to the References tab and click on Insert Tables of Figures located in the Captions group. The caption label should be set to Figure.
-)
- 
-List of Tables
-(
-Add this to your paper if there you have inserted figures; otherwise, delete this section, including the header
-To add a list of figures,
-1.	Ensure that each figure has been properly captioned (Right clickInsert caption)
-2.	Put the cursor below the List of Tables heading, then go to the References tab and click on Insert Tables of Figures located in the Captions group. The caption label should be set to Table.
-)
- 
 Introduction
-In many cases, healthcare suffers from the way patient information is stored and shared. As each hospital/clinic operates its own system for these purposes, it has been a challenge to transfer patient records between healthcare facilities. Even if connectivity is improved, as in the Wireless Access for Health (WAH) project, exchanging information between different systems remains a challenge. WAH is a non-government organization that aims to improve the healthcare system in the Philippines by giving its partner hospitals/clinics connectivity to build a more integrated system (Arnaout et al., 2014). However, because the patient records system is diverse (HIMS, etc.), the records cannot be shared because of the format used. This in turn results in slow care and information inconsistency. 
-The problem of exchanging data is a national problem that is targeted by the Universal Health Care (UHC) Act. The UHC Act requires the implementation of interoperable information systems and standardized health data collection (Republic Act No. 11223, 2019) This project builds upon the baseline interoperability system designed by (Cecilio et al., n.d.) by taking further through the full implementation of HL7 Fast Healthcare Interoperability Resources (FHIR) standard. The previous system serves as a baseline system, which provides connectivity. However, the previous system does not have a data standard that can be shared and understood by all participating systems. 
-To bridge this gap, this thesis focuses on FHIR mapping, which transforms the current local data formats into standardized models such as Patient, Observation, and Condition. This enables the effective sharing and interpretation of patient data with the same meaning between healthcare systems. The solution proposed therefore acts as an intermediary system that facilitates the flow of data between existing applications and ensures that the data shared is in a standardized format. As noted in Sinaci et al. (2023), the integration of FHIR mapping, compliance, and system integration aims to increase the effectiveness of patient data usage, consistency, and availability of patient records as mentioned throughout the WAH network. 
 
+In many cases, healthcare suffers from the way patient information is stored and shared. As each hospital or clinic operates its own independent computer system, transferring patient records between healthcare facilities remains a significant challenge. This lack of communication creates isolated "data islands," which occur when medical records are locked inside a specific facility's computer system and cannot be accessed by outside networks. This fragmentation creates a critical need for interoperability, which is the ability of different computer systems to seamlessly connect, exchange, and understand each other's data.
+Wireless Access for Health (WAH) is a non-government organization aiming to build an integrated Philippine healthcare network. Within the WAH network, WAH-partnered clinics and hospitals can easily share data because their systems use the same internal standard, known as HL7 Fast Healthcare Interoperability Resources (FHIR) R4. FHIR is a global standard for exchanging healthcare information electronically, acting as a universal digital medical form. However, a major barrier occurs when a WAH-partnered hospital needs to send patient data to an outside facility, such as a government hospital using the Integrated Hospital Operations and Management Information System (iHOMIS). Because iHOMIS Implementing Hospitals and WAH-partnered hospitals use completely different data formats, they cannot communicate externally. This incompatibility results in slow care and a heavy reliance on manual, pen-and-paper processes, which typically happens when Philippine hospitals lag behind in medical technology.
+This disconnection is a national problem targeted by the Universal Health Care (UHC) Act, which mandates the implementation of interoperable information systems. The previous WAH4PC development batch successfully established the baseline interoperability server, but its data exchange capabilities were strictly limited to internal communication within the WAH ecosystem. This project, WAH4PCE (WAH4PC External), acts as the direct
 
-
-	
-
-
- 
-Project Context
-Healthcare in the Philippines currently faces a critical fragmentation challenge where patient information is trapped in isolated "data islands." While organizations like Wireless Access for Health (WAH) have improved physical connectivity, the digital systems used by partnered facilities, including HIMS, operate with incompatible data formats. This lack of a common language creates a significant hurdle when patients are referred between clinics and Department of Health (DOH) hospitals using systems like iHOMIS. When these records cannot be shared automatically, the result is a reliance on slow, manual processes that increase the risk of "garbage in, garbage out" data pollution and delay life-saving care.
-Our project, WAH4PCE: An AI-Driven Automation Layer for PH Core FHIR Interoperability, is a direct technical response to this bottleneck. While previous batches (Cecilio et al., n.d.) established a baseline interoperability server and the core Philippine (PH) Core FHIR formats, the process of translating legacy records into those formats still relies heavily on human gatekeeping and manual verification. Our team bridges this gap by introducing an intelligent automation layer that serves as a Local Health Information Exchange (LHIE). This system is designed to act as the primary connection point between legacy WAH systems and the standardized DOH network, ensuring that data moves with "liquidity" and consistent clinical meaning.
-The urgency of this project is heightened by the current national landscape. Although the Universal Health Care (UHC) Act mandates standardized data submission to the National Health Data Repository (NHDR), the development of this national infrastructure is currently on hold following changes in leadership. This creates a critical need for Local Government Units (LGUs) and organizations like WAH to lead the way by establishing their own FHIR-powered interoperability platforms. Our system achieves this by utilizing a modern tech stack. This stack consists of Go (Golang) for high-speed processing, MongoDB for native FHIR storage, and Next.js for administrative oversight.
-Central to our solution is an AI-driven Mapping Engine that operates via a Model Context Protocol (MCP) server. This AI agent automatically parses legacy records and maps them to the PH Core FHIR standards established by the "Batch 1 WAH4PC" team, removing the need for manual re-encoding. To ensure the system is production-ready, we implement automated validation tools that verify the accuracy of every record before it reaches a DOH endpoint. While our team focuses exclusively on the automation and translation logic, the system is designed to seamlessly integrate with the security and encryption protocols provided by a separate project group to ensure full compliance with the Data Privacy Act of 2012.
-Ultimately, our project goal is to deliver a functional, production-caliber proof-of-concept (POC) that demonstrates how WAH systems can seamlessly talk to DOH systems today. By automating the path to FHIR compliance, we provide WAH and its partners with the technical tools needed to fulfill the vision of the UHC law. This ensures that a patient’s record can follow them securely and instantly from a primary care clinic to a tertiary hospital.
+technical inheritor and upgrader of that baseline architecture. Rather than building a separate system, the development team is upgrading the existing infrastructure by introducing the Automated Data Processing and Transformation (ADAPT) engine. ADAPT functions as an intelligent, embedded middleman explicitly designed to automatically translate the current data format used by WAH into the required iHOMIS data format, and vice versa, enabling true external communication. Without automated technical checks during this digital transfer, there is a high risk of data pollution, where incomplete information, such as missing PhilHealth identification numbers, enters the national database.
+To address severe security vulnerabilities associated with centralized databases, WAH4PCE shifts the infrastructure to a federated network architecture. A federated architecture is a decentralized setup. Instead of storing all patient data in one giant, vulnerable central database, each participating clinic and hospital keeps its own data securely and only shares specific records directly with another facility when necessary. To simulate this real-world setup for testing, the system will be deployed on local Proxmox Virtual Environment (Proxmox VE) servers. Proxmox VE is a server management platform that allows developers to run multiple isolated virtual computers on a single physical machine, mimicking a network of independent hospitals.
+The urgency of this project is heightened by the current national landscape. Although the UHC Act mandates standardized data submission to the National Health Data Repository (NHDR), the development of this national infrastructure is currently on hold following changes in leadership. This creates a critical need for local organizations like WAH to establish their own platforms to communicate with government systems. The system achieves this by utilizing a modern technology stack, which is the specific combination of programming languages and software tools used to build the application. This stack consists of Golang, a programming language chosen for its high-speed processing capabilities; MongoDB, a database chosen for its flexibility in storing native FHIR medical records; and Next.js, a web framework used to build simple, user-friendly administrative dashboards.
 
 
 
 
+Central to this solution is an AI-driven Mapping Engine operating via a Model Context Protocol (MCP) server. MCP is a standardized tool that allows the Artificial Intelligence to securely access and understand external data sources without exposing sensitive information. Instead of relying on traditional machine learning, which requires permanently training models on massive amounts of sensitive health data, the system utilizes In-Context Learning (ICL). ICL allows the AI to understand and translate data formats based on real-time instructions and context provided in the exact moment of transfer, ensuring no patient data is retained in the AI's memory. To evaluate the technical feasibility during the testing phase, the system leverages the Google Gemini AI model. This setup allows the AI agent to automatically parse the medical records and translate them between the WAH and iHOMIS standards without incurring heavy up-front infrastructure costs.
+Transitioning from development to execution requires addressing operational sustainability. Prior to deployment, the development team will deliver a comprehensive business proposal to WAH to evaluate different AI runtime strategies. It will balance cloud-based AI models against localized, on-premises alternatives. Factors such as Application Programming Interface (API) token costs, data transfer speeds, local hardware availability, and maintenance costs will be weighed to help verify that the final architecture remains financially viable. An Application Programming Interface is a software connection that allows different applications to communicate with one another, meaning its token costs represent the ongoing transaction fees paid to utilize the cloud-based AI model.
+To ensure the system is production-ready, automated validation tools will be implemented to verify the accuracy of every record before it reaches a DOH (Department of Health) endpoint. Crucially, to adhere to the right to data portability under the Data Privacy Act of 2012 (RA 10173), the system acts as an automated legal gatekeeper. To avoid the legal complications associated with unauthorized data transport across different hospital networks, the AI will double-check the patient's digital consent form before any data is
 
-
+processed. The system does not create or format this consent form; rather, the AI scans the incoming record to verify that explicit legal consent is present and valid. If the consent is missing or invalid, the data transfer is automatically blocked. While the team focuses exclusively on this automation and translation logic, the system is designed to seamlessly integrate with the security and encryption protocols provided by a separate project group (WAH for Security) to ensure full legal compliance.
+Ultimately, the project’s goal is to deliver a functional proof-of-concept demonstrating how WAH-partnered systems can seamlessly communicate with iHOMIS Implementing Hospitals today. By automating this translation process, the system provides WAH and its partners with the technical tools needed to fulfill the vision of the UHC law, ensuring that a patient’s record can follow them securely and instantly from a primary care clinic to a tertiary hospital.
 
 Statement of the Problem
-The primary problem is the lack of an automated, intelligent connection between WAH legacy systems and the standardized DOH EMRs (iHOMIS), preventing the realization of a functional Local Health Information Exchange.
+
+The primary problem is the absence of an automated, production-ready system capable of facilitating two-way communication between the WAH ecosystem and external government endpoints, specifically iHOMIS Implementing Hospitals. This disconnect prevents the realization of a functional, automated health information exchange between local WAH facilities and the DOH.
 Specifically, this study aims to answer the following problems:
-•	How can an AI-driven Integration Platform as a Service (iPaaS) be designed to replace manual data mapping and resolve format clashes between WAH legacy systems and DOH systems?
-•	How can this intelligent middleware facilitate the bidirectional, automated movement of records between WAH-partnered clinics and DOH-standardized hospitals?
-•	How can automated validation and filtering mechanisms be integrated into the exchange environment to prevent "garbage in, garbage out" data pollution?
-•	What technical safeguards can be implemented within the middleware to ensure explicit patient authorization during automated data movement, thereby avoiding "implied consent" violations under the Data Privacy Act?
 
 
 
+1.	The limitations of the previous WAH4PC baseline system, which was strictly limited to internal WAH communication and lacked the decentralized routing and high-speed processing necessary for handling real-world hospital data loads.
+2.	The continued reliance on slow, error-prone manual data mapping processes to resolve format differences between WAH legacy records and external government systems.
+3.	The absence of an intelligent middleman software capable of automatically routing and translating health records back and forth between decentralized WAH-partnered clinics and iHOMIS Implementing Hospitals.
+4.	The risk of inaccurate or incomplete data (data pollution) entering the hospital network due to the lack of automated checks enforcing data format compliance before transmission.
+5.	The vulnerability to Data Privacy Act violations due to the current setup of manual verifications, highlighting a critical lack of automated verification tools to confirm explicit patient consent before transferring records across different healthcare facilities.
+
+Objectives
+
+The main objective is to design and implement an automated, secure communication bridge that seamlessly translates and transfers patient records between the internal WAH ecosystem and external government hospitals (iHOMIS Implementing Hospitals).
 
 
-
-
-
-
-
-
-Objectives 
-The main objective is to design and implement an AI-driven automation layer that connects WAH-partnered systems to DOH EMRs (iHOMIS) using the PH Core FHIR standard.
-
-•	To establish an automated interoperability bridge: Connect WAH facilities and DOH platforms by translating legacy records into the required formats.
-•	To build an intelligent iPaaS gateway: Serve as the automated routing hub that sits between WAH facilities and DOH platforms, managing the API handoffs.
-•	To develop a structural validation tool: Check all AI-translated records against the required data schemas (PH Core FHIR or DOH proprietary formats) to ensure data consistency and accuracy before transmission.
-•	To implement Consent-as-Code: Integrate a metadata-based "Consent Flag" check within the ADAPT engine to block any unauthorized data exchange.
-
-
-
-
- 
+1.	To upgrade the previous baseline system: Transform the original internal-only WAH4PC architecture into a high-speed, external-facing platform capable of handling real-world data traffic across independent hospital networks.
+2.	To automate health data interoperability: Reduce the reliance on manual data entry by automatically translating records back and forth between WAH and iHOMIS formats, ensuring a patient's medical history transfers efficiently across hospital networks with minimal manual re-encoding.
+3.	To establish direct, hospital-to-hospital data routing: Build a secure network where independent facilities pass patient records directly to one another, eliminating the security risks of a centralized database.
+4.	To ensure data integrity and schema compliance: Prevent data pollution by integrating an automated validation tool that verifies all translated records for consistency and missing mandatory fields prior to network transmission.
+5.	To enforce automated data privacy compliance: Guarantee strict adherence to the Data Privacy Act by deploying an automated legal gatekeeper that blocks any unauthorized data exchange lacking a valid patient consent form.
 
 Significance of the Project
-This project offers significant benefits by enhancing healthcare efficiency and patient safety within the Wireless Access for Health (WAH) network. The specific groups that will benefit from this project are:
+
+This project offers significant benefits by enhancing healthcare efficiency and patient safety within the WAH network. The specific groups that will benefit from this project are:
 
 •	For WAH and DOH: This project provides the first automated "proof of concept" (POC) that legacy local systems can communicate with national DOH systems, proving that interoperability is possible even while national infrastructure is on hold.
+
+
 •	For Healthcare Staff: By automating the translation, nurses and IT staff no longer must manually re-encode data or fix inconsistent formats when referring patients between clinics and hospitals.
-•	For Patients: Patients benefit from "data liquidity," where their medical history follows them instantly from a rural clinic (using WAH4H) to a government hospital (using iHOMIS).
 
 
-
-
-
-
-
+•	For Patients: This group benefits from having their medical histories travel securely and efficiently alongside them during hospital transfers. Because the software connects rural hospitals using Wireless Access for Health for Hospitals (WAH4H) directly to larger facilities such as iHOMIS Implementing Hospitals.
 
 Scope and Limitations
+
 Scope:
-•	AI Automation Engine: The project focuses on building the AI logic that parses data and maps it to the PH Core FHIR resources provided by Batch 1 WAH4PC.
-•	Hybrid Data Training: The AI Engine will be trained using both PH Core FHIR standards and DOH-specific EMR formats to ensure high mapping accuracy between legacy systems and national standards.
-•	DOH System Integration: The system acts as the bridge specifically for iHOMIS, enabling WAH systems to "talk" to DOH-standardized EMRs.
-•	iPaaS Middleware Integration: The ADAPT system operates strictly as an Integration Platform as a Service (iPaaS). Rather than serving as the central database itself, it functions as the intelligent routing middleware that sits between the DOH endpoints (iHOMIS) and the WAH network, facilitating the secure, automated movement and translation of data.
-•	Automated Validation: Implementation of AI-driven "cleaners" to standardize and validate data during the exchange process.
-•	The system includes automated "Consent-as-Code" checks and structural FHIR validation for WAH4H and DOH IHomis data formats.
+•	Concurrent Processing Upgrade: The project upgrades the inherited baseline server to support concurrent data processing, enabling the system to handle simultaneous data requests from multiple independent hospital connections more efficiently.
+•	Automated Format Translation: The scope focuses on replacing manual data entry with an automated translation engine. It maps health records moving between the WAH network and external government systems to structurally comply with target data formats, significantly reducing the need for human intervention.
+•	External System Connectivity: The scope establishes a bidirectional communication pathway tailored specifically for iHOMIS. This provides WAH-partnered hospitals with the technical capability to send records outward and receive incoming clinical data from iHOMIS Implementing Hospitals.
+•	Decentralized Network Design: To mitigate the risks of a single point of failure, the project shifts the data exchange to a decentralized routing setup. Data movement bypasses a central database hub, reducing the likelihood of a network-wide outage if a single facility experiences a connection drop.
+•	Automated Data Validation and Consent Verification: The system includes automated checkers that isolate structurally incomplete records (such as those missing PhilHealth numbers) prior to transmission. It also implements a digital gatekeeper that blocks the transfer of records lacking an explicit patient consent flag, supporting adherence to data privacy guidelines.
 
 Limitations:
-•	Static Data Standards: The project will not create new FHIR formats; it relies strictly on the PH Core standards that were already established and complying with the PhilHealth guidelines.
-•	External Dependencies: System testing is contingent upon the availability of mock endpoints for the WAHpatients and WAH hospital modules being developed by other teams.
-•	Testing with Dummy Data: Due to privacy laws, We do not have direct access to live DOH or WAH production databases, our team will develop functional dummy system endpoints simulating an iHOMIS environment and a WAH hospital environment. These dummy systems will be used strictly to validate the iPaaS data exchange and demonstrate the bidirectional transformation capabilities.
-•	The validation tool checks for structural accuracy and missing fields but does not verify the clinical truth of the medical data provided by the source system.
+•	Reliance on Established Standards: The system does not create new data formats or health standard structures; it operates strictly within the pre-defined boundaries of the established PH Core and iHOMIS data schemas.
+•	Endpoint Availability Dependencies: The confirmation of functional data exchange is completely dependent on the availability and simulation of readiness of external hospital and clinic system endpoints managed by separate development teams.
+•	Environment Scaling for AI Verification: To validate structural mapping logic without up-front server infrastructure expenditures, the prototype relies on cloud-based processing pathways. Local infrastructure deployment and the integration of on-premises resources are outside the scope of this project and remain the operational responsibility of WAH management.
+•	Simulated Testing Boundaries: Due to strict privacy laws, the project is strictly barred from accessing or using live, real-world public health databases. System validation is limited to testing environments that use artificial, synthetically generated health data within simulated hospital endpoints.
+•	Clinical Truth Exclusions: The system's checking tools are limited to enforcing format structural accuracy and identifying missing data fields; the architecture cannot evaluate, edit, or verify the actual clinical correctness or medical truth of the information submitted by a facility.
 
 
- 
 Review of Related Literature / Systems
-The landscape of healthcare is undergoing significant metamorphosis driven by digital transformation. This evolution, while promising enhanced efficiency and patient care, hinges on various factors, including technology acceptance and the effective implementation of digital tools. 
-One of the pioneering studies that shed light on this shift in the industry is the work of Nassr, Al-Shamayleh, and Al-Shboul (2023). The authors investigate various aspects of how healthcare professionals and patients are adopting new technologies. Specifically, the authors investigate the factors that make healthcare professionals more or less likely to adopt these technologies.
-Another study that investigates this same topic but with a focus on the local area is by Llanes et al. (2024), who investigate the current state of the Electronic Health Record (EHR) system in the Philippines. The authors reveal valuable insights into the current state of the EHR system in the Philippines. Furthermore, because there are some disconnected EHR systems within the Philippines, there is a recognized need for a system that can provide a standard system for the data to be exchanged between these disconnected systems.
-The digital tools can be further seen in the work of Singh et al. (2024), who discuss the potential of artificial intelligence to improve health outcomes through earlier and more accurate diagnoses.
-The benefits and the challenges of Electronic Health Records (EHRs) are discussed by Simbo.ai (2023). The authors explain how these systems can lead to improved health information management and health care professionals’ workflows, but also present issues with interoperability between different health systems. Most health systems utilize slightly different structures of their internal data from others in the industry, preventing interoperability between these health records databases.
-To overcome these interoperability challenges, the healthcare industry has used the HL7 Fast Healthcare Interoperability Resources (FHIR) standard (Adegoke et al., 2025). HL7 FHIR allows healthcare data to be represented in a standard format using modular resources. Using this standard, systems can exchange data with semantic interoperability. FHIR requires a full mapping from the existing databases to the FHIR standard to enable interoperability between these two systems. Several research studies have explored how to create interoperable and reusable health data using the FHIR standard (Sinaci et al., 2023). Additionally, there are several studies exploring the semantic issues of FHIR and implementing the FHIR standard within EHR systems (Amar et al., 2024). These solutions will eliminate data silos and enable better communication between systems.
-Finally, the broader implications for healthcare quality and safety are discussed by Alshurideh et al. (2024). Their work highlights how digital transformation improves service delivery, particularly when systems are integrated and capable of sharing accurate data. The effectiveness of these improvements depends on the ability of systems to communicate reliably, further reinforcing the importance of standardized interoperability frameworks such as FHIR. 
-Through reviewing the literature, it is evident that there is both a global and local movement toward the digitization of healthcare. The literature discusses, for instance, the acceptance of technology in healthcare (Nassr et al., 2023), the challenges of implementing Electronic Health Records in healthcare facilities (Charalambous, 2024), the role that advanced technologies play in improving healthcare outcomes (Singh et al., 2024), and the impact of digitization on healthcare (Alshurideh et al., 2024). Furthermore, systems like CHITS, and iHOMIS have allowed for the digitization of certain processes within the Philippines (Inquirer Business, 2025; Ongkeko et al., 2016; Philippine Council for Health Research and Development, n.d.; Scribd, n.d., 2021; UIJRT, n.d.) but also demonstrate the limitations of such systems implemented alone. Thus, the literature indicates a need for a system that provides interoperability for the country’s healthcare systems. Such interoperability could be achieved through the implementation of a system that maps each healthcare system to the FHIR standard, which would guarantee compliance with the UHC law (Philippine Statistics Authority, 2025; Scribd, 2021) and lead to the integration of the entire Philippine healthcare system.
-According to research by Nan and Xu (2023), the biggest obstacle to the digital transformation in healthcare is the existence of so-called data islands. Even as medical records are increasingly going digital, the data are still confined to heterogeneous Information Technology (IT) systems that lack a common language. This fragmentation does not allow providing coordinated care and narrows the utility of clinical decision-support tools (Nan & Xu, 2023). 
-The researchers refer to Fast Healthcare Interoperability Resources (FHIR) as the most promising solution to this issue. Unlike the previous messaging standards, which were complex and rigid, FHIR leverages the current web technologies i.e. RESTful API and modular Resources (Nan and Xu, 2023). They consist of standardized building blocks, including Patient, Medication and Procedure, which are shared between different systems in order to share certain bits of information efficiently. Flexibility of FHIR is highlighted in the literature, with the mention of the fact that it can be applied to various platforms, such as mobile health apps and cloud systems (Nan and Xu, 2023). 
-Nan and Xu (2023) formulate three areas of critical importance on the basis of a systematic review of 85 scholarly articles: 
-•	Data Standardization and Mapping: A sizeable portion of the literature is focused on the transformation process, i.e. how to convert the current legacy data, e.g. CDA or HL7 v2, to FHIR-conformant data. This is critical in making sure that information from various time periods and systems can be successfully merged (Nan & Xu, 2023). 
-•	Data Management and Storage: The review explains the architecture of FHIR servers and emphasizes the need to have robust architecture that can address large-scale "Big Data" and maintain high rates of security and privacy controls to protect confidential patient information (Nan & Xu, 2023). 
-•	Clinical Services Data Interoperation: This paper goes beyond mere technical exchange to emphasize "semantic interoperability." This has been determined as the ability of systems to not only communicate its content but also the meaning and react to it, which will allow the provision of higher-level services like real-time patient tracking and research across institutions (Nan & Xu, 2023). 
-The proposal of a General FHIR Practice Guideline (FHIR PG) is one of the important contributions of this research. In their argument, Nan and Xu (2023) argue that standardization is not a technical undertaking but a team effort. Their model defines the roles of different groups of stakeholders to be successful: to prevent the non-compatibility of different versions of FHIR, the standardizers need to create particular Implementing Guides; the system provider needs to create the infrastructure and servers to store such data; and the service provider (app developers) needs to create user-facing tools to transform this data into improved clinical outcomes (Nan & Xu, 2023).
-The transition from manual paper-based reporting to electronic health records (EHRs) in the Philippines, led by initiatives like Wireless Access for Health (WAH), necessitates a theoretical framework for seamless data exchange. According to Vorisek et al. (2022), the FHIR standard serves as this framework by utilizing modern web technologies such as RESTful APIs and JSON to ensure that health data adheres to the FAIR Principles (Findable, Accessible, Interoperable, and Reusable). In the context of the Philippines' Universal Healthcare Act, the literature emphasizes that "data liquidity"—the ability of data to move securely and meaningfully between systems—is the next frontier for digital health. Vorisek et al. argue that FHIR’s "resource" building blocks allow for the modular development of health systems, which aligns with WAH's open-source philosophy. However, the literature also warns of significant bottlenecks, including the "versioning" of FHIR resources and the legal complexities of cross-institutional data sharing, which remain primary challenges for the Philippines as it seeks to harmonize fragmented local health information into a unified national repository.
-The landscape of digital health in the Philippines is governed by DOH-PHIC Joint Administrative Order (JAO) No. 2021-0002, which institutionalizes the Mandatory Adoption and Use of National Health Data Standards for Interoperability. This policy serves as the regulatory backbone for the Universal Health Care (UHC) Act, recognizing that "seamless and interoperable health services" are essential for evidence-based sectoral planning. According to the JAO, the current inconsistent adoption of data standards prevents healthcare providers from sharing medical records for continuing care, a critical challenge for decentralized systems like Wireless Access for Health (WAH). By mandating a "common data language" through the National Health Data Dictionary (NHDD), the order ensures that health data—whether from a rural health unit or a tertiary hospital—can be analyzed for national program planning and decision-making.
-Furthermore, the JAO defines interoperability through a structured set of National Health Data Standards, which include specific data elements, official definitions, and standardized data types (e.g., text, numeric, and date formats). This policy framework supports the "FAIR" principles (Findable, Accessible, Interoperable, and Reusable) discussed by Vorisek et al. (2022) by providing the legal requirement for systems to utilize authoritative terminology services. For local health initiatives, compliance with these standards is now a prerequisite for licensing and accreditation, effectively making technical interoperability a mandatory operational standard rather than an optional technical feature (DOH & PhilHealth, 2021).
+
+The landscape of healthcare is undergoing significant metamorphosis driven by digital transformation. This evolution, while promising enhanced efficiency and patient care, hinges on various factors, including technology acceptance and the effective implementation of digital tools.
+One of the pioneering studies that shed light on this shift in the industry is the work of Nassr et al. [12]. The authors investigate various aspects of how healthcare professionals and patients are adopting new technologies. Specifically, the authors investigate the factors that make healthcare professionals more or less likely to adopt these technologies.
+Another study that investigates this same topic but with a focus on the local area is by [25], who investigate the current state of the Electronic Health Record (EHR) system in the Philippines. The authors reveal valuable insights into the current state of the EHR system in the Philippines. Furthermore, because there are some disconnected EHR systems within the Philippines, there is a recognized need for a system that can provide a standard system for the data to be exchanged between these disconnected systems
+The digital tools can be further seen in the work of [21], who discuss the potential of artificial intelligence to improve health outcomes through earlier and more accurate diagnoses.
+The benefits and challenges of EHRs are discussed by [19]. The authors explain how these systems can lead to improved health information management and health care professionals’ workflows, but also present issues with interoperability between different health systems. Most health systems utilize slightly different structures of their internal data from others in the industry, preventing interoperability between these health records databases.
+To overcome these interoperability challenges, the healthcare industry has used the HL7 FHIR standard [1]. HL7 FHIR allows healthcare data to be represented in a standard format using modular  resources.  Using  this  standard,  systems  can  exchange  data  with  semantic
 
 
-The global trajectory of healthcare informatics is increasingly defined by the transition from localized data digitization to the pursuit of semantic interoperability. As highlighted by Balch et al. (2023), while the post-HITECH era has catalyzed the widespread adoption of Electronic Health Records (EHRs), the clinical utility of this data remains hindered by fragmented architectures and variable implementation methods. The study posits that the lack of standardized data formats across institutions creates significant barriers to real-time clinical analysis and multi-institutional research. To mitigate these "data silos," the Fast Healthcare Interoperability Resources (FHIR) standard has emerged as the premier technical framework for achieving a unified data language. By utilizing a "resource-based" approach, FHIR provides the necessary modularity to transform disparate clinical narratives into structured, machine-readable formats, ensuring that health data is not merely digitized but truly interoperable (Balch et al., 2023).
-Furthermore, the research underscores that the adoption of FHIR is a foundational requirement for the advancement of Machine Learning-enabled Clinical Information Systems (ML-CISs). By evaluating 39 distinct systems, the study categorizes these technological advancements into three functional domains: clinical decision support systems, data management and analytic platforms, and auxiliary modules or application programming interfaces (APIs). This taxonomy demonstrates that the "FAIR" principles (Findable, Accessible, Interoperable, and Reusable) are realized through the automation of data mapping and the reduction of manual pre-processing (Balch et al., 2023). Despite these advancements, many intelligent systems continue to face critical challenges regarding external validation and seamless integration into existing clinical workflows. Consequently, the findings suggest that the future of digital health lies in the development of secure, scalable, and interinstitutional data exchange protocols that can accommodate diverse electronic health record platforms (Balch et al., 2023).
- 
+interoperability. FHIR requires full mapping from the existing databases to the FHIR standard to enable interoperability between these two systems. Several research studies have explored how to create interoperable and reusable health data using the FHIR standard [20]. Additionally, there are several studies exploring the semantic issues of FHIR and implementing the FHIR standard within EHR systems [3]. These solutions will eliminate data silos and enable better communication between systems.
+Finally, the broader implications for healthcare quality and safety are discussed by Alshurideh et al. [2]. Their work highlights how digital transformation improves service delivery, particularly when systems are integrated and capable of sharing accurate data. The effectiveness of these improvements depends on the ability of systems to communicate reliably, further reinforcing the importance of standardized interoperability frameworks such as FHIR.
+Through reviewing the literature, it is evident that there is both a global and local movement toward the digitization of healthcare. The literature discusses, for instance, the acceptance of technology in healthcare [12], the challenges of implementing Electronic Health Records in healthcare facilities [8], the role that advanced technologies play in improving healthcare outcomes [21], and the impact of digitization on healthcare [2]. Furthermore, systems like the Community Health Information Tracking System (CHITS), and iHOMIS have allowed for the digitization of certain processes within the Philippines [10, 13, 14, 18] but also demonstrate the limitations of such systems implemented alone. Thus, the literature indicates a need for a system that provides interoperability for the country’s healthcare systems. Such interoperability could be achieved through the implementation of a system that maps each healthcare system to the FHIR standard, which would guarantee compliance with the UHC law [17, 18] and lead to the integration of the entire Philippine healthcare system.
+According to research by [11], the biggest obstacle to digital transformation in healthcare is the existence of so-called data islands. Even as medical records are increasingly going digital,
+
+
+the data are still confined to heterogeneous Information Technology (IT) systems that lack a common language. This fragmentation does not allow for providing coordinated care and narrows the utility of clinical decision-support tools [11].
+The researchers refer to FHIR as the most promising solution to this issue. Unlike the previous messaging standards, which were complex and rigid, FHIR leverages the current web technologies i.e. RESTful (Representational State Transfer) API and modular resources [11]. They consist of standardized building blocks, including Patient, Medication, and Procedure, which are shared between different systems in order to share certain bits of information efficiently. Flexibility of FHIR is highlighted in the literature, with the mention of the fact that it can be applied to various platforms, such as mobile health apps and cloud systems [11].
+Nan and Xu [11] formulate three areas of critical importance on the basis of a systematic review of 85 scholarly articles:
+•	Data Standardization and Mapping: A sizeable portion of the literature is focused on the transformation process, i.e. how to convert the current legacy data, e.g. CDA or HL7 v2, to FHIR-conformant data. This is critical in making sure that information from various time periods and systems can be successfully merged [11].
+•	Data Management and Storage: The review explains the architecture of FHIR servers and emphasizes the need to have robust architecture that can address large-scale "Big Data" and maintain high rates of security and privacy controls to protect confidential patient information [11].
+•	Clinical Services Data Interoperation: This paper goes beyond mere technical exchange to emphasize "semantic interoperability." This has been determined as the ability of systems to not only communicate its content but also the meaning and react to it, which will allow the provision of higher-level services like real-time patient tracking and research across institutions [11].
+
+
+The proposal of a General FHIR Practice Guideline (FHIR PG) is one of the important contributions of this research. In their argument, [11] argue that standardization is not a technical undertaking but a team effort. Their model defines the roles of different groups of stakeholders to be successful: to prevent the non-compatibility of different versions of FHIR, the standardizers need to create particular Implementing Guides; the system provider needs to create the infrastructure and servers to store such data; and the service provider (app developers) needs to create user-facing tools to transform this data into improved clinical outcomes [11].
+The transition from manual paper-based reporting to EHRs in the Philippines, led by initiatives like WAH, necessitates a theoretical framework for seamless data exchange. According to [24], the FHIR standard serves as this framework by utilizing modern web technologies such as RESTful APIs and JavaScript Object Notation (JSON) to ensure that health data adheres to the FAIR Principles (Findable, Accessible, Interoperable, and Reusable). In the context of the Philippines' Universal Healthcare Act, the literature emphasizes that "data liquidity" the ability of data to move securely and meaningfully between systems is the next frontier for digital health.
+[24] argue that FHIR’s "resource" building blocks allow for the modular development of health systems, which aligns with WAH's open-source philosophy. However, the literature also warns of significant bottlenecks, including the "versioning" of FHIR resources and the legal complexities of cross-institutional data sharing, which remain primary challenges for the Philippines as it seeks to harmonize fragmented local health information into a unified national repository
+The landscape of digital health in the Philippines is governed by Department of Health – Philippine Health Insurance Corporation (DOH-PHIC) Joint Administrative Order (JAO) No. 2021-0002, which institutionalizes the Mandatory Adoption and Use of National Health Data Standards for Interoperability. This policy serves as the regulatory backbone for the UHC Act, recognizing that "seamless and interoperable health services" are essential for evidence-based sectoral planning. According to the JAO, the current inconsistent adoption of data standards prevents
+
+
+healthcare providers from sharing medical records for continuing care, a critical challenge for decentralized systems like WAH. By mandating a "common data language" through the National Health Data Dictionary (NHDD), the order ensures that health data, whether from a rural health unit or a tertiary hospital, can be analyzed for national program planning and decision-making.
+Furthermore, the JAO defines interoperability through a structured set of National Health Data Standards, which include specific data elements, official definitions, and standardized data types (e.g., text, numeric, and date formats). This policy framework supports the "FAIR" principles (Findable, Accessible, Interoperable, and Reusable) discussed by [24] by providing the legal requirement for systems to utilize authoritative terminology services. For local health initiatives, compliance with these standards is now a prerequisite for licensing and accreditation, effectively making technical interoperability a mandatory operational standard rather than an optional technical feature [9].
+
+The global trajectory of healthcare informatics is increasingly defined by the transition from localized data digitization to the pursuit of semantic interoperability. Semantic interoperability refers to the ability of different computer systems to exchange information with a shared, unambiguous meaning so that the receiving platform can process the data accurately. As highlighted by [5], while the post-Health Information Technology for Economic and Clinical Health (HITECH) Act era has catalyzed the widespread adoption of EHRs, the clinical utility of this data remains hindered by fragmented architectures and variable implementation methods. The HITECH Act is a legislative framework enacted to accelerate the adoption of digital health platforms, while Electronic Health Records are secure, digital versions of a patient’s medical charts. Furthermore, fragmented architectures mean that different software systems are built on completely disconnected technical foundations that prevent them from communicating smoothly. The study posits that the lack of standardized data formats across institutions creates significant barriers to real-time clinical analysis and multi-institutional research. To mitigate these "data
+
+
+silos," the FHIR standard has emerged as the premier technical framework for achieving a unified data language. Data silos are isolated pockets of information trapped inside a single system and cut off from others, whereas the FHIR standard is a universally recognized set of rules and formats designed to streamline the exchange of electronic health data. By utilizing a "resource-based" approach, FHIR provides the necessary modularity to transform disparate clinical narratives into structured, machine-readable formats, supporting the baseline so that health data is not merely digitized but truly interoperable [5]. A resource-based approach refers to a software strategy that breaks down medical data into small, interchangeable units, such as patient demographics or laboratory results, that can be easily shared and reassembled by separate systems.
+
+Furthermore, the research underscores that the adoption of FHIR is a foundational requirement for the advancement of Machine Learning-enabled Clinical Information Systems (ML-CISs). By evaluating 39 distinct systems, the study categorizes these technological advancements into three functional domains: clinical decision support systems, data management and analytic platforms, and auxiliary modules or APIs. This taxonomy demonstrates that the "FAIR" principles (Findable, Accessible, Interoperable, and Reusable) are realized through the automation of data mapping and the reduction of manual pre-processing [5]. Despite these advancements, many intelligent systems continue to face critical challenges regarding external validation and seamless integration into existing clinical workflows.
+Consequently, the findings suggest that the future of digital health lies in the development of secure, scalable, and interinstitutional data exchange protocols that can accommodate diverse electronic health record platforms [5].
+
+The transition toward seamless data exchange between highly disparate systems requires robust and scalable architectural frameworks. According to Jayaraman and Singh [25], employing a microservices architecture is the established industry standard for achieving cross-
+
+
+industry interoperability. This type of architecture breaks down a large software system into small, independent services that handle specific tasks individually. The authors emphasize the critical necessity of utilizing specialized "adapter" or "gateway" microservices that manage protocol translation and format conversion without requiring disruptive modifications to existing legacy systems [25]. In plain terms, these components act as dedicated translators that sit between two different systems to convert data without altering the original software. This principle provides a strong theoretical and practical validation for the WAH4PCE project, specifically justifying the development of the Automated Data Processing and Transformation (ADAPT) engine as an optimization upgrade to the operational WAH4PC baseline to resolve traffic management and operational visibility constraints. By functioning as an independent, intelligent middleman, the ADAPT engine translates medical records between the WAH network's FHIR R4 standard and the iHOMIS format, directly mirroring the adapter-pattern best practices outlined in the study [25]. The adapter pattern refers to a software design strategy where an intermediary tool standardizes communication between incompatible interfaces.
+Furthermore, Jayaraman and Singh [25] strongly advocate for decentralized data management and strict API boundary security to mitigate the risks of single points of failure and help protect data confidentiality during transit. Decentralized data management means that information remains safely stored locally at each individual hospital rather than being gathered into one massive, vulnerable central server. This proves the profound relevance and necessity of the project's federated network architecture, its interactive frontend dashboard, and its AI-driven legal gatekeeper. A federated network architecture is a digital setup where separate, independent local servers safely connect and share data directly with one another. By applying the decentralized and stateless processing principles established in the literature [25], which dictate that patient information is handled strictly in-memory and is completely wiped from the middleman's system the moment the transfer is complete, the WAH4PCE system supports the
+
+
+secure, efficient achievement of healthcare interoperability in strict compliance with data privacy regulations.
+The objective to automate health data interoperability and reduce reliance on manual data entry is not solely a technical upgrade, but a necessary step to ensure patient safety and data integrity. According to Abraham et al. [26], patient acceptance of advanced health information systems is heavily influenced by the perceived reliability of the technology; patients frequently express apprehension regarding data inaccuracies, system malfunctions, and human errors when their sensitive information is transferred across networks. By automatically translating medical records between WAH and iHOMIS formats, the WAH4PCE system directly mitigates these socio-technical concerns. Eliminating the need for manual re-encoding significantly reduces the risk of human-introduced transcription errors—often referred to as data pollution—ensuring that a patient’s medical history remains accurate as it moves between facilities. In this context, the automated translation engine functions as the type of built-in "safeguard system" that Abraham et al. [26] identify as crucial for establishing patient trust and ensuring the secure, reliable transfer of health data.
+The necessity of ensuring data integrity and strict schema compliance prior to network transmission extends beyond operational efficiency; it is a fundamental requirement for maintaining data security in modern medical environments. According to Yadav et al. [27], the deployment of artificial intelligence and digital health repositories requires "fool-proof" prerequisites to protect sensitive patient information from the immense vulnerabilities inherent in massive data transfers. When health data is exchanged between disparate systems without stringent formatting checks, the introduction of incomplete, unverified, or anomalous information—commonly referred to as data pollution—can severely compromise the security and privacy protocols of the entire network. By fulfilling the objective to integrate an automated validation tool that verifies translated records for consistency and missing mandatory fields, the
+
+
+WAH4PCE system establishes the rigorous data governance necessary to safeguard health information. Yadav et al. [27] emphasize that navigating the ethical and legal constraints of healthcare data sharing requires strict oversight. Therefore, by ensuring that only clean, structurally compliant, and fully verified data is allowed to transmit between WAH and iHOMIS, the system proactively blocks corrupted or incomplete payloads that could lead to privacy breaches or database corruption [27].
+
 List of Processes
 
-(Note: The provided table below is just an example of informing your readers of the current processes being performed by your client. You may have processes as subsections, and in each subsection, you either list the steps or draw a flowchart of actions – make sure you identify who the doer of the actions).
 Table 1 List of Processes in the Current System
-Process ID	Process Name	Process Details
-P001	Patient Record Submission	1. Health Facility Staff enter clinical data into the local electronic medical record (EMR).
 
+Process
 
-2. The system bundles the data into a local JSON format.
-
-
-3. The record is queued for validation against the WAH Format inspired by the PH Core profile.
-P002	FHIR Data Validation	1. The AI automation layer intercepts the incoming record.
-
-
-2. The system checks the data against HL7 FHIR standards and Philippine legal waiver requirements.
-
-
-3. If errors are found (e.g., missing mandatory fields), a notification is sent back to the facility for correction.
-P003	Data Mapping & Transformation	1. Validated local data is mapped to specific PH Core profiles (e.g., Patient, Encounter, Observation).
-
-
-2. The system transforms local terminology into standardized codes recognized by the DOH and.
-P004	Registry Synchronization	1. The system establishes a secure connection with national registries (e.g., DOH).
-
-
-2. Validated and standardized records are pushed to the central registry.
-
-
-3. The system receives and logs a "Success" or "Acknowledgement" receipt from the government server.
+ID	
+Process Name	
+Process Details
 
 
 
-( Please include a table caption. At the end of the table, you may include process details not covered in the table. You may write the processes as flowcharts or pseudocodes. Note that captions are required for both for referencing. Also, remember to put a sentence or two to describe any table in the document. Like, “Table 1 contains a list of all the process that are currently being applied by the business”.)
-Product Inquiry
-1.	Customer initializes conversation in Facebook Messenger.
-2.	Seller acknowledges customer.
-3.	Customer asks about item.
-4.	Seller responds with item information.
-Product Purchase
-1.	Customer writes an “intent to buy” message via Facebook Messenger.
-2.	Seller responds with item price and delivery details
-3.	Customer sends payment proof.
-4.	Seller confirms order.
 
-SWOT Analysis
 
- 
-Figure 1.0 SWOT ANALYSIS
-Outlines the internal architectural strengths and testing boundaries of the interoperability middleware against external regulatory opportunities and localized data risks in the Philippine healthcare ecosystem.
+P001	
+
+
+
+Patient Record Submission	1.	Health Facility Staff enter clinical data into the local electronic medical record (EMR).
+
+
+2.	The system bundles the data into a local JSON format.
+
+3.	The record is queued for validation against the WAH Format inspired by the PH Core profile.
+
+
+
+
+
+P002	
+
+
+
+
+FHIR Data Validation	1.	The AI automation layer intercepts the incoming record.
+
+2.	The system checks the data against HL7 FHIR
+standards and Philippine legal waiver requirements.
+
+3.	If errors are found (e.g., missing mandatory fields), a notification is sent back to the facility for correction.
+
+
+
+
+P003	
+
+
+Data Mapping & Transformation	1.	Validated local data is mapped to specific PH Core
+profiles (e.g., Patient, Encounter, Observation).
+
+
+2.	The system transforms local terminology into standardized codes recognized by the DOH and
+PhilHealth.
+
+
+
+P004	
+
+Registry Synchronization	1.	The system establishes a secure connection with national registries (e.g., DOH).
+
+
+2.	Validated and standardized records are pushed to the central registry.
+
+
+		3. The system receives and logs a "Success" or "Acknowledgement" receipt from the government
+server.
+
+4.1	SWOT Analysis
+
+Strengths	Weaknesses
+•	ADAPT AI Formatter: Uses a Go-based automation layer via an MCP server to
+eliminate manual, error-prone data re-encoding.
+•	High-Speed Processing: Built on Golang for concurrency and leverages the
+baseline MongoDB native FHIR storage to achieve data liquidity.
+•	Technical Safeguards: Includes an automated Consent-as-Code module that blocks unauthorized data exchange by
+checking metadata for a "Consent Flag”.
+•	Resource Resilience: Features a smart router executing Model Juggling Logic to seamlessly switch from Gemini 3.1 Flash
+Lite to Gemini 3.1 Preview to prevent API
+rate limit downtime.	•	Testing Limitations: Relies on synthetic (dummy) data due to legal and privacy
+constraints rather than real-world medical records.
+•	External Dependencies: Integration testing is entirely contingent on the
+availability of mock endpoints for parallel modules (like WAH for Patient (WAH4P)).
+•	No Clinical Verification: The structural validation tool checks for schema compliance and missing mandatory fields
+but cannot verify the clinical truth of the medical data.
+•	Middleware Scope: The project does not design new database structures or user interfaces; it functions purely as an
+Intelligent Middleware Endpoint.
+
+
+Opportunities	Threats
+
+•	National Infrastructure Gap: Because the National Health Data Repository
+(NHDR) deployment is currently on hold, LGUs and networks like WAH must step up with localized platforms.
+•	Regulatory Mandate: The UHC Act and JAO 2021-0002 legally mandate
+interoperable systems, forcing a transition to a common data language.
+•	WAH Network Footprint: Immediate scaling potential by leveraging an established network of 100+ hospital
+footprints and rural health units.	•	Legal/Privacy Hurdles: Full deployment with real data remains
+frozen until extensive cross-institutional legal clearances are settled under the Data Privacy Act.
+•	Standard Fragmentation: Inconsistent adoption, technical versioning conflicts of FHIR resources, and shifting national
+data standards present long-term compliance friction.
+•	Data Pollution: High risk of "garbage in, garbage out" scenarios if the source legacy systems pass up poor-quality or
+structurally sound but clinically incorrect
+
+data.
+
 Proposed Solution
+
 Technical Background
-To resolve manual bottlenecks within the WAH network, the proposed solution introduces a specialized AI automation function named ADAPT (Automated Data Processing and Transformation). ADAPT functions as an Integration Platform as a Service (iPaaS) and an Intelligent Middleware Endpoint. It is important to note that our scope is strictly building this iPaaS middleware. Establishing the actual connections, configuring the outbound webhooks, and providing the official iHOMIS API keys for deployment will be the sole responsibility of the Batch 1 team and WAH administrators.
-1. Software Technologies
-•	AI Orchestration Engine: To power ADAPT during the testing and prototyping phase, the system utilizes the Gemini API via a smart router function, primarily using Gemini 3.1 Flash Lite and Preview for high-volume translations. However, for actual clinical deployment, WAH will provide their own official, production-grade AI model to plug into the ADAPT architecture to ensure strict, localized data privacy compliance.
-•	AI Tooling (Model Context Protocol): The Gemini models are controlled through an MCP server. This allows the AI to use specific tools, such as the SourceDataParser, to understand WAH4H data and the FHIRMappingTool to generate valid PH Core JSON files.
-•	Consent-as-Code Module: This automated filter scans record metadata for a "Consent Flag" before any AI processing begins. If the flag is missing, the mapping function is blocked to ensure compliance with the Data Privacy Act.
-•	Structural Validation Module: All AI-translated resources are automatically checked against the PH Core FHIR schema. Records missing critical data, such as PhilHealth IDs or birthdates, are quarantined for manual review.
-2. Hardware Technologies
-•	Go (Golang) Middleware: The "model juggling" logic is written in Go to take advantage of its high-speed concurrency. This allows the system to switch models in milliseconds without dropping the data payload.
-•	API Load Management: The system is hosted on the existing Batch 1 Proxmox cloud environment. It uses secure API keys to connect to Google’s AI endpoints, ensuring that even during model switching, the data remains encrypted and protected.
-3. Peopleware
-•	AI Integration Engineers: Personnel responsible for prompt engineering and API management using Gemini 3.1 Preview to ensure mapping accuracy.
-•	Data Quality Administrators: IT staff who monitor the automated quarantine logs and manually review records that fail the structural validation check.
-•	Systems Integration Leads: Staff focused on maintaining the connection between the AI endpoint and the existing Batch 1 MongoDB repository and FHIR server.
+
+To resolve the communication disconnect between the WAH network and government systems, the proposed solution introduces an intelligent automation software named ADAPT (Automated Data Processing and Transformation). ADAPT acts as a secure middleman between the two networks. Crucially, this project upgrades the previous WAH4PC baseline system. It transforms the original, internal-only background server into a high-speed, external-facing platform equipped to securely route and translate health records directly between WAH-partnered clinics and iHOMIS Implementing Hospitals.
 
 
 
+Establishing the actual network connections and configuring the official government API keys for real-world deployment will remain the operational responsibility of the WAH administrators, while the development team focuses strictly on building this routing and translation layer.
+1.	Software Technologies
 
-4. Network Technologies
-•	Secure Middleware Endpoints: The system operates as a RESTful API middleware. It receives raw data via HTTPS and sends validated FHIR resources to the central server using Transport Layer Security (TLS).
-•	Encrypted Tunneling: While our group does not build the security layer, the automation endpoint is designed to operate within the secure VPN tunnels provided by the parallel security team.
+•	Automated Format Translation (AI Engine): To significantly reduce the reliance on slow, manual data entry, the system utilizes an Artificial Intelligence (AI) model, specifically Google Gemini. Artificial Intelligence refers to software systems trained to perform complex tasks that typically require human intelligence, such as understanding language or patterns. Instead of healthcare workers manually re-typing patient forms, the AI automatically reads the incoming record and translates it to match the required format of the receiving hospital.
+•	Secure AI Tooling (Model Context Protocol): To support safe operations, the AI functions through the Model Context Protocol (MCP). The Model Context Protocol is a secure, open-standard connector that grants an AI model strict, limited access to specific
+
+data sources without exposing the rest of a system's database to safety risks. This protocol allows the system to read the necessary health records and translate them securely.
+•	Automated Legal Gatekeeper ("Consent-as-Code"): To mitigate the risk of Data Privacy Act violations, this module acts as an automated checkpoint. Consent-as-Code refers to a programming practice where legal rules and user permissions are embedded directly into the software logic to be enforced automatically. The module scans the incoming record for an explicit digital patient consent flag, and if a patient's consent is missing or invalid, the system blocks the transfer before any data leaves the facility.
+•	Structural Validation and Quarantine: To lower the risk of data pollution from inaccurate or incomplete information, the system automatically checks translated records to verify that they are consistent and complete. Structural validation is an automated data-checking process that verifies whether a file contains all mandatory information and adheres to a required layout before it is processed. If a record is missing required fields, such as a Philippine Health Insurance Corporation identification (PhilHealth ID) number, the system pauses the transfer and isolates the file in a quarantine queue so hospital staff can review and correct it.
+
+
+
+2.	Technology Stack (The Processing Engine)
+
+•	High-Speed Traffic Management (Golang): To directly optimize the traffic management capabilities of the operational WAH4PC baseline system, the core routing software is built using Go, also known as Golang. Golang is a high-performance programming language developed by Google that is specifically designed for high concurrency. High concurrency refers to the ability of a software application to process
+
+heavy, simultaneous data traffic from multiple independent network connections at the same time without slowing down.
+•	Administrative Visibility (Next.js Frontend): As an optimization upgrade to the operational WAH4PC system, the project introduces a web-based administrative dashboard built with Next.js. Next.js is a modern development framework used to build fast, interactive user interfaces for web applications. This frontend interface provides Information Technology (IT) personnel with visual monitoring tools to track active data transfers, check system health, and manually review any incomplete records caught in the validation quarantine queue.
+•	Flexible Data Staging (MongoDB): The system utilizes MongoDB, which functions as a flexible, document-oriented database, to temporarily hold incoming health records just long enough to process and translate them. A document-oriented database is a type of storage system that keeps data in flexible, text-based documents rather than rigid rows and tables, allowing it to easily hold diverse medical file formats before translation
+
+
+
+3.	Network Technologies
+
+•	Direct Hospital-to-Hospital Routing: To mitigate the security risks associated with storing patient data in a single, centralized database hub, the system uses a direct network design. This approach passes patient records directly from one independent healthcare facility to another, keeping data ownership local.
+•	Local Server Simulation (Proxmox): To simulate this real-world setup for testing, the system is deployed on local Proxmox servers. Proxmox is a platform that allows developers to run multiple, isolated virtual computers on a single physical machine, which effectively mimics a network of separate, independent hospitals.
+
+•	Encrypted Connections: The system receives raw data and sends the translated files directly to the target system using Transport Layer Security (TLS). Transport Layer Security is a standard security protocol that encrypts digital connections to protect information from being intercepted or read while it travels over a network. Furthermore, the system operates safely inside the secure Virtual Private Network (VPN) tunnels provided by the parallel security team. A virtual private network is a private digital pathway that creates an encrypted tunnel across the internet to shield data from outside access.
+
+
+4.	Security and Data Integrity Architecture
+
+•	Ephemeral Data Processing: To support patient privacy, data does not permanently live inside the ADAPT middleman software. Once a patient's record is successfully translated and securely delivered to the receiving hospital, the raw data is automatically purged from the translation engine's active memory.
+•	Sanitized Audit Logging: The system keeps a permanent log of all transactions so administrators can track network activity via the interactive frontend dashboard. Audit logging is an automated recording process that logs system events, errors, and data transfers for administrative tracking. To maintain privacy, these logs are sanitized, which means they only record non-sensitive details like timestamps, success or failure statuses, and hospital names while completely omitting actual patient health information.
+•	Node-to-Node Security (Zero Trust): Because the medical data remains safely inside the separate hospital databases, the system focuses security measures strictly on the data travel path. This follows a Zero Trust model, which is a cybersecurity framework requiring continuous verification for every single user and device interacting with the network. The system acts as a strict gateway where every connection requires a verified API key, helping guarantee that a compromised connection at one facility cannot expose
+
+the broader network. An API key is a unique digital passcode that identifies and verifies a specific software application attempting to connect to the network.
+
+
 
 Feasibility
+
 Operational Feasibility
-WAH4PCE project rests on its ability to seamlessly integrate into the daily workflows of rural health units and district hospitals without disrupting patient care. Currently, healthcare workers frequently struggle with the administrative burden of double data entry, manually inputting patient records into the local Wireless Access for Health (WAH) platform and then duplicating that data within the Department of Health’s (DOH) Integrated Hospital Operations and Management Information System (iHOMIS) for referrals or admissions. 
-By establishing an automated interoperability bridge, the system operates invisibly in the background, minimizing data entry errors, eliminating redundant administrative tasks, and speeding up client processing times. Because medical staff are already deeply familiar with their respective platforms, user resistance will be minimal, and training will focus strictly on verifying data-syncing statuses and processing digital data privacy consent forms. 
-Furthermore, this initiative directly aligns with the organizational mandates of Universal Health Care (UHC) in the Philippines, ensuring strong backing from local government health boards, hospital administrators, and the DOH, provided strict protocols are established to maintain compliance with the Data Privacy Act of 2012 (RA 10173).
+
+The WAH4PCE project rests on its ability to seamlessly integrate into the daily workflows of rural health units and district hospitals without disrupting patient care. Currently, healthcare workers frequently struggle with the administrative burden of double data entry, manually inputting patient records into local WAH-partnered systems and then duplicating that data within iHOMIS Implementing Hospitals for referrals or admissions.
+By establishing an automated interoperability bridge, the system operates securely in the background, minimizing data entry errors, significantly reducing redundant administrative tasks, and speeding up client processing times. Because medical staff are already deeply familiar with their respective platforms, user resistance will be minimal. Training will focus strictly on verifying data-syncing statuses via the Next.js dashboard and processing digital Data Privacy Act consent forms.
+Furthermore, this initiative directly aligns with the organizational mandates of the UHC Act, ensuring strong backing from local government health boards, hospital administrators, and the DOH, provided strict protocols are established to maintain compliance with the Data Privacy Act.
+
+
 
 Economic Feasibility
-From an economic perspective, the financial viability of the project is highly secure, as the WAH Non-Government Organization (NGO) has officially committed to absorbing all core capital and operational expenses. A significant portion of the upfront infrastructure cost is already eliminated because the WAH NGO is providing a dedicated local server to host the integration system. Financial planning and the integrated AI models will therefore focus heavily on predicting, tracking, and optimizing operational expenses, such as long-term data bandwidth costs, local server power efficiency, hardware maintenance, and emergency IT support.
- By eliminating expensive proprietary software licensing fees through the use of open-source and custom-built tools, the financial risks are remarkably low. In return, the financial benefits to the public health system remain substantial; automating the data pipeline saves hundreds of collective clerical hours across municipal health centers, translating directly into optimized personnel allocation, faster referral windows, and a significant reduction in rejected PhilHealth claims.
 
- 
+From an economic perspective, the financial viability of the project is strong, as WAH has officially committed to absorbing core capital and operational expenses. A significant portion of the upfront infrastructure cost is minimized because WAH is providing the local Proxmox
+
+servers to host the integration system. Financial planning will therefore focus heavily on predicting, tracking, and optimizing operational expenses, such as API token costs for the AI models, long-term data bandwidth, local server power efficiency, hardware maintenance, and IT support.
+By bypassing expensive proprietary software licensing fees through the use of open-source tools and flexible cloud-based AI, the financial risks are kept remarkably low. In return, the financial benefits to the public health system remain substantial; automating the data pipeline saves hundreds of collective clerical hours across municipal health centers, translating directly into optimized personnel allocation, faster referral windows, and a potential reduction in rejected PhilHealth claims.
+
 Technical Feasibility
-The technical feasibility of connecting WAH to iHOMIS is exceptionally strong, utilizing a modern, scalable, and high-performance technology stack deployed directly onto the local server provided by the WAH NGO. The user-facing configuration and monitoring dashboards will be built using Next.js for a responsive, modern front-end experience, while the core interoperability bridge, API routing, and data-mapping services will be handled by Go (Golang) to ensure ultra-low latency and highly efficient concurrent processing. For the data layer, MongoDB will be utilized as a flexible, document-based database capable of efficiently handling disparate, semi-structured health records and transaction logs before they are transformed. The local server will host this full-stack environment alongside the integration middleware that maps local data to the DOH iHOMIS backend. 
-To ensure strict adherence to national health data standards, the Go backend will explicitly reference the HL7 FHIR R4 framework and the Philippine FHIR Core (PH Core) profiles to programmatically transform and translate incoming data payloads into standardized, compliant JSON health resources. To address the infrastructure challenges of remote Philippine municipalities, the Go backend will run a robust "Store-and-Forward" mechanism, allowing data to be queued securely in MongoDB when internet connectivity drops and automatically synchronizing it with the DOH endpoints once the wireless connection is restored. Security is tightly integrated, utilizing TLS 1.3 encryption for data in transit, cryptographic protection for data at rest on the local server, and strict access controls via OAuth 2.0.
+The technical feasibility of connecting WAH-partnered systems to iHOMIS Implementing Hospitals is exceptionally strong, utilizing a modern, scalable technology stack deployed on the decentralized Proxmox servers provided by WAH. The user-facing configuration and monitoring dashboards will be built using Next.js for a responsive front-end experience, while the core routing and automated translation services will be handled by Golang to efficiently manage heavy, concurrent network traffic. For the data layer, MongoDB will be utilized as a flexible, document-based database capable of efficiently staging semi-structured health records before they are translated. The local server will host this full-stack environment alongside the ADAPT middleman that maps local data to external endpoints.
+To support national health data standards, the Go backend explicitly references the PH Core profiles to programmatically format incoming data payloads into standardized JSON health resources. To address the infrastructure challenges of remote Philippine municipalities, the system utilizes MongoDB to securely queue data when internet connectivity drops, synchronizing it with the target endpoints once the connection is restored. Security is heavily
+
+integrated, utilizing TLS encryption for data in transit and strict access controls to protect patient privacy.
+
+
 
 Schedule Feasibility
-		The schedule feasibility is highly viable, structured as a one-year project that strictly adheres to the systematic stages outlined in the academic course flowchart. The project lifecycle is divided into clear milestones across the year to ensure a logical transition from ideation to deployment.
-•	Research & Development (Term 1): The initial phase is dedicated entirely to core R&D, where the research team will conceptualize the interoperability bridge, analyze the data endpoints of both systems, and formulate a comprehensive structural blueprint for the integration architecture.
-•	Design & Prototyping (Term 2): Building on this conceptual foundation, the team will design detailed system, architectural, and data-flow diagrams to map WAH structures to the PH Core and HL7 FHIR R4 standards. This phase culminates in the construction of a working prototype to validate the data transformation logic and local server communication.
-•	Development & Technical Documentation (Term 3): The final phase focuses heavily on full-scale development, implementing the production-ready Next.js frontend, Go backend, and MongoDB database on the WAH-provided local server. Parallel to code development, rigorous system documentation will be compiled, covering API endpoints, data transformation pipelines, security audits, and deployment guides to ensure system sustainability.
+
+The schedule feasibility is structured as a one-year project that adheres to the systematic stages outlined in the academic course flowchart. The project lifecycle is divided into clear milestones across the year to ensure a logical transition from ideation to prototype deployment.
+•	Research & Development (Term 1): The initial phase is dedicated entirely to core R&D, where the research team conceptualizes the interoperability bridge, analyzes the data schemas of both systems, and formulates a structural blueprint for the decentralized integration architecture.
+•	Design & Prototyping (Term 2): Building on this conceptual foundation, the team designs detailed system and data-flow diagrams to map WAH structures to the PH Core standards and iHOMIS formats. This phase culminates in the construction of a working prototype to validate the AI translation logic and local server communication.
+•	Development & Technical Documentation (Term 3): The final phase focuses heavily on full-scale development, implementing the production-ready Next.js frontend dashboard, the high-speed Go backend, and the MongoDB staging environment on the local server. Parallel to code development, rigorous system documentation is compiled, covering API endpoints, data transformation pipelines, security configurations, and deployment guides to ensure system sustainability.
 
 Requirements Analysis
-Project Vision
+This section outlines the Vision and Mission of the system. These statements serve as the strategic foundation of the project and summarize its intended impact on the healthcare network by introducing smart data translation, direct hospital-to-hospital connections, and a completely upgraded management platform. They reflect the guiding principles that shaped the system's design as an intelligent middleman that connects independent hospital systems directly without relying on a risky central data hub.
+Vision
+
+To establish a secure, automated communication bridge that resolves health data fragmentation, enabling an efficient, accurate, and automated exchange of patient information directly between local facilities and government systems through a direct, hospital-to-hospital network that protects patient privacy.
+Mission
+
+This project aims to:
+
+•	Upgrade the baseline platform with visual control: Transform the inherited background server into a high-speed, external-facing platform by adding an interactive administrative dashboard, giving local IT staff full visibility over network traffic and control over quarantined files.
+•	Automate data translation between separate systems: Venture away from slow, manual data entry by automatically converting health records back and forth between the formats used by WAH-partnered hospitals and iHOMIS Implementing Hospitals.
+
+•	Establish a direct hospital-to-hospital network: Build secure communication pathways that pass patient records directly between independent facilities, removing the security risks and system-wide downtime of a single, vulnerable central database hub.
+•	Protect data quality through automated checks: Lower the risk of incomplete or inaccurate information entering the network by automatically isolating files missing mandatory details (such as PhilHealth numbers) into a review queue before transmission.
+•	Enforce automated data privacy protection: Act as an electronic gatekeeper that supports data privacy laws by automatically verifying patient consent flags before allowing any cross-facility data transfer.
+
+
 
 Prototype (Mock Flow / Wireframe)
+
+
+
  
- 
- 
+
+
 Project Lean Canvas
- 
-Figure 1.1 Lean Canvas
+
+
+Figure 1.0 Lean Canvas
 Maps the project’s business strategy, highlighting how the middleware solves legacy data silo problems by utilizing the existing WAH network to deliver a plug-and-play FHIR compliance solution.
 
-User Classes and Characteristics
-(
-Insert a table here with two columns: Roles and Description
-Roles	Description
-Student Org Representative	A student organization representative is a type of user. When this user makes a request, the request must be approved by the org adviser, etc..
-Org adviser	This user approves or disapproves the request made by the representatives of the org he/she handles.
-
-) 
-
 Product Backlog
-(Create a table here like the one below. Do not create a table in Excel and insert the table here as image.)
 
- 
+WAH4PCE - ADAPT Interoperability Middleware Product Backlog
 
-
-
+ID	As a...	I want to be able to...	So that...	Acceptance Criteria	Priority
 
 
 
 
 
 
+US-1.1	
 
 
-Product Roadmap
-(Create your product roadmap. Template can be found in the CoursePack)
-		
-Release Plan
-(
-Include here your updated release plan and discuss whether you are on/ahead/behind schedule. Explain also how much of the product backlog has been finished (it is up to you how you will present it, without being repetitive. You can say something like, “The complete product backlog is in Table ___”. Note: template can be found in the CoursePack.
-)
+
+
+
+WAH Admin	
+
+
+
+Securely manage and queue local health records.	
+
+
+
+They are ready for validation and mapping to the PH Core profile.	Given a batch of local health records is received, When the system queues the data, Then the admin can view the pending records in the ADAPT dashboard awaiting PH Core mapping.	
+
+
+
+
+
+Must
+
+
+
+
+
+
+US-1.2	
+
+
+
+
+
+WAH Admin	
+
+
+
+
+Oversee the interoperability pipeline.	
+Legacy WAHTERMELON
+systems can establish a functional Local Health Information Exchange (LHIE) with DOH standardized systems.	Given the system is actively processing records, When the admin accesses the pipeline overview, then they can view
+real-time metrics of successful LHIE transfers, pending queue sizes, and mapping errors.	
+
+
+
+
+
+Must
+
+
+
+
+
+
+US-1.3	
+
+
+
+
+
+iHOMIS	
+
+
+
+exchange standardized data with WAH facilities	
+
+
+Patient medical history follows them instantly from primary care clinics to tertiary hospitals.	Given a patient referral from a WAH facility is initiated, When the DOH system queries the intermediary, then it successfully receives the full patient history formatted as standard FHIR R4 resources.	
+
+
+
+
+
+Must
+
+US-1.4	Healthcare Staff	receive automatically mapped and	I do not have to manually re-encode data or fix	Given a patient record is transferred via the	
+Must
+
+
+		converted FHIR records	inconsistent formats during patient referrals.	intermediary, When the receiving staff opens the patient's profile in their local EMR, then all mapped data populates correctly without triggering format errors or requiring manual data entry.	
+
+
+
+
+
+
+US-2.1	
+
+
+
+
+
+AI Agent (MCP)	
+
+
+automatically parse legacy records and map them to the PH Core FHIR
+standards	
+
+
+
+
+The system removes the need for manual re-encoding.	Given a legacy data payload is routed to the MCP server, When the AI Agent processes the text, then it outputs a JSON payload where all identified fields strictly map to the equivalent PH Core FHIR data dictionaries.	
+
+
+
+
+
+Must
+
+
+
+
+
+US-2.2	
+
+
+
+
+AI Agent (MCP)	
+Transform current local data formats into standardized models (such as Patient, Observation, and Condition)	
+
+Disparate healthcare systems can share and interpret data with the same meaning.	Given unstructured or uniquely formatted local data, When the AI Agent transforms it, Then the resulting output categorizes the information correctly into specific FHIR resource models.	
+
+
+
+
+Must
+
+
+
+
+US-2.3	
+
+
+
+AI Agent (MCP)	
+
+Transform legacy DOH formats into WAH formats and vice versa	
+
+
+Bi-directional semantic interoperability is achieved.	Given a bidirectional-exchange request, when data moves from DOH (R4) back to WAH (R4 or
+legacy), Then the AI Agent accurately	
+
+
+
+Must
+
+
+				translates the semantic terminologies, so the clinical meaning is preserved for the receiving system.	
+
+
+
+
+
+
+
+US-3.1	
+
+
+
+
+
+
+AI Agent	
+
+
+
+Scan a record's metadata for a "Consent Flag" Before any processing begins	
+
+
+
+
+Unauthorized data exchange is blocked, ensuring strict compliance with the Data Privacy Act.	Given a record arrives in the processing queue, When the AI Agent scans the metadata, then it proceeds with transformation ONLY if the Consent_Flag is set to 'True' and immediately rejects/drops the payload if the flag is missing or 'False'.	
+
+
+
+
+
+
+Must
+
+
+
+
+
+
+
+US-3.2	
+
+
+
+
+
+
+AI Agent	
+
+
+
+Validate translated FHIR
+resources against the PH Core schema	
+
+
+
+
+Structural accuracy is verified before transmission to national registries.	Given the AI has finished mapping a record, When the system runs a pre-transmission check, Then the generated FHIR resource must pass a strict schema validation against the PH Core profiles before being cleared for DOH delivery.	
+
+
+
+
+
+
+Must
+
+
+
+
+
+US-3.3	
+
+
+
+Data Quality Administrator (WAH Admin)	
+
+The system to quarantine records that are missing critical fields (e.g., PhilHealth IDs)	
+
+I can perform manual reviews and prevent "garbage in, garbage out" data pollution.	Given a record is processed, When the system detects a missing mandatory field (e.g., PhilHealth ID), Then it redirects the record to a 'Quarantine' queue and flags	
+
+
+
+
+Must
+
+
+				the admin for manual intervention.	
+
+
+
+
+
+
+
+
+US-4.1	
+
+
+
+
+
+
+Go Middleware orchestrator	
+
+
+
+Automatically switch between Gemini 3.1 Flash Lite and other available models when API rate limits are reached	
+
+
+
+
+
+The automated exchange continues without downtime.	Given the orchestrator is routing translation requests, When the primary AI model returns a 429 Rate Limit error or times out, Then the Go middleware seamlessly redirects the queued payloads to the designated fallback model without dropping the connection.	
+
+
+
+
+
+
+
+Must
+
+
+
+
+
+
+
+
+US-4.2	
+
+
+
+
+
+
+System Router	
+
+
+
+
+Establish secure connections using Transport Layer Security (TLS)	
+
+
+
+
+The data payload remains encrypted and protected during model switching and transmission.	Given data is moving between the endpoints, the Go middleware, and the AI models, When a connection is established, Then the system enforces TLS 1.2+ encryption and immediately terminates any handshake attempts over unencrypted HTTP.	
+
+
+
+
+
+
+
+Must
+
+Project Roadmap
+
+
+Use Case Diagram
+
+
+
+Figure 1.1 Use Case Diagram
+Illustrates the functional boundaries and interactive relationships between the system administrator (WAH4PCE Admin), external healthcare endpoints (Provider and Requestor), and the ADAPT AI microservice as it extends the core data exchange to perform automated FHIR translation and privacy consent validation.
+
+User Stories and Acceptance Criteria
+
+Epic	Story ID	Actor	User Story	Acceptance Criteria
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1: Health Record & Data Interoperability	
+
+
+
+
+
+
+
+
+
+
+
+
+
+US1.1	
+
+
+
+
+
+
+
+
+
+
+
+
+
+WAH4PCE
+Admin	
+
+
+
+
+
+
+
+
+
+
+
+As a WAH4PCE Admin, I want to securely manage and queue local health records so that they are ready for validation and mapping to the PH Core profile.	
+
+
+
+
+
+
+
+
+
+
+Given a batch of local health records is received, When the system queues the data, Then the admin can view the pending records in the ADAPT dashboard awaiting PH Core mapping.
+	
+
+
+US1.2	
+
+
+WAH4PCE
+Admin	As a WAH4PCE Admin, I want to oversee the interoperability pipeline so that legacy WAHTERMELON systems can establish a functional Local Health Information Exchange (LHIE) with DOH standardized
+systems.	Given the system is actively processing records, When the admin accesses the pipeline dashboard, Then they can view real-time metrics for successful LHIE transfers, pending queue
+sizes, and mapping errors.
+	
+
+
+
+US1.3	
+
+
+
+Requester	
+As a Requester endpoint, I want to exchange standardized data with WAH facilities so that patient medical history follows them instantly from primary care clinics to tertiary hospitals.	Given a patient referral from a WAH facility is initiated, When the DOH system queries the intermediary gateway, Then it successfully receives the full patient history formatted as standard FHIR R4
+resources.
+
 
 	
-  	Use Case Diagram
- 
-Figure 1.2 Use Case Diagram
-Illustrates the functional boundaries and interactive relationships between the WAH Admin, external healthcare applications (iHomis, WAH4PC), and the AI Agent during FHIR data translation and consent verification.
 
- 
 
-    	Use Case Full Description
- 
+
+US1.4	
+
+
+
+Provider	
+As a Provider, I want to receive automatically mapped and converted FHIR records so that I do not have to manually re-encode data or fix inconsistent formats during patient referrals.	Given a patient record is transferred via the intermediary, When the receiving staff opens the patient's profile in their local EMR, Then all mapped data populates correctly without triggering format
+errors.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2: AI-Driven Data Transformation	
+
+
+
+
+
+
+
+
+
+
+
+US2.1	
+
+
+
+
+
+
+
+
+
+
+
+WAH4PCE AI	
+
+
+
+
+
+
+
+
+
+As the WAH4PCE AI, I want to automatically parse legacy records and map them to the PH Core FHIR standards so that the system removes the need for manual re-encoding.	
+
+
+
+
+
+
+
+Given a legacy data payload is routed to the MCP server, When the WAH4PCE AI processes the payload text, Then it outputs a valid JSON payload where all identified fields strictly map to the equivalent PH Core FHIR data dictionaries.
+	
+
+
+
+
+US2.2	
+
+
+
+
+WAH4PCE AI	
+
+As the WAH4PCE AI, I want to transform current local data formats into standardized resource models so that disparate healthcare systems can share and interpret data with the same clinical meaning.	Given unstructured or uniquely formatted local data, When the WAH4PCE AI transforms it, Then the resulting output categorizes the information correctly into specific FHIR resource models (e.g., separating symptoms into 'Condition' and vitals into
+'Observation').
+	
+
+
+
+US2.3	
+
+
+
+WAH4PCE AI	
+As the WAH4PCE AI, I want to transform legacy DOH formats into WAH formats and vice versa so that bi-directional semantic interoperability is achieved.	Given a bi-directional exchange request, When data moves from DOH (R4) back to WAH (legacy), Then the WAH4PCE AI accurately translates the semantic terminologies so the clinical meaning is
+
+
+				preserved for the receiving system.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3: Automated Verification & Compliance	
+
+
+
+
+
+
+
+
+
+
+
+US3.1	
+
+
+
+
+
+
+
+
+
+
+
+WAH4PCE AI	
+
+
+
+
+
+
+
+
+As the WAH4PCE AI, I want to scan a record's metadata for a privacy consent flag before processing begins so that unauthorized data exchange is blocked.	
+
+
+
+
+
+
+Given a record arrives in the processing queue, When the WAH4PCE AI scans the metadata, Then it proceeds with transformation ONLY if Consent_Flag is set to True, and immediately rejects the payload if the flag is missing or False.
+	
+
+
+
+US3.2	
+
+
+
+WAH4PCE AI	
+As the WAH4PCE AI, I want to validate translated FHIR resources against the PH Core schema so that structural accuracy is verified before transmission to national registries.	Given the AI has finished mapping a record, When the system runs a pre-transmission check, Then the generated FHIR resource must pass a strict schema validation against the PH Core profiles before
+being cleared for delivery.
+	
+
+
+
+US3.3	
+
+
+WAH4PCE
+Admin	
+As a WAH4PCE Admin, I want the system to quarantine records that are missing critical fields so that I can perform manual reviews and prevent "garbage in, garbage out" data pollution.	Given a record is processed, When the system detects a missing mandatory field (e.g., PhilHealth ID), Then it redirects the record to a 'Quarantine' queue and flags the entry for manual
+admin intervention.
+
+
 Conclusion
-(
-Write what you have accomplished so far (which of your objectives have been achieved and what needs to be done to achieve the others, if there are still any left). Summarize what you have done: specify the objectives and briefly describe how it was achieved. At the end of this chapter, write what will be done for the next iteration (for the next PBL subject)
-)
- 
+
+Based on the research, design, and prototyping conducted in this development cycle, this study confirms that building and deploying an AI-driven interoperability layer over independent hospital networks is entirely viable.
+The core finding proves that the system successfully optimizes the existing, operational WAH4PC baseline. Rather than replacing the infrastructure, the project directly resolves the previous system's primary traffic management constraints by introducing high-speed concurrent processing capable of handling heavy, simultaneous data traffic across external networks without system slow-downs. Furthermore, the integration platform successfully bridges the communication gap between the structured PH Core FHIR standard and the open-source iHOMIS schema, significantly reducing the reliance on manual data re-encoding without the use of rigid, hardcoded mapping scripts.
+By operating as an embedded intelligent middleman software, this routing and translation engine directly addresses the study's primary problem statements. Initial testing demonstrates that the system can:
+•	Optimize WAH4PC Traffic and Visibility: Directly resolve the traffic processing limitations of the existing baseline system through high-speed concurrent routing, while adding an interactive frontend dashboard to provide visual monitoring over the newly integrated translation pipeline and quarantined files.
+•	Automate Format Translation: Resolve data format mismatches automatically using AI logic instead of slow, manual text entry.
+•	Enable Bidirectional Data Movement: Facilitate the secure, automated transfer of patient records directly between independent clinics and hospitals, removing the security risks and system-wide downtime of a single, vulnerable central database hub.
+
+
+•	Enforce Compliance and Validation: Use structural data validation to isolate incomplete records and implement automated consent checks to protect patient privacy, ensuring strict adherence to the Data Privacy Act.
+Consequently, this architecture provides a practical, deployable software upgrade that directly enhances the capabilities of the existing WAH4PC ecosystem. It serves as a vital platform, proving that local health information exchanges can achieve smooth, high-speed data mobility even while national health IT infrastructures are still maturing.
+
+
 References
 
-Adegoke, K., Adegoke, A., Dawodu, D., Adekoya, A., Bayowa, A., Kayode, T., & Singh, M. (2025). Interoperability as a Catalyst for Digital Health and Therapeutics: A Scoping Review of Emerging Technologies and Standards (2015–2025). International Journal of Environmental Research and Public Health, 22(10), 1535. https://doi.org/10.3390/ijerph22101535 
-Alshurideh, M., Al Kurdi, B., AlHamad, A. Q., Salloum, S. A., Al-Emran, M., & AbuGhoush, Q. (2024). Assessing the impact of digital transformation on healthcare services: A focus on quality and safety. BMJ Open Quality, 13(2), e002621. https://doi.org/10.1136/bmjoq-2023-002621 
-Amar, F., April, A., & Abran, A. (2024). Electronic health record and semantic issues using Fast Healthcare Interoperability Resources: Systematic mapping review. Journal of Medical Internet Research, 26, e45209. https://doi.org/10.2196/45209 
-Arnaout, S., Jeanty, N., Keane, H., & Mkemwa, G. (2014). The Effect of the Wireless Access for Health Electronic Health Record System on Rural Health Units in the Philippines. https://wah.ph/wp-content/uploads/2023/07/The-Effect-of-the-Wireless-Access-for-Health-Electronic-Health-Record-System-on-Rural-Health-Units-in-the-Philippines.pdf 
-Balch, J. A., Ruppert, M. M., Loftus, T. J., Guan, Z., Ren, Y., Upchurch, G. R., Ozrazgat-Baslanti, T., Rashidi, P., & Bihorac, A. (2023). Machine Learning–Enabled Clinical Information systems using fast healthcare interoperability Resources Data Standards: Scoping review. JMIR Medical Informatics, 11, e48297. https://doi.org/10.2196/48297
-Bossenko, I., Randmaa, R., Piho, G., & Ross, P. (2024). Interoperability of health data using FHIR Mapping Language: transforming HL7 CDA to FHIR with reusable visual components. Frontiers in Digital Health, 6, 1480600. https://doi.org/10.3389/fdgth.2024.1480600 
-Cecilio, M. C. T., Garcia, C. A., & Tengco, J. R. B. (n.d.). Wireless access for health for interoperability [Unpublished project documentation]. School of Computing and Information Technologies, Asia Pacific College. 
-Charalambous, A. (2024). Digital transformation in healthcare: Have we gone off the rails? Asia-Pacific Journal of Oncology Nursing, 11(5), 100481. https://apjon.org/article/S2347-5625(24)00101-X/fulltext 
-Department of Health & Philippine Health Insurance Corporation. (2021, April 21). Mandatory adoption and use of national health data standards for interoperability (Joint Administrative Order No. 2021-0002). https://law.upd.edu.ph/wp-content/uploads/2021/06/DOH-PHIC-JAO-No-2021-002.pdf 
-Inquirer Business. (2025, June 9). Enabling universal health care in the Philippines. https://business.inquirer.net/529621/enabling-universal-health-care-in-the-philippines 
-Nan, J., & Xu, L. (2023). Designing Interoperable health care services based on Fast healthcare Interoperability Resources: Literature review. JMIR Medical Informatics, 11, e44842. https://doi.org/10.2196/44842 
-Nassr, A. A., Al-Shamayleh, H. R., & Al-Shboul, M. F. (2023). Digital transformation in healthcare: Technology acceptance and its applications. WSEAS Transactions on Systems and Control, 18, 86–95. https://doi.org/10.37394/23203.2023.18.10 
-Ongkeko, A. M., Jr., Fernandez, R. G., Sylim, P. G., Amoranto, A. J. P., Ronquillo-Sy, M.-I., Santos, A. D. F., & Tolentino, J. G. (2016). Community health information and tracking system (CHITS): Lessons from eight years implementation of a pioneer electronic medical record system in the Philippines. Acta Medica Philippina, 50(4), 265–273. https://www.researchgate.net/publication/313893323 
-Philippine Council for Health Research and Development. (n.d.). Community health information tracking system (CHITS). https://www.pchrd.dost.gov.ph/heartnovation/community-health-information-tracking-system-chits/ 
-Philippine Information Agency. (2024, February 28). DOH launches integrated info system for healthcare improvement. https://pia.gov.ph/doh-launches-integrated-info-system-for-healthcare-improvement/ 
-Philippine Statistics Authority. (2025, April 30). PSA clears the “Evaluation of the Universal Health Care (UHC) health information systems (HIS)” survey, encourages participation for data-driven evaluation by HIS interoperability, functionality, and impact on UHC implementation. https://psa.gov.ph/content/psa-clears-evaluation-universal-health-care-uhc-health-information-systems-his-survey
-Republic Act no. 11223, Official Gazette of the Republic of the Philippines (2019). https://www.officialgazette.gov.ph/2019/02/20/republic-act-no-11223/ 
-Scribd. (2021, November 9). Integrated hospital operations and management information system (iHOMIS). https://www.scribd.com/presentation/543228631/IHOMIS-Presentation 
-Simbo.ai. (2023, November 17). Understanding electronic health records: Benefits and implementation challenges in modern healthcare delivery systems. https://www.simbo.ai/blog/understanding-electronic-health-records-benefits-and-implementation-challenges-in-modern-healthcare-delivery-systems-1611764/ 
-Sinaci, A. A., Gencturk, M., Teoman, H. A., Laleci Erturkmen, G. B., AlvarezRomero, C., MartinezGarcia, A., PobladorPlou, B., CarmonaPírez, J., Löbe, M., & ParraCalderon, C. L. (2023). A data transformation methodology to create findable, accessible, interoperable, and reusable health data: Software design, development, and evaluation study. Journal of Medical Internet Research, 25, e42822. https://doi.org/10.2196/42822 
-Singh, R., Mathur, N., Singh, A., Sangwan, S., & Pitalia, A. (2024). Artificial intelligence-guided clinical decision support system for early prediction of neonatal sepsis: A prospective diagnostic validation study. Asia Pacific Journal of Oncology Nursing, 11(4), 100401. https://doi.org/10.1016/j.apjon.2024.100401 
-ThinkWell Global. (n.d.). The Philippine UHC law series: Brief 1. https://thinkwell.global/wp-content/uploads/2020/05/PH-UHC-Law-Series_Brief-1.pdf 
-University of the Philippines Manila Standards and Interoperability Lab. (n.d.). PH Core implementation guide. https://build.fhir.org/ig/UP-Manila-SILab/ph-core/ 
-Vorisek, C. N., Lehne, M., Klopfenstein, S. a. I., Mayer, P. J., Bartschke, A., Haese, T., & Thun, S. (2022). FaST Healthcare Interoperability Resources (FHIR) for Interoperability in Health Research: Systematic review. JMIR Medical Informatics, 10(7), e35724. https://doi.org/10.2196/35724 
- 
+[1]	K. Adegoke et al., "Interoperability as a Catalyst for Digital Health and Therapeutics: A Scoping Review of Emerging Technologies and Standards (2015–2025)," International Journal of Environmental Research and Public Health, vol. 22, no. 10, p. 1535, 2025, doi: 10.3390/ijerph22101535.
+[2]	M. Alshurideh et al., "Assessing the impact of digital transformation on healthcare services: A focus on quality and safety," BMJ Open Quality, vol. 13, no. 2, p. e002621, 2024, doi: 10.1136/bmjoq-2023-002621.
+[3]	F. Amar, A. April, and A. Abran, "Electronic health record and semantic issues using Fast Healthcare Interoperability Resources: Systematic mapping review," Journal of Medical Internet Research, vol. 26, p. e45209, 2024, doi: 10.2196/45209.
+[4]	S. Arnaout, N. Jeanty, H. Keane, and G. Mkemwa, "The Effect of the Wireless Access for Health Electronic Health Record System on Rural Health Units in the Philippines," Wireless Access for Health, 2014. [Online]. Available: https://wah.ph/wp-content/uploads/2023/07/The-Effect-of-the-Wireless-Access-for-Health-Electronic-Health-Record-System-on-Rural-Health-
+Units-in-the-Philippines.pdf
+[5]	J. A. Balch et al., "Machine Learning–Enabled Clinical Information systems using fast healthcare interoperability Resources Data Standards: Scoping review," JMIR Medical Informatics, vol. 11, p. e48297, 2023, doi: 10.2196/48297.
+[6]	I. Bossenko, R. Randmaa, G. Piho, and P. Ross, "Interoperability of health data using FHIR Mapping Language: transforming HL7 CDA to FHIR with reusable visual components," Frontiers in Digital Health, vol. 6, p. 1480600, 2024, doi: 10.3389/fdgth.2024.1480600.
+[7]	M. C. T. Cecilio, C. A. Garcia, and J. R. B. Tengco, "Wireless access for health for interoperability," School of Computing and Information Technologies, Asia Pacific College, n.d. [Unpublished project documentation].
+[8]	A. Charalambous, "Digital transformation in healthcare: Have we gone off the rails?" Asia-Pacific Journal of Oncology Nursing, vol. 11, no. 5, p. 100481, 2024, doi: 10.1016/j.apjon.2024.100481.
+[9]	Department of Health & Philippine Health Insurance Corporation, "Mandatory adoption and use of national health data standards for interoperability (Joint Administrative Order No. 2021-0002)," Apr. 21, 2021. [Online]. Available: https://law.upd.edu.ph/wp-content/uploads/2021/06/DOH-PHIC-JAO-No-2021-002.pdf
+[10]	Inquirer Business, "Enabling universal health care in the Philippines," Jun. 9, 2025. [Online]. Available: https://business.inquirer.net/529621/enabling-universal-health-care-in-the-philippines
+[11]	J. Nan and X. Xu, "Designing Interoperable health care services based on Fast healthcare Interoperability Resources: Literature review," JMIR Medical Informatics, vol. 11, p. e44842, 2023, doi: 10.2196/44842.
+
+
+[12]	A. A. Nassr, H. R. Al-Shamayleh, and M. F. Al-Shboul, "Digital transformation in healthcare: Technology acceptance and its applications," WSEAS Transactions on Systems and Control, vol. 18, pp. 86–95, 2023, doi: 10.37394/23203.2023.18.10.
+[13]	A. M. Ongkeko, Jr. et al., "Community health information and tracking system (CHITS): Lessons from eight years implementation of a pioneer electronic medical record system in the Philippines," Acta Medica Philippina, vol. 50, no. 4, pp. 265–273, 2016.
+[14]	Philippine Council for Health Research and Development, "Community health information tracking system (CHITS)," n.d. [Online]. Available: https://www.pchrd.dost.gov.ph/heartnovation/community-health-information-tracking-system-chits/
+[15]	Philippine Information Agency, "DOH launches integrated info system for healthcare improvement," Feb. 28, 2024. [Online]. Available: https://pia.gov.ph/doh-launches-integrated-info-system-for-healthcare-improvement/
+[16]	Philippine Statistics Authority, "PSA clears the “Evaluation of the Universal Health Care (UHC) health information systems (HIS)” survey, encourages participation for data-driven evaluation by HIS interoperability, functionality, and impact on UHC implementation," Apr. 30, 2025. [Online]. Available: https://psa.gov.ph/content/psa-clears-evaluation-universal-health-care-uhc-health-information-systems-his-survey
+[17]	Republic Act no. 11223, Official Gazette of the Republic of the Philippines, 2019. [Online].
+Available: https://www.officialgazette.gov.ph/2019/02/20/republic-act-no-11223/
+[18]	Scribd, "Integrated hospital operations and management information system (iHOMIS)," Nov. 9, 2021. [Online]. Available: https://www.scribd.com/presentation/543228631/IHOMIS-
+Presentation
+[19]	Simbo.ai, "Understanding electronic health records: Benefits and implementation challenges in modern healthcare delivery systems," Nov. 17, 2023. [Online]. Available: https://www.simbo.ai/blog/understanding-electronic-health-records-benefits-and-implementation-challenges-in-modern-healthcare-delivery-systems-1611764/
+[20]	A. A. Sinaci et al., "A data transformation methodology to create findable, accessible, interoperable, and reusable health data: Software design, development, and evaluation study," Journal of Medical Internet Research, vol. 25, p. e42822, 2023, doi: 10.2196/42822.
+[21]	R. Singh, N. Mathur, A. Singh, S. Sangwan, and A. Pitalia, "Artificial intelligence-guided clinical decision support system for early prediction of neonatal sepsis: A prospective diagnostic validation study," Asia Pacific Journal of Oncology Nursing, vol. 11, no. 4, p. 100401, 2024, doi: 10.1016/j.apjon.2024.100401.
+[22]	ThinkWell Global, "The Philippine UHC law series: Brief 1," n.d. [Online]. Available: https://thinkwell.global/wp-content/uploads/2020/05/PH-UHC-Law-Series_Brief-1.pdf
+[23]	University of the Philippines Manila Standards and Interoperability Lab, "PH Core implementation guide," n.d. [Online]. Available: https://build.fhir.org/ig/UP-Manila-SILab/ph-core/
+
+
+[24]	C. N. Vorisek et al., "FaST Healthcare Interoperability Resources (FHIR) for Interoperability in Health Research: Systematic review," JMIR Medical Informatics, vol. 10, no. 7, p. e35724, 2022, doi: 10.2196/35724.
+[25]	S. Jayaraman and A. Singh, "Best Practices in Microservices Architecture for Cross-Industry Interoperability," International Journal of Computer Science and Engineering, vol. 13, no. 2, pp. 353-398, Nov. 2024.
+[26]	J. Abraham, A. Meng, K. J. Holzer, L. Brawer, A. Casarella, M. Avidan, and M. C. Politi, "Exploring patient perspectives on telemedicine monitoring within the operating room," International Journal of Medical Informatics, vol. 156, p. 104595, Dec. 2021, doi: 10.1016/j.ijmedinf.2021.104595.
+[27]	N. Yadav, S. Pandey, A. Gupta, P. Dudani, S. Gupta, and K. Rangarajan, "Data privacy in healthcare: In the era of artificial intelligence," Indian Dermatology Online Journal, vol. 14, no. 6,
+pp. 788–792, Oct. 2023, doi: 10.4103/idoj.idoj_543_23.
+
 Appendices
-(Add more appendices when necessary)
+
 Appendix A: Roles and Responsibilities
- 
+
+1.	Qelvin Joszeler D. Nagales - Leader, Researcher, Frontend Developer, & Project Manager
+Core Role: Serves as the primary administrative and technical lead of the project, holding direct responsibility for team governance, strategic milestone planning, and the equitable delegation of tasks. This involves monitoring overall project health, synchronizing the efforts of both frontend and backend sub-teams, and serving as the final arbiter for architectural and operational decisions to ensure the project meets all academic and technical benchmarks.
+Key Responsibilities:
+•	Project Oversight & Delegation: Formulate project timelines, define sprint milestones, and distribute technical tasks across the team to ensure optimal productivity and project alignment.
+•	Frontend Engineering & UI/UX Design: Lead the design and implementation of responsive, user-centric client-side interfaces, ensuring intuitive user experiences and seamless navigation.
+•	Research & Requirements Synthesis: Direct the conceptual research phase, coordinate documentation, and translate high-level system requirements into actionable development tasks.
+2.	Vince Nelmar P. Alobin - Co-leader, Researcher, & Full Stack Developer
+
+Core Role: Acts as the primary bridge between project management and technical execution, taking full ownership of the end-to-end software development lifecycle and comprehensive system analysis. This entails examining the theoretical workflows of the
+
+
+system during the research phase, evaluating how different software components interact, and executing code across both client-side and server-side environments to establish a unified and functional application.
+Key Responsibilities:
+
+•	Full-Stack Integration: Bridge the gap between user-facing elements and server-side logic, ensuring robust end-to-end functionality and cohesive data flow across the entire software stack.
+•	System Analysis & Architecture Design: Analyze system workflows, design architectural frameworks, and evaluate technical feasibility during the pre-development research phase.
+•	Cross-Functional Technical Support: Assist both frontend and backend sub-teams in troubleshooting integration blockers, managing API connections, and maintaining code consistency.
+3.	Rick Francis T. Cruz - Backend Developer, Quality Assurance, & Researcher Core Role: Responsible for the design, stability, and protection of the application's underlying infrastructure by engineering to secure server-side business logic and a
+highly optimized database architecture. This role focuses heavily on maintaining data integrity, establishing strict security and access control protocols, and running rigorous quality assurance frameworks to ensure the system is resilient against vulnerabilities and processing bottlenecks.
+Key Responsibilities:
+
+•	Database Design & Management: Construct, optimize, and maintain the database schema, ensuring data integrity, efficient query performance, and structured storage.
+
+
+•	Server-Side Logic & Security Implementation: Develop secure API endpoints, implement robust server-side business logic, and enforce authorization and authentication protocols to safeguard user data.
+•	Quality Assurance & Bug Testing: Conduct systematic debugging, write unit tests, and perform rigorous quality assurance checks to identify and eliminate system vulnerabilities and software bugs.
+4.	Marwin John G. Gonzales - Frontend Developer & Project Manager
+Core Role: Serves as the team’s operations officer, holding primary responsibility for scheduling maintenance, task tracking, and pipeline efficiency. This involves constantly auditing the team's velocity, identifying operational bottlenecks or delays, maintaining the project management board, and ensuring that every individual deliverable is completed and integrated strictly within the established project roadmap.
+Key Responsibilities:
+
+•	Timeline & Milestone Tracking: Monitor team progress against established deadlines, maintain project roadmaps, and implement risk-mitigation strategies to prevent project delays.
+•	Frontend Implementation & Component Development: Collaborate on building reusable, modular UI components, ensuring visual consistency across all pages and adherence to modern frontend standards.
+•	Resource Coordination & Reporting: Act as a central point of contact for tracking pending items, organizing internal review meetings, and documenting development progress for final thesis evaluation.
+
+
 Appendix B: Minutes of the Meetings
-(
-Include here the minutes of the meetings with your adviser/consultant/client.
-)
- 
+
+APC - WAH Kick Off Meeting 3rd Term 2025–2026
+
+Meeting Information
+
+•	Date: March 26, 2026
+
+•	Platform/Location: Microsoft Teams / Asia Pacific College
+
+•	Facilitator: Jose Eugenio L. Quesada
+
+Attendee List
+
+•	Jose Eugenio L. Quesada
+
+•	Alijah Miguel Fama
+
+•	WAH-MYK (Sir Mike)
+
+•	Carl Dominique Bueno
+
+•	Jhon Lloyd Nicolas
+
+•	John Kate
+
+•	Mariyah Vanna Monique C. Chavez
+
+•	Sergio Jean (Project Adviser)
+
+•	Carl Dheyniel Genova
+
+•	Anthonee Jhel Rumbaoa
+
+•	Yumi
+
+•	Seann (Mentioned)
+
+
+•	Marwin John Gonzales
+
+•	Vince Nelmar Alobin
+
+•	Qelvin Joszeler Nagales
+
+•	Rick Francis Cruz
+
+Meeting Objective
+
+•	Introduce the new groups and students for the 3rd Term WAH projects.
+
+•	Discuss the current server architecture and scalability challenges for WAH systems.
+
+•	Present updates on the WAH for Hospitals project and its prototype deployment.
+
+•	Introduce the WAH for Security team and their role in penetration testing across all developed systems.
+•	Align Batch 1 and Batch 2 teams on deployment goals and intergroup collaboration.
+
+Agenda Overview
+
+1.	Introductions and Cloud Architecture Discussion
+
+2.	WAH for Hospitals Project Presentation
+
+3.	WA for Security Team Introduction
+
+4.	Deployment Goals and Intergroup Collaboration
+
+Executive Summary
+
+The meeting served as an introductory and alignment session for the APC-WAH collaborative projects. A significant portion of the discussion centered on infrastructure, with Carl Dominique Bueno requesting architectural details from Sir Mike to help design scalable solutions for the growing WAH ecosystem, which currently operates on 13 Linode servers.
+
+
+Following this, Jhon Lloyd Nicolas presented the WAH for Hospitals project, showcasing a working prototype built with Django and React, designed for LGU infirmaries and compliant with government FHIR standards. Finally, Alijah Miguel Fama introduced the WA for Security team, which will act as Advanced Persistent Threat (APT) actors to conduct penetration testing on all student-developed systems. The meeting concluded with clear directives for Batch 1 (initial deployment by the end of the term) and Batch 2 (commencing PBL 1).
+Detailed Discussion Points
+
+1.	Cloud Architecture & Infrastructure Challenges
+
+•	Speakers: Carl Dominique Bueno, Jose Eugenio L. Quesada, WAH-MYK
+
+•	Discussion:
+
+o Carl Dominique Bueno requested to review the current WAH architecture to help optimize and strategize for the growing ecosystem of applications.
+o	Jose Eugenio L. Quesada explained that WAH for Clinics currently runs 13 Linode servers, with one or two provinces hosted on each server.
+o	Noted that the current setup is not architected for massive scale, and Sir Mike is currently handling production as a "one-man army."
+o	The responsibility of designing a scalable architecture and setting up communication between the old and new systems falls on the APC teams.
+•	Key Highlights:
+
+o	The project poses a significant, real-world challenge involving real patients and healthcare services.
+
+
+o	The end goal is to contribute to providing robust healthcare services across the Philippines.
+2.	WAH for Hospitals Project Presentation
+
+•	Speaker: Jhon Lloyd Nicolas
+
+•	Team: John Kate (Frontend), Maria Van Monique C. Chavez (Project Manager), Sergio Jean (Adviser)
+•	Discussion:
+
+o	Presented a modular, cloud-based Hospital Information System (HIS) targeted at small to mid-sized LGU hospitals.
+o	The system digitizes patient registration, billing, pharmacy, laboratory requests, and features a role-based dashboard.
+o	Tech stack includes the Django framework and React framework.
+
+o	The system is being built for interoperability with WAH4PC and must comply with government reporting formats (FHIR R4.0.1 and PH Core FHIR).
+•	Key Highlights:
+
+o	A working prototype has been developed (Frontend deployed on Vercel, Backend on Azure).
+o	Pilot deployment is planned for Grapho Infirmary.
+
+3.	WA for Security Team Introduction
+
+•	Speaker: Alijah Miguel Fama
+
+
+•	Team: Carl Dheyniel Genova (Documentation), Anthonee Jhel Rumbaoa (Documentation), Yumi (Development/Pen-Testing)
+•	Discussion:
+
+o	The team will act as Advanced Persistent Threat (APT) actors to test and validate the security of all systems developed by the other APC teams.
+o	Requested a list of current cloud security measures from Sir Mike to establish a baseline for their research and penetration testing.
+•	Key Highlights:
+
+o	Security testing is fully authorized and will be an integral part of the development lifecycle for all groups.
+4.	Deployment Goals and Next Steps
+
+•	Speaker: Jose Eugenio L. Quesada
+
+•	Discussion:
+
+o	Clarified that this is the start of PBL 1 for Batch 2 and PBL 2 for Batch 1.
+
+o	Set the expectation for Batch 1 to achieve initial deployment by the end of the term.
+•	Key Highlights:
+
+o	Immediate next steps involve setting up intergroup collaboration and adding teams to the necessary GitHub repositories.
+Additional Notes / Observations
+
+
+•	The meeting emphasized the real-world impact of the projects, heavily pushing the narrative of "real learning, real projects, real people, and real patients."
+•	There were minor technical difficulties (audio feedback/loudness) during the WAH for Security presentation, which were quickly resolved.
+•	The Board of Trustees meeting highlights were deferred off recording.
+
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Coordinate intergroup collaboration structures	All project groups	Ongoing
+Add collaborating teams to shared GitHub repositories	Student Teams	Immediate
+Provide/Discuss cloud security measures for research	WAH-MYK / Security Team	Ongoing
+Achieve initial system deployment (PBL 2)	Batch 1 Teams	End of the 3rd Term
+Continue project development (PBL 1)	Batch 2 Teams	Ongoing
+
+
+Overall Sentiment Analysis
+
+The tone of the meeting was highly encouraging, collaborative, and grounded in practical application. Faculty heavily emphasized the social impact and gravity of the work, motivating students to view their assignments not just as academic requirements, but as vital contributions to the Philippine healthcare system. The student teams presented their progress with confidence and readiness to tackle complex architectural and security challenges.
+
+
+TCG Trio WAH for Interoperability (WAH4PC) B1 and Merge Conflict | WAH4PC B2
+
+Meeting
+
+Meeting Information
+
+•	Date: April 1, 2026
+
+•	Platform/Location: Microsoft Teams / Asia Pacific College
+
+•	Facilitator: Jose Eugenio L. Quesada
+
+Attendee List
+
+•	Jose Eugenio L. Quesada
+
+•	Michael Christian Cecilio
+
+•	Qelvin Joszeler Nagales
+
+•	Julian Rylie Tengco
+
+•	Vince Nelmar Alobin
+
+•	Rick Francis Cruz
+
+•	Marwin John Gonzales
+
+Meeting Objective
+
+•	Onboard Batch 2 students and ensure successful access to the shared GitHub repositories.
+•	Establish folder structures for final presentation documentation.
+
+•	Resolve technical issues regarding file size limitations during repository uploads.
+
+Agenda Overview
+
+
+1.	GitHub Repository Access and Folder Organization
+
+2.	Front-end Documentation and Final Output Submissions
+
+3.	Workarounds for File Upload Limitations (GitHub vs. SharePoint)
+
+Executive Summary
+
+The meeting focused on technical onboarding and submission logistics for the project's final documentation. Facilitator Jose Eugenio L. Quesada guided students through accessing their GitHub repositories and establishing specific folders (MCS approach / IMCS Proj) for their final outputs. When students encountered a 25MB upload limit on GitHub for their video compilations, the team established a protocol to use Git terminal commands (git clone, git push) for standard files, while routing oversized media files to a shared SharePoint drive. Sir Quesada requested access to this SharePoint group to review the larger files.
+Detailed Discussion Points
+
+1.	GitHub Repository Access & Structure
+
+•	Speaker: Jose Eugenio L. Quesada, Qelvin Joszeler Nagales, Vince Nelmar Alobin
+
+•	Discussion:
+
+o	Sir Quesada verified that Batch 2 members, specifically Qelvin and Vince, had accepted their GitHub invitations and could access the repository (which includes the WAH for PC Gateway).
+o	Instructed the teams (including Cruz, Alobin, and Gonzales) to create a dedicated folder named MCS approach (or IMCS Proj) to house their final presentation documentation.
+
+
+•	Key Highlights: Access is confirmed, and "front end docs" have been successfully placed in the repository.
+2.	File Uploading Limitations and Workarounds
+
+•	Speaker: Julian Rylie Tengco, Michael Christian Cecilio, Jose Eugenio L. Quesada
+
+•	Discussion:
+
+o	Julian Tengco reported an error stating uploads must be smaller than 25MB when attempting to upload the compilation video directly to GitHub.
+o	Sir Quesada advised against using the browser's manual file upload feature for large files, recommending standard terminal commands (git clone and git push) instead.
+o	Michael Christian Cecilio and Julian suggested using their established SharePoint/Drive for the oversized files.
+o	Sir Quesada agreed to this workaround and requested to be added to the team's SharePoint group to access the videos.
+•	Key Highlights: GitHub will be strictly used for code and lightweight documentation via Git commands, while SharePoint will handle heavy media files.
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Accept GitHub repository invitations and verify access	Qelvin Nagales, Vince Alobin, Batch 2	Immediate
+Create MCS approach / IMCS Project folder and organize final docs	
+Project Team	
+Not specified
+
+
+Push code and documents using git clone / git push instead of web upload	
+All Developers	
+Ongoing
+Upload large compilation videos to the shared SharePoint folder	Julian Tengco / Michael Cecilio	Not specified
+Add Jose Eugenio L. Quesada to the SharePoint group	Project Team	Immediate
+
+Overall Sentiment Analysis
+
+The meeting was brief, administrative, and solution-oriented. The facilitator provided direct, step-by-step guidance to ensure students met submission requirements, and the students were highly responsive in troubleshooting upload blockers.
+
+
+
+WAH Kick Of Meeting Batch 2 MNTSDEV T3 2025-2026
+
+Meeting Information
+
+•	Date: April 13, 2026
+
+•	Platform/Location: Microsoft Teams / Asia Pacific College
+
+•	Facilitator: Jose Eugenio L. Quesada.
+
+Attendee List
+
+•	Jose Eugenio L. Quesada.
+
+•	Nicky Abusa Balderosa ([WAH] Nicky).
+
+•	Mentioned: Shang Biag (Manager), Michael Martinez (Tech Supervisor).
+
+•	Marwin John Gonzales
+
+
+•	Vince Nelmar Alobin
+
+•	Rick Francis Cruz
+
+•	Qelvin Joszeler Nagales
+
+Meeting Objective
+
+•	Introduce Nicky Abusa Balderosa to the Batch 2 students and establish her role for the next three terms.
+•	Outline the handoff process from Batch 1 to Batch 2.
+
+•	Provide an overview of the "Watermelon" EMR system and its real-world impact.
+
+Agenda Overview
+
+1.	Introduction of WAH Consultant and Project Manager.
+
+2.	Batch 1 Handoff and Knowledge Transfer.
+
+3.	Overview of the Watermelon EMR System and WAH Operations.
+
+4.	Review of the Ecosystem Developed by Batch 1.
+
+Executive Summary
+
+The meeting served to introduce Nicky Abusa Balderosa, a consultant for Wireless Access for Health (WAH) and agile practitioner, as the Project Manager for the Batch 2 students over the next three terms. Nicky commended the impressive performance of the Batch 1 teams and highly recommended scheduling a 30-minute knowledge-sharing session for a proper handoff. She also provided a detailed overview of WAH's primary software, "Watermelon," which is a web-based EMR application used by Primary Care Facilities (PCFs) to record medical data and process PhilHealth reimbursements. The meeting concluded with a summary of the ecosystem
+
+
+expansions built by Batch 1, which included a patient mobile app, a hospital system, and an interoperability layer.
+Detailed Discussion Points
+
+1.	Introduction of WAH Consultant
+
+•	Speaker: [WAH] Nicky.
+
+•	Discussion:
+
+o	Nicky introduced herself as a consultant for WAH, a Learning and Development Manager for Strat Point Technologies, and an agile practitioner and Scrum Master.
+o	She shared that she manages the IT internship programs at Strat Point, taking on about 100 to 120 interns annually.
+o	She confirmed that she served as the Project Manager on the WAH side for Batch 1 and will take on the exact same role for Batch 2 for the next three terms.
+•	Key Highlights: Nicky brings extensive industry and teaching experience, establishing a structured, agile framework for the student teams.
+2.	Batch 1 Performance and Handoff
+
+•	Speakers: [WAH] Nicky, Jose Eugenio L. Quesada.
+
+•	Discussion:
+
+o	Nicky expressed that WAH was extremely impressed with the performance of all three teams from Batch 1.
+
+
+o	She highly recommended that the new teams schedule a 30-minute session with each of the Batch 1 groups.
+o	The purpose of this session is to walk through what was built, share experiences, and discuss potential improvements to ensure the development process remains agile and iterative.
+•	Key Highlights: Knowledge transfer between the student batches is highly prioritized to maintain project momentum.
+3.	Overview of Watermelon EMR
+
+•	Speaker: [WAH] Nicky.
+
+•	Discussion:
+
+o	WAH's main product is "Watermelon," a web-based EMR application used primarily by Primary Care Facilities (PCFs) and Healthcare Institutions (HCIs).
+o	The system is used to electronically record patient health data and file for PhilHealth reimbursements.
+o	It automates the reimbursement process for free services rendered at clinics, effectively replacing a pen-and-paper system that had been used 15 years prior.
+•	Key Highlights: WAH is close to hitting 300 partner sites this year using the Watermelon platform.
+4.	Systems Developed by Batch 1
+
+•	Speaker: [WAH] Nicky.
+
+•	Discussion:
+
+
+o	Nicky outlined how Batch 1 helped scale up the Watermelon ecosystem.
+
+o	One team created a mobile app to give patients direct access to their medical data.
+o	Another team developed a system tailored for small hospitals and infirmaries.
+
+o	A third team focused on interoperability, making sure the clinic system, mobile app, and hospital system could effectively communicate.
+•	Key Highlights: Batch 2 will be building upon a multi-faceted digital healthcare ecosystem rather than starting from scratch.
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Schedule a 30-minute knowledge-sharing/handoff session with Batch 1 groups.	
+Batch 2 Student Teams.	
+Not specified.
+
+
+Overall Sentiment Analysis The tone of the meeting was welcoming, informative, and encouraging. Nicky expressed genuine excitement to work with the new students and set a positive precedent by highly praising the output of the previous batch. By explaining the history and utility of the Watermelon app, she successfully grounded the academic requirements in real-world healthcare impact.
+
+
+
+WAHxAPC WAH4PC Interoperability Batch 2
+
+Meeting Information
+
+•	Date: April 15, 2026
+
+
+•	Platform/Location: Google Meet / Asia Pacific College
+
+•	Facilitator: Qelvin Joszeler Nagales
+
+Attendee List
+
+•	Nicky (WAH Consultant)
+
+•	Vince Nelmar Alobin
+
+•	Qelvin Joszeler Nagales
+
+•	Marwin John Gonzales
+
+•	Rick Francis Cruz
+
+•	Mentioned: Sir Jean, Sir Dong, Miss Minty, PCG Trio, iBugs
+
+Meeting Objective
+
+•	Define the technical architecture and data flow for the Wireless Access for Health (WAH) ecosystem.
+•	Outline Batch 2’s scope of work, specifically the development of the "WAH for Patients" system and the expansion of the "WAH for PC" interoperability layer.
+•	Plan a proof-of-concept deployment in Tarlac province to demonstrate seamless health data exchange.
+Agenda Overview
+
+1.	System Architecture and the Role of WAH for PC
+
+2.	Batch 2 Scope: WAH for Patients (WA for P) Mobile App
+
+3.	Data Standardization (PH4/FHIR) and Custom Definitions
+
+
+4.	Security, Authorization, and Data Privacy
+
+5.	Tarlac Proof of Concept and External Integrations (DOH, Comlogik)
+
+Executive Summary
+
+The meeting focused on aligning the student developers with the overarching technical architecture of the WAH ecosystem. The consultant, Nicky, explained that the "WAH for PC" layer acts as the central interoperability highway for all health data. Batch 2 is tasked with building the entirely new "WAH for Patients" mobile application and extending the existing WAH for PC layer to handle custom data fields (this is still yet to be decided). The ultimate goal of the term is to execute a real-world proof of concept in Tarlac province (e.g., Camiling) to prove that patient data can seamlessly transfer between local health centers and larger hospitals, as well as integrate with external entities like Comlogik and the Department of Health (DOH).
+Detailed Discussion Points
+
+1.	System Architecture & WAH for PC
+
+•	Speaker: Nicky
+
+•	Discussion:
+
+o	WAH for PC acts as the central "connector," "highway," or "interchange" for the entire ecosystem.
+o	All systems—whether WAH for Clinics, WAH for Hospitals, or external systems—must route their data through WAH for PC to communicate with one another.
+•	Key Highlights: WAH for PC ensures that there is a shared, common definition of data flowing between disparate healthcare systems.
+2.	Batch 2 Scope: WAH for Patients (WAH4P)
+
+
+•	Speaker: Nicky
+
+•	Discussion:
+
+o	Identified that while systems exist for clinics and hospitals, there is currently no system for the patients themselves.
+o	Batch 2 will take ownership of developing "WAH4P," which will be a patient-facing mobile application (yet to be decided).
+•	Key Highlights: The patient app will connect directly to the WAH for PC highway to access and share necessary medical data.
+3.	Data Standardization and Custom Definitions
+
+•	Speaker: Nicky
+
+•	Discussion:
+
+o	The baseline standard for data sharing across the ecosystem is PH4 (FHIR/PH Core).
+o	However, a 100% universal standard is rarely possible in real-world hospital deployments.
+o	Batch 2 needs to add functionality to WAH for PC to support "custom data definitions" or custom fields specific to certain deployments.
+•	Key Highlights: The interoperability layer must remain flexible enough to handle outlier data requirements from different facilities.
+4.	Security and Data Privacy
+
+•	Speaker: Nicky, Student Developers
+
+
+•	Discussion:
+
+o	Security must be enforced at the endpoints (the applications receiving and sending data).
+o	The team needs to establish strict authorization protocols to determine exactly who is permitted to view specific patient records.
+•	Key Highlights: Adherence to data privacy laws is critical, requiring a robust system for tracking and verifying data access.
+5.	Tarlac Proof of Concept & External Integrations
+
+•	Speaker: Nicky
+
+•	Discussion:
+
+o	The target for deployment is Tarlac Province, aiming to connect at least two or three towns (e.g., Camiling) to a larger city hospital.
+o	The use case will simulate a patient from a small town being referred to a city hospital, proving that the interoperability layer successfully transfers their records.
+o	The ecosystem must also integrate with at least two external providers outside of WAH: Comlogik and DOH systems.
+•	Key Highlights: Demonstrating this working proof of concept to the government and external providers is the primary milestone for the project.
+Additional Notes / Observations
+
+•	The team utilized a physical whiteboard (requested by Vince) to visualize the complex system architecture.
+
+
+•	The meeting began and ended with casual team bonding, including discussions about coffee, commuting on scooters, and taking a group picture for documentation.
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Deciding if Batch 2 will take on WAH4P	Batch 2 Developers	Ongoing
+Implement custom data definitions/fields within the WAH for PC layer	
+Batch 2 Developers	
+Ongoing
+Establish endpoint security and authorization protocols	Project Team	Ongoing
+Prepare deployment strategy for Tarlac (Camiling to City Hospital)	Project Team / WAH	Prior to end of project
+Map out API connections for external integrations (Comlogik, DOH)	Project Team	Ongoing
+
+
+Overall Sentiment Analysis
+
+The meeting was highly collaborative and technical, balanced with a relaxed and friendly atmosphere. The WAH consultant provided clear, visionary guidance on the architecture, ensuring the students understood the real-world scale and impact of their work. The students were engaged, actively requesting visual aids (whiteboard) to map out the system, and demonstrated readiness to take on the complex interoperability challenges.
+
+
+
+Merge Conflict Meeting with Project Adviser 5
+
+Meeting Information
+
+•	Date: April 24, 2026
+
+
+•	Platform/Location: Microsoft Teams / Asia Pacific College
+
+•	Facilitator: Sir Pay (Project Adviser)
+
+Attendee List
+
+•	Marwin John Gonzales
+
+•	Vince Nelmar Alobin
+
+•	Qelvin Joszeler Nagales
+
+•	Rick Francis Cruz
+
+•	Sir Pay (Project Adviser)
+
+•	Mentioned: RJ, Miss Ryssel, Jello, Christopher, Nonet (Batch 1), Dr. Alvin Marcelo
+
+Meeting Objective
+
+•	Review the system visualization and architecture for WAH4PC Batch 2.
+
+•	Address critical concerns regarding data privacy, system security, and deployment infrastructure.
+•	Redefine the interoperability model from a centralized exchange to a secure, federated network.
+•	Outline actionable steps for real-world validation, including local testing and field consultations.
+Agenda Overview
+
+1.	Evaluation of Batch 1 vs. Batch 2 Scope
+
+2.	AI Automation Layer and Data Verification
+
+
+3.	Shift to a Federated Interoperability Architecture
+
+4.	Deployment: Local Servers (Proxmox) vs. Cloud
+
+5.	Security: MFA and Device Validation
+
+6.	Field Validations (UP Manila and Tarlac)
+
+Executive Summary
+
+The meeting focused on a critical architectural review of the WAH4PC system being developed by Batch 2. Project Adviser Sir Pay challenged the team's initial centralized exchange model, mandating a shift to a federated architecture to eliminate single points of failure and ensure strict data privacy compliance. In this model, every participating healthcare entity (WAH, iClinics, iHOMIS) will host its own dedicated WAH4PC interoperability node. The team also discussed leveraging an AI Automation Layer to parse, clean, and format raw input data into the HL7 FHIR standard. To validate the system, the team will simulate the network locally using Proxmox servers and coordinate field visits to UP Manila (for health informatics consultation) and Tarlac (to observe live WAH deployments).
+Detailed Discussion Points
+
+1.	AI Automation Layer & Data Verification
+
+•	Speaker: Vince Nelmar Alobin / Sir Pay
+
+•	Discussion:
+
+o	Vince presented the system flow, detailing how the AI Automation Layer will act as a gatekeeper.
+o	The layer is responsible for verifying patient waiver/consent forms before any data is transmitted.
+
+
+o	It will intercept incomplete or unstructured data (handling the "garbage in, garbage out" problem) and format it into standard HL7 FHIR before allowing it into the network.
+•	Key Highlights: The AI must ensure that only clean, standardized, and authorized data enters the healthcare ecosystem.
+2.	Federated Architecture (The "Telephone Exchange" Model)
+
+•	Speaker: Sir Pay
+
+•	Discussion:
+
+o	Sir Pay firmly rejected the idea of a centralized interoperability server, warning that it creates a massive target for hackers and a single point of failure.
+o	He instructed the team to adopt a federated approach.
+
+o	WAH4PC should act like a Private Branch Exchange (PBX) or telephone directory. Each distinct healthcare system (WAH, iClinics, iHOMIS, DOH) must run its own independent WAH4PC node.
+o	These independent nodes will then communicate with each other securely, rather than routing everything through one central database.
+3.	Deployment Infrastructure (Proxmox & On-Premise)
+
+•	Speaker: Sir Pay / Development Team
+
+•	Discussion:
+
+o	To mimic the federated architecture, the team cannot simply deploy everything to a single cloud instance.
+
+
+o	Sir Pay advised the team to set up local servers using Proxmox to create distinct virtual environments.
+o	This setup will simulate a real-world scenario where different hospitals are running their own isolated servers that must communicate over a network, proving the system works even in environments with limited internet access.
+4.	Security and Device Validation
+
+•	Speaker: Sir Pay
+
+•	Discussion:
+
+o	Because patient data is highly sensitive, basic password authentication is insufficient.
+o	The system must incorporate Multi-Factor Authentication (MFA).
+
+o	Furthermore, authentication should include device-level validation (tying access to the specific hardware/device of the authorized healthcare worker) to prevent unauthorized remote access.
+5.	Field Visits and Expert Consultations
+
+•	Speaker: Sir Pay / Marwin John Gonzales
+
+•	Discussion:
+
+o	The adviser emphasized the need to step away from theoretical designs and look at the actual systems in use.
+o	UP Manila: The team is encouraged to consult with experts in health informatics, specifically mentioning Dr. Alvin Marcelo, to ensure their FHIR implementations align with national standards.
+
+
+o	Tarlac Field Trip: The team needs to schedule a visit to the WAH facilities in Tarlac to see how Watermelon, iClinicSys, and iHOMIS are actually utilized by end-users in the clinics.
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Redesign system architecture to a decentralized, federated model	Vince / Dev Team	Ongoing
+Configure local Proxmox testing environments to simulate distinct hospital nodes	
+Dev Team	
+Ongoing
+Implement MFA and strict device-level validation for endpoints	Security/Dev Team	Ongoing
+Coordinate a consultation/visit to UP Manila regarding health informatics standards	
+Marwin John Gonzales	
+Not specified
+Schedule a field trip to Tarlac to observe live WAH deployments	Marwin John Gonzales	Not specified
+
+
+WAH4PCE - Merge Conflict Meeting with WAH Officials
+
+Meeting Information
+
+•	Date: April 28, 2026
+
+•	Platform/Location: Google Meet / Asia Pacific College
+
+•	Facilitator: Marwin John Gonzales (Recorded/Uploaded by)
+
+Attendee List
+
+•	Marwin John Gonzales
+
+•	Client Representative (addressed as "Miss")
+
+
+•	Development Team (Merge Conflict / Interoperability Team)
+
+•	Mentioned: Cybersecurity Team, WAH for Patients Team (Batch 1), Concepcion District Hospital Team
+Meeting Objective
+
+•	Address system security within the interoperability layer for future scalability.
+
+•	Define the automated patient consent workflow and its legal justifications.
+
+•	Align on inter-team collaboration for the Tarlac (Concepcion District Hospital) proof of concept deployment.
+Agenda Overview
+
+1.	Security in the Interoperability Layer
+
+2.	Patient Consent Management and Automated Verification
+
+3.	Legal Justifications for Data Transport
+
+4.	Concepcion District Hospital Proof of Concept (PoC)
+
+Executive Summary
+
+The meeting focused on the security, legal compliance, and real-world deployment goals of the WAH interoperability layer. The client representative emphasized the need to collaborate with the cybersecurity team to ensure data is secure, especially as the system scales to other provinces like Cebu. A critical discussion revolved around patient consent; the current waiver only covers in-facility processing, DoH, and PhilHealth. The team agreed to work with Batch 1 to integrate an updated consent form into the WAH for Patients app to authorize cross-facility data transport. The ultimate goal of the project is an ambitious Proof of Concept (PoC) in
+
+
+Concepcion, Tarlac, demonstrating seamless data flow across WAH Clinics, WAH Hospitals, and non-WAH facilities.
+Detailed Discussion Points
+
+1.	Interoperability Layer Security
+
+•	Speaker: Client Representative / Development Team
+
+•	Discussion:
+
+o	Emphasizing that data coming from outside the network requires robust security within the interoperability layer.
+o	The system must be secure enough to be pitched and sold to other provinces (e.g., Cebu) in the future.
+o	Directed the interoperability team to coordinate directly with the dedicated cybersecurity team to ensure all security aspects are covered in their scope of work.
+2.	Automated Patient Consent Management
+
+•	Speaker: Client Representative / Development Team
+
+•	Discussion:
+
+o	Address the potential "legal nightmare" of whether patients need to sign a waiver every time their data moves.
+o	The current consent form only allows data usage within the specific facility, for DoH reporting, and PhilHealth claims—it does not cover inter-facility transport.
+
+
+o	Solution: The team will coordinate with the Batch 1 "WAH for Patients" team to integrate a comprehensive consent form into the mobile app.
+o	In the automated environment, the interoperability layer will check for this signed online waiver. If the patient has not consented, the data transfer request will be automatically rejected.
+3.	Legal Justifications for Data Transport
+
+•	Speaker: Development Team / Client Representative
+
+•	Discussion:
+
+o	The team needs to clearly justify the data transport architecture to their panelists.
+
+o	Primary Legal Basis: The UHC Law requires healthcare facilities to create a healthcare provider network, making data transport and sharing mandatory.
+o	Secondary Legal Basis: Joint Administrative Order (JAO) 21-0002 was cited as a triggering requirement for hospitals to comply with these data exchange standards. The team was advised to explain this context clearly during their
+defense.
+
+4.	Concepcion District Hospital Proof of Concept
+
+•	Speaker: Client Representative
+
+•	Discussion:
+
+o	The client representative deferred commenting directly on the technical architecture, focusing instead on system integration and collaboration.
+o	The interoperability team acts as the "glue" holding the various applications together.
+
+
+o	The immediate deployment target is Concepcion District Hospital in Concepcion, Tarlac, which is currently using "WAHTERMELON" (WAH for Clinics) and needs to be upgraded to WAH for Hospitals.
+o	The Goal: Execute a highly ambitious proof of concept that successfully transports data seamlessly across a chain: Clinic to Hospital to Non-WAH Clinic to Non-WAH Hospital.
+Action Items Table
+
+Action Item	Responsible Party	Deadline
+Schedule a meeting with the Cybersecurity Team to align on data protection	Development Team	Not specified
+Meet with Batch 1 (WAH for Patients) to integrate an updated data transport consent form	
+Development Team	
+Not specified
+Update the system logic to automatically reject data transfers lacking explicit patient consent	
+Development Team	
+Ongoing
+Prepare defense context regarding UHC Law and JAO 21-0002 for the panel	Development Team	Prior to final defense
+Coordinate with the Concepcion District Hospital team to plan the PoC deployment	Development Team	Ongoing
+
+Overall Sentiment Analysis
+
+The meeting was highly constructive, balancing legal/compliance realities with extremely ambitious technical goals. The client provided clear, practical guidance on how to navigate the "legal nightmare" of patient consent while keeping the team focused on the overarching goal of a seamless, nationwide healthcare provider network. The team demonstrated readiness to adapt their verification layer to meet these strict consent requirements.
+
+
 Appendix C: Methodology
 
+This project follows a phased, iterative methodology to ensure structured development, continuous stakeholder involvement, and alignment with the goals of optimizing the existing WAH4PC platform. The process is guided by the Software Development Life Cycle (SDLC), adapted to suit the constraints of a student-led project. Each phase is described below:
+1.	Planning and Requirements Gathering: The phase began by mapping out the communication disconnect between separate hospital systems and assessing the specific traffic management and concurrency limitations of the existing, operational WAH4PC baseline platform. Regular consultations were conducted with WAH consultants and officials to clarify existing integration issues, discuss automated consent tracking under the Data Privacy Act, and define the scope of the ADAPT middleman software. Key deliverables included the statement of the problem, project objectives, technical scope, and the initial system architecture using a direct hospital-to-hospital network design.
+2.	Analysis and Documentation: This phase focused on creating detailed documentation of the system requirements needed to enhance the current platform and support the new translation features. The development team created use case diagrams, user stories, and a product backlog outlining the processing requirements for the AI-driven translation engine. This phase also identified priority features, data flow sequences, and key system actors, including the WAH-partnered Hospital Administrator, the WAH4PC Administrator, the iHOMIS system, and the ADAPT middleman.
+3.	Design Phase (Current Phase): The project is currently in the design phase, focusing on developing wireframes for the new administrative dashboard and finalizing the network architecture using local Proxmox servers. These visual wireframes map out user-facing configurations, transaction logs, and data-syncing statuses to give operators
 
 
+full visibility over the network traffic. The proposed tech stack was also finalized: Golang for high-speed concurrent processing to solve the inherited traffic load constraints, Next.js for the visual monitoring dashboard, MongoDB for flexible data staging, and a Model Context Protocol (MCP) server running Gemini models for automated format translation.
+4.	Development Phase (Upcoming): Once the user interface designs and local server testing environments are finalized, full-scale development will begin. Features will be built in iterations, starting with the core traffic management upgrades for the existing WAH4PC backend and the AI translation logic, followed by the Next.js administrative dashboard and validation modules. Testing will be conducted continuously alongside code development to identify formatting errors and API boundaries early.
+5.	Testing and Quality Assurance: The development team plans to conduct rigorous testing using functional dummy system endpoints and synthetic patient data to simulate both a WAH-partnered hospital environment and an iHOMIS Implementing Hospital environment, maintaining strict compliance with the Data Privacy Act. Feedback from WAH administrators and continuous validation against the PH Core profiles will ensure the system accurately parses and formats data payloads without risking actual patient records.
+6.	Deployment and Handover: The final proof-of-concept system is targeted for local deployment within a simulated network—such as the Concepcion District Hospital framework in Tarlac—to demonstrate a working clinic-to-hospital data pipeline. System documentation, covering API endpoints, deployment guides, and a comprehensive business proposal outlining long-term AI operational costs, will be handed over to WAH management to support project sustainability.
+7.	Maintenance and Feedback: Following the proof-of-concept deployment, the development team will collect feedback regarding data translation accuracy, processing
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+efficiency, and system uptime. While long-term maintenance is limited due to the academic scope of a student project, the goal is to leave the updated middleman architecture in a highly maintainable, well-documented state so WAH administrators can easily integrate their own production-grade AI models in the future.
 
 
 Appendix D: Project Sharepoint Link
+
 Merge Conflict - SharePoint Site Link
+
+
+
+
 Appendix E: Requirements Traceability Matrix
+
+The Requirements Traceability Matrix (RTM) maps each project objective to the specific user stories in the product backlog that address it. This ensures that every requirement from the client is covered in the planned system.
+
+Objective	Related User Stories (ID)	Artifact / Document
+
+Automate health data interoperability	
+US-1.3, US-1.4, US-2.1, US-2.2, US-2.3	
+Product Backlog, Use Case Diagram
+Decentralize the integration architecture	US-1.1, US-1.2, US-4.1, US-4.2	Product Backlog, Lean Canvas
+Ensure data integrity and schema compliance	US-3.2, US-3.3	Product Backlog
+
+Enforce automated data privacy compliance	
+US-3.1	
+Product Backlog, Use Case Diagram
+
+
+Traceability Key:
+
+ID	User Story Summary	Priority	Objective Covered
+US-1.1	Queue local health records for PH Core validation	Must	Objective 2
+US-1.2	Oversee interoperability pipeline metrics	Must	Objective 2
+US-1.3	Exchange standardized data with WAH	Must	Objective 1
+US-1.4	Receive automatically mapped FHIR records	Must	Objective 1
+US-2.1	Parse legacy records to PH Core FHIR	Must	Objective 1
+US-2.2	Transform local data to standard FHIR models	Must	Objective 1
+US-2.3	Transform legacy DOH formats for bi-directional interoperability	Must	Objective 1
+US-3.1	Scan metadata for Consent Flag	Must	Objective 4
+US-3.2	Validate translated FHIR against PH Core schema	Must	Objective 3
+US-3.3	Quarantine records missing critical fields	Must	Objective 3
+US-4.1	Switch AI models when API rate limits are reached	Must	Objective 2
+US-4.2	Establish secure TLS connections for data payloads	Must	Objective 2
+
 
 Appendix F: RACI Matrix
 
+The RACI Matrix shows who is Responsible, Accountable, Consulted, or Informed for each major task in the project.
+•	R – Responsible: Does the work
+
+•	A – Accountable: Owns the outcome and has final say
+
+•	C – Consulted: Gives input or feedback before a decision
+
+•	I – Informed: Kept updated on progress or decisions
+
+Task / Deliverable	Nagales (Team Leader)	
+Alobin	
+Gonzales	
+Cruz	
+Adviser	Client (WAH)
+Project Background	A	C	R	C	C	I
+Statement of the Problem	A	R	C	C	C	C
+Project Objectives	A	R	C	C	C	C
+Scope and Limitations	C	C	C	R	C	C
+Review of Related Literature/System	R	C	C	R	C	I
+Current System Analysis (SWOT)	C	R	C	R	C	C
+Proposed Solution: Technical Background	
+C	
+R	
+C	
+R	
+C	
+C
+Proposed Solution: Feasibility	
+R	
+C	
+R	
+C	
+C	
+C
+Project Vision	A	C	R	C	C	C
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Significance of the Project	R	C	R	C	C	I
+Wireframes / Mockups	R	C	R	C	C	C
+Use Case Diagram	C	R	C	C	I	I
+Product Backlog / User Stories	A	C	R	C	C	C
+Project Lean Canvas	R	R	R	R	C	I
+Project Roadmap	A	R	R	C	C	I
+SWOT Analysis	C	R	R	R	C	C
+Product Video Teaser	R	R	R	R	I	I
+Requirements Gathering (Client Meeting)	
+A	
+R	
+R	
+R	
+I	
+A
+Documentation (Full Paper)	A	R	R	R	C	I
+Adviser / Consultant Coordination	
+A	
+I	
+R	
+I	
+A	
+I
 
