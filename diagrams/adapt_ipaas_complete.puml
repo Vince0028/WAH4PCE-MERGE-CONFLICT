@@ -56,7 +56,7 @@ rectangle "Groq AI\n(Backup)" as GROQ #FFF3E0
 actor "WAH4PCE Admin" as ADMIN
 
 ' -- ADAPT iPaaS System Boundary --
-rectangle "ADAPT iPaaS (Our Middleware)" as ADAPT #F3E5F5 {
+rectangle "ADAPT(Our Middleware)" as ADAPT #F3E5F5 {
 
     rectangle "Receiving Data" {
         component "Receive incoming\nhealth record" as STEP_RECEIVE

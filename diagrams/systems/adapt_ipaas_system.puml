@@ -1,81 +1,33 @@
-@startuml ADAPT_iPaaS_System
-' ============================================================
-' ADAPT iPaaS - AI Middleware (Simplified View)
-' Simple and understandable
-' ============================================================
+@startuml ADAPT_iPaaS_System_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-skinparam backgroundColor #D6EAF8
-skinparam defaultFontColor #333333
-skinparam defaultFontName "Segoe UI"
-skinparam defaultFontSize 12
-skinparam shadowing true
+'Diagram Title
+title System Context Diagram for ADAPT iPaaS
 
-skinparam rectangle {
-    BackgroundColor #FFFFFF
-    BorderColor #BDBDBD
-    FontColor #333333
-    FontSize 12
-    RoundCorner 10
-}
+'Actors
+Person(admin, "WAH4PCE Admin", "IT administrator overseeing the interoperability pipeline, monitoring metrics, and reviewing quarantined records.")
 
-skinparam component {
-    BackgroundColor #FFFFFF
-    BorderColor #CE93D8
-    FontColor #333333
-    FontSize 11
-}
+'The Main System
+System(adapt_ipaas, "ADAPT iPaaS", "AI-Powered Middleware (Hub) that provides bidirectional translation between HL7 v2 and FHIR R4.")
 
-skinparam database {
-    BackgroundColor #FFFFFF
-    BorderColor #CE93D8
-    FontColor #333333
-}
+'External Systems
+System_Ext(ihomis, "iHOMIS", "DOH Legacy Hospital System that sends and receives data in HL7 v2 + flat JSON format.")
+System_Ext(wah_hospital, "WAH Hospital", "Modern FHIR R4 System that sends and receives data in FHIR R4 Transaction Bundle format.")
+System_Ext(gemini, "Google Gemini AI", "Cloud AI Service used as the transformation engine via In-Context Learning.")
+System_Ext(supabase, "Supabase Database", "Cloud Database (PostgreSQL) used to store transaction audit logs (no patient data stored permanently).")
 
-skinparam note {
-    BackgroundColor #FFFDE7
-    BorderColor #FBC02D
-    FontColor #333333
-    FontSize 10
-}
+'Relationships/ Interactions
+Rel(admin, adapt_ipaas, "Monitors dashboard, views logs, and manages quarantined records", "HTTPS")
 
-title **ADAPT iPaaS - AI-Powered Middleware**
+Rel(ihomis, adapt_ipaas, "Sends HL7 v2 records for transformation", "POST /api/ingest")
+Rel(adapt_ipaas, ihomis, "Sends transformed flat JSON records", "POST /api/webhook")
 
-rectangle "ADAPT iPaaS" #F3E5F5 {
+Rel(wah_hospital, adapt_ipaas, "Sends FHIR R4 bundles for transformation", "POST /api/ingest")
+Rel(adapt_ipaas, wah_hospital, "Sends transformed FHIR R4 bundles", "POST /api/webhook")
 
-    component "Admin Dashboard\n(View system health)" as DASHBOARD
-    component "Transaction History\n(View all past transfers)" as TX_VIEWER
+Rel(adapt_ipaas, gemini, "Sends prompts for HL7 v2 <-> FHIR R4 translation", "Google SDK")
+Rel(gemini, adapt_ipaas, "Returns structured JSON translations", "JSON")
 
-    component "Receive Incoming\nHealth Record" as INGEST_API
-    component "Check Patient\nConsent" as CONSENT_CHECK
-    component "AI Format\nConversion Engine" as AI_ENGINE
-    component "Backup AI Models\n(If main AI is busy)" as MODEL_FALLBACK
-    component "Verify Converted\nData is Correct" as VALIDATOR
-    component "Block Bad Records\nfor Admin Review" as QUARANTINE
-
-    database "Transaction Logs\n(Audit Trail)" as IPAAS_DB
-
-    INGEST_API --> CONSENT_CHECK : Step 1
-    CONSENT_CHECK --> AI_ENGINE : Step 2
-    AI_ENGINE --> MODEL_FALLBACK : AI busy
-    AI_ENGINE --> VALIDATOR : Step 3
-    VALIDATOR --> IPAAS_DB : Step 4 - log it
-
-    DASHBOARD --> IPAAS_DB
-    TX_VIEWER --> IPAAS_DB
-    QUARANTINE --> IPAAS_DB
-}
-
-note bottom of IPAAS_DB
-  **What it does:**
-  - Receives health records from iHOMIS or WAH
-  - Checks if patient gave consent
-  - AI converts the data format automatically
-  - Verifies the converted data is valid
-  - Forwards to the destination hospital
-  - Logs everything (but no patient data kept)
-
-  **If main AI is busy:**
-  Automatically switches to a backup AI model
-end note
+Rel(adapt_ipaas, supabase, "Reads/writes transaction and audit logs", "REST API")
 
 @enduml
