@@ -43,27 +43,27 @@ rectangle "WAH for Hospitals" as WAH_HOSP
 rectangle "WAH for Patients" as WAH_PATIENTS
 
 ' Main horizontal flow
-IHOMIS -right-> SEND_EXT : (1)
-SEND_EXT -right-> PAAS : (2)
-PAAS -right-> SEND_FHIR : (11)
-SEND_FHIR -right-> RECEIVE_TRANS : (12)
-RECEIVE_TRANS -right-> WAH_INTEROP : (13)
-WAH_INTEROP -right-> WAH_HOSP : (14)
-WAH_HOSP -right-> WAH_PATIENTS
+IHOMIS -right-> SEND_EXT : (1) Build HL7 v2\n(MSH|PID|PV1|OBX|DG1|RF1)
+SEND_EXT -right-> PAAS : (2) POST /api/ingest\n(JSON payload)
+PAAS -right-> SEND_FHIR : (11) Dispatch valid\nFHIR R4 Bundle
+SEND_FHIR -right-> RECEIVE_TRANS : (12) POST /api/webhook\n(to WAH)
+RECEIVE_TRANS -right-> WAH_INTEROP : (13) Store record\n(Status=RECEIVED)
+WAH_INTEROP -right-> WAH_HOSP : (14) Doctor reviews\nin Inbox
+WAH_HOSP -right-> WAH_PATIENTS : (15) Patient Data\nUpdated
 
 ' Vertical AI Flow
-PAAS -down-> TEMP_DB : (3) Stores data
-TEMP_DB -down-> AI_LAYER : (4) Passes the \nencrypted data
-AI_LAYER -down-> CONVERT : (5)
-CONVERT -left-> GEMINI : using
-CONVERT -down-> FHIR : (6)
-FHIR -right-> VERIFY : (7)
-VERIFY -right-> GEMINI : using
-GEMINI -down-> WAIVER
-GEMINI -down-> FORMAT
-VERIFY -up-> AI_LAYER : (8)
-AI_LAYER -up-> TEMP_DB : (9)
-TEMP_DB -up-> PAAS : (10) Return \nconverted data
+PAAS -down-> TEMP_DB : (3) Consent Check & Log Transaction\n(No PHI stored permanently)
+TEMP_DB -down-> AI_LAYER : (4) Route to Gemini\nfor Transformation
+AI_LAYER -down-> CONVERT : (5) HL7 v2 → FHIR R4\nTranslation
+CONVERT -left-> GEMINI : using Google SDK
+CONVERT -down-> FHIR : (6) Generates\nFHIR Transaction Bundle
+FHIR -right-> VERIFY : (7) Validate Structure\n& Mandatory Fields
+VERIFY -right-> GEMINI : using Fallback Chain\n(flash-lite to 2.0-flash)
+GEMINI -down-> WAIVER : Check consent_signed
+GEMINI -down-> FORMAT : Apply PH Core Profiles
+VERIFY -up-> AI_LAYER : (8) Return Validation Result
+AI_LAYER -up-> TEMP_DB : (9) Log Transformation\nSuccess/Quarantine
+TEMP_DB -up-> PAAS : (10) Return FHIR R4 Data
 
 note right of TEMP_DB
   Note: We will train the AI

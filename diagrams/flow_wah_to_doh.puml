@@ -43,27 +43,27 @@ rectangle "Receive transformed data\nfrom external system" as RECEIVE_TRANS
 rectangle "iHOMIS" as IHOMIS
 
 ' Main horizontal flow
-WAH_PATIENTS -right-> WAH_HOSP
-WAH_HOSP -right-> WAH_INTEROP : (1)
-WAH_INTEROP -right-> SEND_EXT : (2)
-SEND_EXT -right-> PAAS : (3)
-PAAS -right-> SEND_FHIR : (12)
-SEND_FHIR -right-> RECEIVE_TRANS : (13)
-RECEIVE_TRANS -right-> IHOMIS : (14)
+WAH_PATIENTS -right-> WAH_HOSP : Doctor creates\nFHIR record
+WAH_HOSP -right-> WAH_INTEROP : (1) Package FHIR R4\nBundle
+WAH_INTEROP -right-> SEND_EXT : (2) Queue for dispatch
+SEND_EXT -right-> PAAS : (3) POST /api/ingest\n(FHIR R4 JSON)
+PAAS -right-> SEND_FHIR : (12) Dispatch flat JSON\nfor iHOMIS
+SEND_FHIR -right-> RECEIVE_TRANS : (13) POST /api/webhook\n(to iHOMIS)
+RECEIVE_TRANS -right-> IHOMIS : (14) Store record\n(Status=RECEIVED)
 
 ' Vertical AI Flow
-PAAS -down-> TEMP_DB : (4) Stores for raw data
-TEMP_DB -down-> AI_LAYER : (5) 
-AI_LAYER -down-> CONVERT : (6)
-CONVERT -left-> GEMINI : using
-CONVERT -down-> FHIR : (7)
-FHIR -right-> VERIFY : (8)
-VERIFY -right-> GEMINI : using
-GEMINI -down-> WAIVER
-GEMINI -down-> FORMAT
-VERIFY -up-> AI_LAYER : (9)
-AI_LAYER -up-> TEMP_DB : (10)
-TEMP_DB -up-> PAAS : (11) Return for converted data
+PAAS -down-> TEMP_DB : (4) Consent Check & Log Transaction\n(No PHI stored permanently)
+TEMP_DB -down-> AI_LAYER : (5) Route to Gemini\nfor Transformation
+AI_LAYER -down-> CONVERT : (6) FHIR R4 → iHOMIS JSON\nTranslation
+CONVERT -left-> GEMINI : using Google SDK
+CONVERT -down-> FHIR : (7) Flatten rich FHIR\nresources to JSON
+FHIR -right-> VERIFY : (8) Structural Validation
+VERIFY -right-> GEMINI : using Fallback Chain\n(flash-lite to 2.0-flash)
+GEMINI -down-> WAIVER : Check consent_signed
+GEMINI -down-> FORMAT : Map Terminologies\n(LOINC, ICD-10)
+VERIFY -up-> AI_LAYER : (9) Return Validation Result
+AI_LAYER -up-> TEMP_DB : (10) Log Transformation\nSuccess/Quarantine
+TEMP_DB -up-> PAAS : (11) Return Flat JSON Data
 
 note right of TEMP_DB
   Note: We will train the AI

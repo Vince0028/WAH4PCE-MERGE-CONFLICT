@@ -1,6 +1,5 @@
 # 📊 WAH4PCE System Context Diagrams (PlantUML)
-
-This folder contains **PlantUML (.puml)** System Context Diagrams for the WAH4PCE — ADAPT LHIE Interoperability System.
+**PlantUML (.puml)** System Context Diagrams for the WAH4PCE — ADAPT LHIE Interoperability System.
 
 ## 📁 Folder Structure
 

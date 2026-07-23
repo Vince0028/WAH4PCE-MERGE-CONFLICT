@@ -243,4 +243,4 @@ Doctor creates FHIR record in WAH
 
 ---
 
-*Document generated for WAH4PCE — Merge Conflict | AY 2025-2026*
+
