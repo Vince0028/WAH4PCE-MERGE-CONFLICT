@@ -68,9 +68,15 @@ export default function RecordsPage() {
 
   return (
     <>
-        <div className="mb-5">
-          <h1 className="text-lg font-bold">Patient Records</h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved records for {org.name}. Move records to send queue for exchange.</p>
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold">Patient Records</h1>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved records for {org.name}. Move records to send queue for exchange.</p>
+          </div>
+          <button onClick={() => { setLoading(true); fetchRecords(org.id); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
         </div>
 
         {loading ? (

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api';
 
 /**
@@ -96,46 +98,13 @@ export async function POST(request: NextRequest) {
       const ipaasData = await ipaasRes.json();
 
       if (ipaasData.success) {
-        await supabaseAdmin
-          .from('data_requests')
-          .update({
-            status: 'COMPLETED',
-            response_payload: ipaasData.data,
-            transaction_id: ipaasData.transaction_id || null,
-          })
-          .eq('id', reqData.id);
-
-        // Also save the data as a received patient record
-        if (ipaasData.data) {
-          const convertedData = ipaasData.data;
-          const pName = convertedData.patient_lname
-            ? `${convertedData.patient_lname}, ${convertedData.patient_fname} ${convertedData.patient_mname || ''}`.trim()
-            : convertedData.patient_name || patient_name || 'Requested Record';
-
-          await supabaseAdmin
-            .from('org_patients')
-            .insert({
-              org_id,
-              patient_name: pName,
-              philhealth_no: convertedData.philhealth_no || philhealth_no || '',
-              sex: convertedData.sex || convertedData.gender || '',
-              dob: convertedData.dob || convertedData.birthDate || null,
-              diagnosis_code: convertedData.diagnosis_code || '',
-              diagnosis_desc: convertedData.diagnosis_desc || '',
-              priority: convertedData.priority || 'ROUTINE',
-              data_payload: convertedData,
-              consent_signed: true,
-              status: 'RECEIVED',
-              source: 'RECEIVED',
-            });
-        }
-
+        // We do NOT update to COMPLETED here. It remains PENDING until WAH approves.
+        console.log(`[Portal Request] Request sent to iPaaS successfully. Waiting for WAH approval.`);
         return NextResponse.json({
           success: true,
           request_id: reqData.id,
-          status: 'COMPLETED',
-          message: 'Patient data retrieved and converted successfully',
-          data: ipaasData.data,
+          status: 'PENDING',
+          message: 'Data request submitted to WAH. Waiting for manual approval.',
         });
       } else {
         await supabaseAdmin

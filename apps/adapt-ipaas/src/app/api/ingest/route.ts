@@ -23,7 +23,9 @@ export async function POST(request: NextRequest) {
       destination_format: rawDestFormat,
       payload,
       original_json,
-      consent_signed
+      consent_signed,
+      request_id,
+      ipaas_transaction_id
     } = body;
 
     // --- 1. Validate request ---
@@ -78,33 +80,49 @@ export async function POST(request: NextRequest) {
       }, { status: 422 });
     }
 
-    // --- 2. Insert into Supabase as PENDING ---
+    // --- 2. Use existing transaction or insert new one as PENDING ---
     const rawPayloadForDb = typeof payload === 'string'
       ? { message: payload, format: sourceFormat }
       : payload;
 
-    const { data: insertedRecord, error: insertError } = await supabaseAdmin
-      .from('adapt_transaction_logs')
-      .insert({
-        source_system,
-        destination_system,
-        source_format: sourceFormat,
-        destination_format: destFormat,
-        raw_payload: rawPayloadForDb,
-        status: 'PENDING',
-      })
-      .select()
-      .single();
+    let transactionId: string;
 
-    if (insertError) {
-      console.error('[iPaaS Ingest] Supabase insert error:', insertError);
-      return NextResponse.json(
-        { success: false, message: 'Failed to store transaction', error: insertError.message },
-        { status: 500 }
-      );
+    if (ipaas_transaction_id) {
+      // Update the existing PENDING transaction (created during the request phase)
+      await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .update({
+          raw_payload: rawPayloadForDb,
+          status: 'PENDING',
+          error_message: null,
+        })
+        .eq('id', ipaas_transaction_id);
+      transactionId = ipaas_transaction_id;
+      console.log(`[iPaaS Ingest] Reusing existing transaction ${transactionId}`);
+    } else {
+      const { data: insertedRecord, error: insertError } = await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .insert({
+          source_system,
+          destination_system,
+          source_format: sourceFormat,
+          destination_format: destFormat,
+          raw_payload: rawPayloadForDb,
+          status: 'PENDING',
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[iPaaS Ingest] Supabase insert error:', insertError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to store transaction', error: insertError.message },
+          { status: 500 }
+        );
+      }
+      transactionId = insertedRecord.id;
     }
 
-    const transactionId = insertedRecord.id;
     console.log(`[iPaaS Ingest] Transaction ${transactionId} stored as PENDING`);
 
     // --- 3. Update to TRANSFORMING ---
@@ -179,6 +197,7 @@ export async function POST(request: NextRequest) {
           source_system,
           payload: transformResult.data,
           raw_source_payload: original_json || rawPayloadForDb,
+          request_id,
         }),
       });
 
