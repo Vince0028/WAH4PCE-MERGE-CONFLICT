@@ -145,7 +145,7 @@ export default function SendPage() {
                       background: rec.consent_signed ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                       color: rec.consent_signed ? '#34d399' : '#f87171',
                     }}>
-                      {rec.consent_signed ? '✓ Consent' : '⚠ No Consent'}
+                      {rec.consent_signed ? 'Consent Signed' : 'Missing Consent'}
                     </span>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export default function SendPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   {isRejected ? (
                     <>
-                      <button onClick={() => handleRequeue(rec.id)} className="portal-btn portal-btn-primary text-xs px-3 py-1.5">↻ Re-queue</button>
+                      <button onClick={() => handleRequeue(rec.id)} className="portal-btn portal-btn-primary text-xs px-3 py-1.5">Re-queue</button>
                       <button onClick={() => handleRevert(rec.id)} disabled={revertingId === rec.id} className="portal-btn portal-btn-secondary text-xs px-3 py-1.5">
                         {revertingId === rec.id ? 'Reverting...' : 'Revert to Records'}
                       </button>

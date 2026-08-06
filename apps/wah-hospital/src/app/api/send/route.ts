@@ -4,15 +4,27 @@ import { supabaseAdmin } from '@/lib/supabase';
 const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api';
 
 /**
- * POST /api/send — Send a saved FHIR record to iHOMIS via iPaaS
+ * POST /api/send — Send a saved FHIR record to a registered organization via iPaaS
+ * Now accepts destination_org_name and destination_format so iPaaS knows
+ * which format to convert FHIR R4 into.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { patient_id } = await request.json();
+    const body = await request.json();
+    const {
+      patient_id,
+      destination_org_id,
+      destination_org_name,
+      destination_format,
+    } = body;
 
     if (!patient_id) {
       return NextResponse.json({ success: false, message: 'patient_id is required' }, { status: 400 });
     }
+
+    // Default to legacy behavior if no org specified
+    const destName = destination_org_name || 'iHOMIS';
+    const destFormat = destination_format || 'HL7V2';
 
     // 1. Fetch the patient record from local DB
     const { data: patient, error: fetchError } = await supabaseAdmin
@@ -25,18 +37,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Record not found' }, { status: 404 });
     }
 
-    // 2. Send the FHIR bundle to iPaaS
-    console.log(`[WAH Send] Sending patient ${patient_id} to iPaaS...`);
+    // 2. Send the FHIR bundle to iPaaS with destination org info
+    console.log(`[WAH Send] Sending patient ${patient_id} to ${destName} (${destFormat}) via iPaaS...`);
 
     const ipaasRes = await fetch(`${IPAAS_URL}/ingest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         source_system: 'WAH',
-        destination_system: 'iHOMIS',
+        destination_system: destName,
+        source_format: 'FHIR_R4',
+        destination_format: destFormat,
         payload: patient.fhir_bundle,
-        original_json: patient.fhir_bundle, // Clean FHIR for comparison
+        original_json: patient.fhir_bundle,
         consent_signed: patient.consent_signed ?? false,
+        destination_org_id: destination_org_id || null,
       }),
     });
 
@@ -49,9 +64,8 @@ export async function POST(request: NextRequest) {
         .update({ status: 'SENT' })
         .eq('id', patient_id);
 
-      console.log(`[WAH Send] Record ${patient_id} sent. TX: ${ipaasData.transaction_id}`);
+      console.log(`[WAH Send] Record ${patient_id} sent to ${destName}. TX: ${ipaasData.transaction_id}`);
     } else {
-      // Rejected by iPaaS (e.g. no consent, validation failure)
       await supabaseAdmin
         .from('wah_patients')
         .update({
@@ -68,7 +82,7 @@ export async function POST(request: NextRequest) {
       transaction_id: ipaasData.transaction_id,
       status: ipaasData.success ? 'SENT' : 'REJECTED',
       message: ipaasData.success
-        ? `FHIR Bundle sent to DOH via iPaaS (TX: ${ipaasData.transaction_id?.slice(0, 8)})`
+        ? `FHIR R4 → ${destFormat} sent to ${destName} via iPaaS (TX: ${ipaasData.transaction_id?.slice(0, 8)})`
         : ipaasData.message || 'Failed to send',
     });
   } catch (error) {

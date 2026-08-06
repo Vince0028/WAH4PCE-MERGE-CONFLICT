@@ -101,7 +101,7 @@ export default function InboxPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <button onClick={() => handleAccept(rec.id)} className="portal-btn portal-btn-teal text-xs px-3 py-1.5">
-                    ✓ Accept to Records
+                    Accept to Records
                   </button>
                   <button onClick={() => setViewId(viewId === rec.id ? null : rec.id)}
                     className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--color-accent-bright)' }}>

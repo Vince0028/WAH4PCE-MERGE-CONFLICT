@@ -72,7 +72,7 @@ export default function Dashboard() {
           <div className="portal-card p-5" style={{ borderLeft: '3px solid var(--color-teal)' }}>
             <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>Exchange Target</p>
             <p className="text-base font-bold mt-1">WAH Hospital</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 — via ADAPT iPaaS</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 | via ADAPT iPaaS</p>
           </div>
         </div>
 

@@ -102,7 +102,7 @@ export default function RecordsPage() {
                       background: rec.consent_signed ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                       color: rec.consent_signed ? '#34d399' : '#f87171',
                     }}>
-                      {rec.consent_signed ? '✓ Consent' : '⚠ No Consent'}
+                      {rec.consent_signed ? 'Consent Signed' : 'Missing Consent'}
                     </span>
                   </div>
                 </div>

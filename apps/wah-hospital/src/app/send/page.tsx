@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import WAHSidebar from '@/components/Sidebar';
 
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_API_URL || 'http://localhost:3001/api';
+
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
   const text = await res.text();
@@ -17,8 +19,21 @@ interface WAHRecord {
   rejection_reason: string | null;
 }
 
+interface OrgOption {
+  id: string; name: string; code: string; data_format: string;
+}
+
+const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
+const FORMAT_BADGE: Record<string, { bg: string; color: string }> = {
+  HL7V2: { bg: 'rgba(59,130,246,0.08)', color: '#3b82f6' },
+  FHIR_R4: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
+  CDA_R2: { bg: 'rgba(245,158,11,0.08)', color: '#f59e0b' },
+};
+
 export default function SendPage() {
   const [records, setRecords] = useState<WAHRecord[]>([]);
+  const [orgs, setOrgs] = useState<OrgOption[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string|null>(null);
   const [revertingId, setRevertingId] = useState<string|null>(null);
@@ -40,12 +55,42 @@ export default function SendPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchQueue(); }, []);
+  const fetchOrgs = async () => {
+    try {
+      const data = await safeFetch(`${PORTAL_URL}/orgs`);
+      if (data.success && data.data) {
+        setOrgs(data.data);
+        if (data.data.length > 0 && !selectedOrg) {
+          setSelectedOrg(data.data[0].id);
+        }
+      }
+    } catch {
+      console.warn('[WAH Send] Could not fetch orgs from portal');
+    }
+  };
+
+  useEffect(() => { fetchQueue(); fetchOrgs(); }, []);
+
+  const getSelectedOrgInfo = (): OrgOption | undefined => orgs.find(o => o.id === selectedOrg);
 
   const handleSend = async (patientId: string) => {
+    const destOrg = getSelectedOrgInfo();
+    if (!destOrg) {
+      showToast('error', 'Please select a destination organization');
+      return;
+    }
     setSendingId(patientId);
     try {
-      const data = await safeFetch('/api/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ patient_id: patientId }) });
+      const data = await safeFetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient_id: patientId,
+          destination_org_id: destOrg.id,
+          destination_org_name: destOrg.name,
+          destination_format: destOrg.data_format,
+        }),
+      });
       if (data.success) { showToast('success', data.message); fetchQueue(); }
       else { showToast('error', data.message || 'Rejected by iPaaS'); fetchQueue(); }
     } catch { showToast('error', 'Failed to connect to iPaaS'); }
@@ -87,13 +132,55 @@ export default function SendPage() {
     finally { setDeleting(false); setDeleteModal(null); }
   };
 
+  const destOrg = getSelectedOrgInfo();
+  const destFmt = destOrg ? FORMAT_BADGE[destOrg.data_format] : null;
+
   return (
     <>
       <WAHSidebar />
       <main className="flex-1 p-6 overflow-auto">
         <div className="mb-5">
-          <h1 className="text-lg font-semibold">Send to DOH</h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Records queued for sending to iHOMIS (DOH) via iPaaS. FHIR R4 → HL7 v2 conversion.</p>
+          <h1 className="text-lg font-semibold">Send to Organization</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Select a registered organization and send patient records. FHIR R4 will be converted to their format via AI.
+          </p>
+        </div>
+
+        {/* Organization Selector */}
+        <div className="wah-card p-4 mb-5">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="text-xs font-medium uppercase tracking-wide block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Destination Organization</label>
+              {orgs.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent-bright)' }} />
+                  Loading registered organizations from portal...
+                </div>
+              ) : (
+                <select
+                  value={selectedOrg}
+                  onChange={e => setSelectedOrg(e.target.value)}
+                  className="w-full px-3 py-2 rounded text-sm border outline-none"
+                  style={{ background: 'var(--color-bg-primary)', borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                >
+                  {orgs.map(org => (
+                    <option key={org.id} value={org.id}>
+                      {org.name} ({org.code}) — {FORMAT_LABELS[org.data_format]}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {destOrg && destFmt && (
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Target format</p>
+                <span className="text-xs font-bold px-2.5 py-1 rounded" style={{ background: destFmt.bg, color: destFmt.color }}>
+                  {FORMAT_LABELS[destOrg.data_format]}
+                </span>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → {FORMAT_LABELS[destOrg.data_format]}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -102,10 +189,10 @@ export default function SendPage() {
           <div className="wah-card p-10 text-center">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1" className="mx-auto mb-3"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>No records in send queue</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Go to Records and click "Move to Send Queue" on a record.</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Go to Records and click &quot;Move to Send Queue&quot; on a record.</p>
           </div>
         ) : (
-          <div className="space-y-3" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto', paddingRight: '4px' }}>
+          <div className="space-y-3" style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', paddingRight: '4px' }}>
             {records.map(rec => {
               const isRejected = rec.status === 'REJECTED';
               return (
@@ -117,6 +204,12 @@ export default function SendPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ background: 'rgba(139,92,246,0.08)', color: '#8b5cf6' }}>FHIR R4</span>
+                    {destOrg && destFmt && (
+                      <>
+                        <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>→</span>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ background: destFmt.bg, color: destFmt.color }}>{FORMAT_LABELS[destOrg.data_format]}</span>
+                      </>
+                    )}
                     <span className="text-xs font-medium px-2 py-0.5 rounded" style={{
                       background: isRejected ? 'rgba(220,38,38,0.08)' : 'rgba(245,158,11,0.08)',
                       color: isRejected ? '#dc2626' : '#f59e0b',
@@ -130,7 +223,6 @@ export default function SendPage() {
                   </div>
                 </div>
 
-                {/* Rejection Reason Banner */}
                 {isRejected && rec.rejection_reason && (
                   <div className="flex items-start gap-2 mb-3 px-3 py-2.5 rounded-md text-xs" style={{ background: 'rgba(220,38,38,0.04)', border: '1px solid rgba(220,38,38,0.15)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" className="flex-shrink-0 mt-0.5">
@@ -161,8 +253,8 @@ export default function SendPage() {
                     </>
                   ) : (
                     <>
-                      <button onClick={() => handleSend(rec.id)} disabled={sendingId === rec.id} className="wah-btn wah-btn-primary text-xs px-3 py-1.5">
-                        {sendingId === rec.id ? (<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5" /> Sending...</>) : 'Send to DOH'}
+                      <button onClick={() => handleSend(rec.id)} disabled={sendingId === rec.id || !selectedOrg} className="wah-btn wah-btn-primary text-xs px-3 py-1.5">
+                        {sendingId === rec.id ? (<><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5" /> Sending...</>) : `Send to ${destOrg?.name || 'Org'}`}
                       </button>
                       <button onClick={() => handleRevert(rec.id)} disabled={revertingId === rec.id} className="wah-btn wah-btn-secondary text-xs px-3 py-1.5">
                         {revertingId === rec.id ? 'Reverting...' : 'Revert to Records'}

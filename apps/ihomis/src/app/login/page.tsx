@@ -81,7 +81,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Health Data Exchange</h1>
-            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Organization Portal — WAH4PCE ADAPT</p>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Organization Portal | WAH4PCE ADAPT</p>
           </div>
         </div>
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Health Data Exchange Portal — Organization Gateway",
+  title: "Health Data Exchange Portal | Organization Gateway",
   description: "Multi-organization health data exchange portal for the WAH4PCE ADAPT LHIE system. Register your organization, set your data format, and exchange patient records securely.",
 };
 
