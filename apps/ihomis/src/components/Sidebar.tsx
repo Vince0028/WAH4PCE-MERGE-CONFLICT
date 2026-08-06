@@ -46,8 +46,8 @@ export default function PortalSidebar() {
       {/* Org Header */}
       <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(20,184,166,0.3))' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2">
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
           </div>
