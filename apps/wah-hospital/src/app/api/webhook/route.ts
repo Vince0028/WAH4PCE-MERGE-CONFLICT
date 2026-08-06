@@ -8,9 +8,24 @@ import { supabaseAdmin } from '@/lib/supabase';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { transaction_id, source_system, payload, raw_source_payload } = body;
+    const { transaction_id, source_system, payload, raw_source_payload, request_id, status } = body;
 
-    console.log(`[WAH Webhook] Received FHIR bundle from ${source_system}, tx: ${transaction_id}`);
+    console.log(`[WAH Webhook] Received from ${source_system}, tx: ${transaction_id}, reqId: ${request_id || 'none'}, status: ${status || 'RECEIVED'}`);
+
+    // If this is a decline notification, update the request in Supabase
+    if (status === 'DECLINED' && request_id) {
+      const { error } = await supabaseAdmin
+        .from('wah_outbound_requests')
+        .update({ status: 'DECLINED', error_message: payload?.message || 'Declined by organization' })
+        .eq('id', request_id);
+      
+      if (error) {
+        console.error('Failed to update wah_outbound_requests on decline:', error);
+      } else {
+        console.log(`[WAH Webhook] Request ${request_id} was DECLINED.`);
+      }
+      return NextResponse.json({ success: true, message: 'Decline recorded' });
+    }
 
     // Extract patient info from FHIR Bundle for searchable columns
     let patientName = 'Unknown';
@@ -65,6 +80,19 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('[WAH Webhook] DB save error:', error);
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
+
+    if (request_id) {
+      const { error: updateError } = await supabaseAdmin
+        .from('wah_outbound_requests')
+        .update({ status: 'COMPLETED' })
+        .eq('id', request_id);
+      
+      if (updateError) {
+        console.error('Failed to update wah_outbound_requests on success:', updateError);
+      } else {
+        console.log(`[WAH Webhook] Request ${request_id} was COMPLETED.`);
+      }
     }
 
     console.log(`[WAH Webhook] Saved as received FHIR record: ${data.id}`);

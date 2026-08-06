@@ -1,34 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from '@/lib/supabase';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'requests.json');
-
-function readRequests() {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, '[]', 'utf8');
-      return [];
-    }
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('[WAH Requests] Error reading data:', error);
-    return [];
-  }
-}
-
-function writeRequests(requests: unknown[]) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(requests, null, 2), 'utf8');
-  } catch (error) {
-    console.error('[WAH Requests] Error writing data:', error);
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const requests = readRequests();
-  return NextResponse.json({ success: true, data: requests });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('wah_incoming_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('[WAH Requests] GET Error:', error);
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -36,23 +23,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { request_id, requesting_org, requesting_org_id, destination_format, philhealth_no, patient_name, ipaas_transaction_id } = body;
 
-    const newRequest = {
-      id: request_id,
-      requesting_org,
-      requesting_org_id,
-      destination_format,
-      philhealth_no,
-      patient_name,
-      ipaas_transaction_id: ipaas_transaction_id || null,
-      status: 'PENDING',
-      created_at: new Date().toISOString()
-    };
+    const { data, error } = await supabaseAdmin
+      .from('wah_incoming_requests')
+      .insert({
+        request_id: request_id || null,
+        requesting_org,
+        requesting_org_id: requesting_org_id || null,
+        destination_format: destination_format || 'HL7V2',
+        philhealth_no: philhealth_no || null,
+        patient_name: patient_name || null,
+        ipaas_transaction_id: ipaas_transaction_id || null,
+        status: 'PENDING',
+      })
+      .select()
+      .single();
 
-    const requests = readRequests();
-    requests.push(newRequest);
-    writeRequests(requests);
+    if (error) {
+      console.error('[WAH Requests] DB insert error:', error);
+      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true, message: 'Request logged successfully' });
+    return NextResponse.json({ success: true, message: 'Request logged successfully', data });
   } catch (error) {
     console.error('[WAH Requests] POST Error:', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
@@ -67,16 +58,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing id or status' }, { status: 400 });
     }
 
-    const requests = readRequests();
-    const idx = requests.findIndex((r: any) => r.id === id);
-    
-    if (idx !== -1) {
-      requests[idx].status = status;
-      writeRequests(requests);
-      return NextResponse.json({ success: true, message: 'Request updated' });
-    } else {
-      return NextResponse.json({ success: false, message: 'Request not found' }, { status: 404 });
+    const { data, error } = await supabaseAdmin
+      .from('wah_incoming_requests')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[WAH Requests] DB update error:', error);
+      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
+    
+    return NextResponse.json({ success: true, message: 'Request updated', data });
   } catch (error) {
     console.error('[WAH Requests] PUT Error:', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });

@@ -115,6 +115,34 @@ CREATE INDEX IF NOT EXISTS idx_datareq_philhealth ON data_requests (philhealth_n
 CREATE INDEX IF NOT EXISTS idx_datareq_created ON data_requests (created_at DESC);
 
 -- ============================================
+-- 4. Incoming Data Requests Table
+-- ============================================
+-- Tracks data transfer requests received from other organizations (e.g., WAH).
+
+CREATE TABLE incoming_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  target_org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  requesting_system VARCHAR(50) NOT NULL DEFAULT 'WAH',
+  philhealth_no VARCHAR(30),
+  patient_name VARCHAR(200),
+  request_reason TEXT,
+  
+  -- Status tracking
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'DENIED', 'FAILED')),
+    
+  ipaas_transaction_id UUID,
+  error_message TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inreq_org ON incoming_requests (target_org_id);
+CREATE INDEX IF NOT EXISTS idx_inreq_status ON incoming_requests (status);
+CREATE INDEX IF NOT EXISTS idx_inreq_created ON incoming_requests (created_at DESC);
+
+-- ============================================
 -- Auto-update triggers
 -- ============================================
 CREATE OR REPLACE FUNCTION update_modified_column()
@@ -135,6 +163,11 @@ CREATE TRIGGER update_data_requests_modtime
   BEFORE UPDATE ON data_requests
   FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 
+DROP TRIGGER IF EXISTS update_incoming_requests_modtime ON incoming_requests;
+CREATE TRIGGER update_incoming_requests_modtime
+  BEFORE UPDATE ON incoming_requests
+  FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
 -- ============================================
 -- RLS (open for prototype)
 -- ============================================
@@ -146,3 +179,6 @@ CREATE POLICY "Allow all for prototype" ON org_patients FOR ALL USING (true) WIT
 
 ALTER TABLE data_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all for prototype" ON data_requests FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE incoming_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for prototype" ON incoming_requests FOR ALL USING (true) WITH CHECK (true);
