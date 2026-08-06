@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import PortalSidebar from '@/components/Sidebar';
 import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -104,9 +103,7 @@ export default function RequestPage() {
   if (!org) return null;
 
   return (
-    <div className="flex min-h-screen">
-      <PortalSidebar />
-      <main className="flex-1 p-6 overflow-auto">
+    <>
         <div className="mb-5">
           <h1 className="text-lg font-bold">Request Data from WAH</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -212,7 +209,6 @@ export default function RequestPage() {
         </div>
 
         {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      </main>
-    </div>
+    </>
   );
 }

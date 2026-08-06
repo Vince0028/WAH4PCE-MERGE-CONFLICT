@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import PortalSidebar from '@/components/Sidebar';
 import ConsentFormModal from '@/components/ConsentFormModal';
 import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -106,9 +105,7 @@ export default function SavePatientPage() {
   const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
 
   return (
-    <div className="flex min-h-screen">
-      <PortalSidebar />
-      <main className="flex-1 p-6 overflow-auto">
+    <>
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">New Patient Record</h1>
@@ -219,7 +216,6 @@ export default function SavePatientPage() {
         </div>
         {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
         <ConsentFormModal open={showConsent} onClose={() => setShowConsent(false)} />
-      </main>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import PortalSidebar from '@/components/Sidebar';
 import { getCurrentOrg, supabase, type OrgProfile } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -49,9 +48,7 @@ export default function Dashboard() {
   const fmt = FORMAT_INFO[org.data_format];
 
   return (
-    <div className="flex min-h-screen">
-      <PortalSidebar />
-      <main className="flex-1 p-6 overflow-auto">
+    <>
         <div className="mb-6">
           <h1 className="text-lg font-bold">Dashboard</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Welcome, {org.name}</p>
@@ -143,7 +140,6 @@ export default function Dashboard() {
             <a href="/records" className="portal-btn portal-btn-secondary text-sm">View Records</a>
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 }
