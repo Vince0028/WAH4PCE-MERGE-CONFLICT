@@ -3,6 +3,7 @@
 -- Run this in the iPaaS Supabase SQL Editor
 -- ============================================
 -- The iPaaS logs all data exchange transactions.
+-- Updated to support dynamic organization names and data format tracking.
 -- Safe to re-run (uses DROP IF EXISTS).
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -11,14 +12,21 @@ DROP TABLE IF EXISTS adapt_transaction_logs CASCADE;
 
 CREATE TABLE adapt_transaction_logs (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  source_system VARCHAR(10) NOT NULL CHECK (source_system IN ('iHOMIS', 'WAH')),
-  destination_system VARCHAR(10) NOT NULL CHECK (destination_system IN ('iHOMIS', 'WAH')),
 
-  -- Input: HL7 v2 stored as { hl7v2_message: "MSH|...", format: "HL7v2" }
-  --    or: FHIR Bundle stored as-is
+  -- Source and destination (now dynamic org names, not just iHOMIS/WAH)
+  source_system VARCHAR(100) NOT NULL,
+  destination_system VARCHAR(100) NOT NULL,
+
+  -- Data format tracking
+  source_format VARCHAR(20) NOT NULL DEFAULT 'HL7V2'
+    CHECK (source_format IN ('HL7V2', 'FHIR_R4', 'CDA_R2')),
+  destination_format VARCHAR(20) NOT NULL DEFAULT 'FHIR_R4'
+    CHECK (destination_format IN ('HL7V2', 'FHIR_R4', 'CDA_R2')),
+
+  -- Input: raw payload from source system
   raw_payload JSONB NOT NULL,
 
-  -- Output: Transformed data (FHIR Bundle or iHOMIS JSON)
+  -- Output: Transformed data for destination system
   transformed_payload JSONB,
 
   status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
@@ -30,8 +38,10 @@ CREATE TABLE adapt_transaction_logs (
 
 CREATE INDEX IF NOT EXISTS idx_adapt_status ON adapt_transaction_logs (status);
 CREATE INDEX IF NOT EXISTS idx_adapt_source ON adapt_transaction_logs (source_system);
+CREATE INDEX IF NOT EXISTS idx_adapt_dest ON adapt_transaction_logs (destination_system);
+CREATE INDEX IF NOT EXISTS idx_adapt_src_fmt ON adapt_transaction_logs (source_format);
+CREATE INDEX IF NOT EXISTS idx_adapt_dest_fmt ON adapt_transaction_logs (destination_format);
 CREATE INDEX IF NOT EXISTS idx_adapt_created ON adapt_transaction_logs (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_adapt_destination ON adapt_transaction_logs (destination_system);
 
 -- Auto-update trigger
 CREATE OR REPLACE FUNCTION update_modified_column()

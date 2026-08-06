@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { transformWithAI } from '@/lib/ai';
+import { transformWithAI, getTransformDirection } from '@/lib/ai';
+import type { DataFormat } from '@/lib/ai';
 import { validateTransformation } from '@/lib/validator';
 
 /**
  * POST /api/ingest
- * Main ingestion endpoint — receives data from iHOMIS or WAH,
+ * Main ingestion endpoint — receives data from any organization or WAH,
  * stores it in Supabase, triggers AI transformation, validates,
  * and forwards to the destination system.
+ *
+ * Now supports dynamic organization names and 3 data formats:
+ * HL7V2, FHIR_R4, CDA_R2
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { source_system, destination_system, payload, original_json, consent_signed } = body;
+    const {
+      source_system,
+      destination_system,
+      source_format: rawSourceFormat,
+      destination_format: rawDestFormat,
+      payload,
+      original_json,
+      consent_signed
+    } = body;
 
     // --- 1. Validate request ---
     if (!source_system || !destination_system || !payload) {
@@ -22,12 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['iHOMIS', 'WAH'].includes(source_system) || !['iHOMIS', 'WAH'].includes(destination_system)) {
-      return NextResponse.json(
-        { success: false, message: 'source_system and destination_system must be "iHOMIS" or "WAH"' },
-        { status: 400 }
-      );
-    }
+    // Determine formats (default to legacy behavior if not specified)
+    const sourceFormat: DataFormat = rawSourceFormat || (source_system === 'WAH' ? 'FHIR_R4' : 'HL7V2');
+    const destFormat: DataFormat = rawDestFormat || (destination_system === 'WAH' ? 'FHIR_R4' : 'HL7V2');
 
     if (source_system === destination_system) {
       return NextResponse.json(
@@ -36,16 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[iPaaS Ingest] Received from ${source_system} → ${destination_system}`);
+    console.log(`[iPaaS Ingest] Received from ${source_system} (${sourceFormat}) → ${destination_system} (${destFormat})`);
 
     // --- 1b. Check patient data privacy consent ---
     if (!consent_signed) {
       const consentError = 'Patient data privacy consent form not signed or agreed. Record cannot be processed without patient consent per Republic Act 10173 (Data Privacy Act of 2012).';
       console.warn(`[iPaaS Ingest] QUARANTINED — No consent: ${consentError}`);
 
-      // Store the record as QUARANTINED immediately
       const rawPayloadForDb = typeof payload === 'string'
-        ? { hl7v2_message: payload, format: 'HL7v2' }
+        ? { message: payload, format: sourceFormat }
         : payload;
 
       const { data: quarantinedRecord } = await supabaseAdmin
@@ -53,6 +61,8 @@ export async function POST(request: NextRequest) {
         .insert({
           source_system,
           destination_system,
+          source_format: sourceFormat,
+          destination_format: destFormat,
           raw_payload: rawPayloadForDb,
           status: 'QUARANTINED',
           error_message: consentError,
@@ -69,9 +79,8 @@ export async function POST(request: NextRequest) {
     }
 
     // --- 2. Insert into Supabase as PENDING ---
-    // HL7 v2 comes as a string, FHIR comes as an object. Wrap strings for JSONB.
-    const rawPayloadForDb = typeof payload === 'string' 
-      ? { hl7v2_message: payload, format: 'HL7v2' } 
+    const rawPayloadForDb = typeof payload === 'string'
+      ? { message: payload, format: sourceFormat }
       : payload;
 
     const { data: insertedRecord, error: insertError } = await supabaseAdmin
@@ -79,6 +88,8 @@ export async function POST(request: NextRequest) {
       .insert({
         source_system,
         destination_system,
+        source_format: sourceFormat,
+        destination_format: destFormat,
         raw_payload: rawPayloadForDb,
         status: 'PENDING',
       })
@@ -104,12 +115,11 @@ export async function POST(request: NextRequest) {
 
     console.log(`[iPaaS Ingest] Transaction ${transactionId} → TRANSFORMING`);
 
-    // --- 4. AI Transformation via Gemini & Groq Juggling ---
-    const direction = source_system === 'iHOMIS' ? 'IHOMIS_TO_FHIR' : 'FHIR_TO_IHOMIS';
+    // --- 4. AI Transformation ---
+    const direction = getTransformDirection(sourceFormat, destFormat);
     const transformResult = await transformWithAI(payload, direction);
 
     if (!transformResult.success || !transformResult.data) {
-      // Quarantine if transformation fails
       await supabaseAdmin
         .from('adapt_transaction_logs')
         .update({
@@ -132,7 +142,6 @@ export async function POST(request: NextRequest) {
     const validation = validateTransformation(transformResult.data, direction);
 
     if (!validation.valid) {
-      // Quarantine if validation fails
       const errorMsg = `Validation errors: ${validation.errors.join('; ')}`;
       await supabaseAdmin
         .from('adapt_transaction_logs')
@@ -154,9 +163,9 @@ export async function POST(request: NextRequest) {
     }
 
     // --- 6. Forward to destination system ---
-    const webhookUrl = destination_system === 'iHOMIS'
-      ? (process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook')
-      : (process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook');
+    const webhookUrl = destination_system === 'WAH'
+      ? (process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook')
+      : (process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook');
 
     let forwardSuccess = false;
     let forwardError = '';
@@ -169,7 +178,7 @@ export async function POST(request: NextRequest) {
           transaction_id: transactionId,
           source_system,
           payload: transformResult.data,
-          raw_source_payload: original_json || rawPayloadForDb, // Prefer clean JSON over HL7v2 wrapper
+          raw_source_payload: original_json || rawPayloadForDb,
         }),
       });
 
@@ -183,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- 7. Update Supabase with final status ---
-    const finalStatus = forwardSuccess ? 'SUCCESS' : 'SUCCESS'; // Still SUCCESS even if forward fails (data is transformed)
+    const finalStatus = 'SUCCESS';
     await supabaseAdmin
       .from('adapt_transaction_logs')
       .update({
@@ -193,13 +202,13 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', transactionId);
 
-    console.log(`[iPaaS Ingest] Transaction ${transactionId} → ${finalStatus}`);
+    console.log(`[iPaaS Ingest] Transaction ${transactionId} → ${finalStatus} (model: ${transformResult.usedModel})`);
 
     return NextResponse.json({
       success: true,
       transaction_id: transactionId,
       status: finalStatus,
-      message: `Data transformed and ${forwardSuccess ? 'forwarded' : 'stored'} successfully`,
+      message: `Data transformed (${sourceFormat}→${destFormat}) and ${forwardSuccess ? 'forwarded' : 'stored'} successfully`,
       forwarded: forwardSuccess,
     });
 
