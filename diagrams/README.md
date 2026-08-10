@@ -6,7 +6,7 @@
 ```
 diagrams/
 ├── README.md                           ← This file
-├── adapt_ipaas_complete.puml           ← ⭐ ADAPT iPaaS ONLY: What our group built (Simple view)
+├── component_diagram/adapt_ipaas_component_diagram.puml           ← ⭐ ADAPT iPaaS ONLY: What our group built (Simple view)
 ├── system_context_full.puml            ← ✅ COMBINED: Full System Overview (All 3 Systems)
 ├── system_context_simple.puml          ← 🟦 HIGH-LEVEL: True System Context Diagram (Level 1)
 ├── flow_doh_to_wah.puml                ← 🔄 Prototype flow: DOH sending to WAH (Figma match)
@@ -16,8 +16,7 @@ diagrams/
 │   └── external_actors.puml            ← External actors & users (UCD Style Layout)
 │
 ├── systems/
-│   ├── ihomis_system.puml              ← iHOMIS (DOH Legacy System)
-│   ├── adapt_ipaas_system.puml         ← ADAPT iPaaS Middleware
+│   ├── system_context_diagram/adapt_ipaas_system_context_diagram.puml         ← ADAPT iPaaS Middleware
 │   └── wah_hospital_system.puml        ← WAH Hospital (Modern FHIR System)
 │
 ├── external_systems/
@@ -52,4 +51,4 @@ java -jar plantuml.jar system_context_simple.puml
 
 **🔄 `flow_doh_to_wah.puml` / `flow_wah_to_doh.puml`** — These flowcharts exactly match the prototype visualizations you created in Figma, tracking the step-by-step movement of data.
 
-**⭐ `adapt_ipaas_complete.puml` & `system_context_full.puml`** — These are the full diagrams detailing what your group built, but they have been rewritten to use **simple, everyday language** (e.g. "Check if patient gave consent" instead of "Consent-as-Code Gatekeeper").
+**⭐ `component_diagram/adapt_ipaas_component_diagram.puml` & `system_context_full.puml`** — These are the full diagrams detailing what your group built, but they have been rewritten to use **simple, everyday language** (e.g. "Check if patient gave consent" instead of "Consent-as-Code Gatekeeper").

@@ -62,18 +62,17 @@ rectangle "HL7 FHIR R4\nStandard" as FHIR_STD #FFF3E0
 rectangle "Proxmox Server" as PROXMOX #ECEFF1
 rectangle "WAH Security\n(VPN + Encryption)" as WAH_SEC #FFEBEE
 
-' -- System Boundary --
-rectangle "WAH4PCE Platform" as PLATFORM {
+rectangle "iHOMIS\n(DOH Legacy Hospital)" as IHOMIS #E3F2FD {
+    component "Create / Edit\nPatient Records" as I_CRUD
+    component "Build HL7 v2\nMessage" as I_HL7
+    component "Send Queue" as I_QUEUE
+    component "Inbox\n(Receive Records)" as I_INBOX
+    database "iHOMIS Database" as I_DB
+    I_CRUD --> I_DB
+    I_HL7 --> I_QUEUE
+}
 
-    rectangle "iHOMIS\n(DOH Legacy Hospital)" as IHOMIS #E3F2FD {
-        component "Create / Edit\nPatient Records" as I_CRUD
-        component "Build HL7 v2\nMessage" as I_HL7
-        component "Send Queue" as I_QUEUE
-        component "Inbox\n(Receive Records)" as I_INBOX
-        database "iHOMIS Database" as I_DB
-        I_CRUD --> I_DB
-        I_HL7 --> I_QUEUE
-    }
+rectangle "WAH4PCE Platform" as PLATFORM {
 
     rectangle "ADAPT iPaaS\n(AI Middleware)" as IPAAS #F3E5F5 {
         component "Receive\nIncoming Data" as IP_INGEST

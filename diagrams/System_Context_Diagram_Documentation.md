@@ -233,9 +233,8 @@ Doctor creates FHIR record in WAH
 |------|----------|-------------|
 | `system_context_full.puml` | `diagrams/` | ✅ **COMBINED** — Full System Context Diagram (everything in one view) |
 | `external_actors.puml` | `diagrams/actors/` | External actors & users |
-| `ihomis_system.puml` | `diagrams/systems/` | iHOMIS (DOH Legacy System) component |
-| `adapt_ipaas_system.puml` | `diagrams/systems/` | ADAPT iPaaS Middleware component |
-| `wah_hospital_system.puml` | `diagrams/systems/` | WAH Hospital (FHIR R4) component |
+| `adapt_ipaas_system_context_diagram.puml` | `diagrams/system_context_diagram/` | ADAPT iPaaS Middleware component |
+| `wah_hospital_system.puml` | `diagrams/system_context_diagram/` | WAH Hospital (FHIR R4) component |
 | `external_dependencies.puml` | `diagrams/external_systems/` | External systems (Gemini, Supabase, DOH, PhilHealth, etc.) |
 | `data_transformation.puml` | `diagrams/functions/` | AI-powered format translation functions |
 | `validation_consent.puml` | `diagrams/functions/` | Validation engine & consent gatekeeper functions |
