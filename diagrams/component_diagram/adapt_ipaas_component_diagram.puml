@@ -1,65 +1,59 @@
-@startuml ADAPT_iPaaS_Component
+@startuml ADAPT_iPaaS_Component_Diagram
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-'Diagram Title
 title Component Diagram for ADAPT iPaaS Middleware
 
-'Actors
-Person(admin, "WAH4PCE Admin", "Monitors system health and manages records")
+Person(admin, "System Admin", "IT administrator who monitors the interoperability pipeline, views logs, and manages config.")
 
-'External Systems
-System_Ext(ihomis, "iHOMIS", "DOH Legacy System")
-System_Ext(wah, "WAH Hospital", "Modern System")
-System_Ext(gemini, "Google Gemini AI", "Cloud AI Service")
-System_Ext(groq, "Groq AI", "Backup AI Service")
+System_Ext(gemini, "Google Gemini AI", "Primary AI provider for record transformation.")
+System_Ext(groq, "Groq API", "Fallback AI provider.")
+SystemDb_Ext(supabase, "Supabase Database", "Stores transaction logs and metrics.")
 
-Container_Boundary(adapt_ipaas, "ADAPT (Our Middleware)") {
+System_Ext(requester, "Data Requester", "External system requesting data.")
+System_Ext(provider, "Data Provider", "External system providing approved records.")
+
+Container_Boundary(adapt_ipaas, "ADAPT iPaaS") {
     
-    Container_Boundary(web_app, "Web Dashboard") {
-        Component(dashboard, "View Transactions & Health", "React", "View all transactions and system health")
-        Component(review, "Review Blocked Records", "React", "Review blocked records")
+    Component(dashboard, "Admin Dashboard", "Web UI", "Monitor metrics, view logs, test transforms, and configure AI models.")
+    
+    Container_Boundary(api_layer, "API Layer") {
+        Component(request_api, "Request API", "API", "Handles bidirectional data requests. Logs Pending transaction.")
+        Component(ingest_api, "Ingest API", "API", "Receives approved records. Runs AI transformation, validates, forwards.")
+        Component(decline_api, "Decline API", "API", "Handles request declines. Marks transaction as Quarantined.")
     }
 
-    Container_Boundary(api_app, "Interoperability Routing & ADAPT Engine") {
-        Component(step_receive, "Receive Incoming Record", "Golang", "Receive incoming health record")
-        Component(step_consent, "Check Consent", "Golang", "Check if patient gave consent")
-        Component(step_pending, "Save Pending Record", "Golang", "Save record as Pending")
-        Component(step_ai, "AI Format Conversion", "Golang", "Send to AI for format conversion")
-        Component(step_fallback, "Backup AI Converter", "Golang", "If AI is busy, try backup model")
-        Component(step_validate, "Verify Converted Data", "Golang", "Verify the converted data is correct")
-        Component(step_quarantine, "Quarantine Bad Records", "Golang", "Block bad records for admin review")
-        Component(step_forward, "Forward Converted Data", "Golang", "Forward converted data to destination hospital")
-        Component(step_log, "Transaction Logger", "Golang", "Save a log of what happened")
+    Container_Boundary(core_services, "Core Services") {
+        Component(ai_svc, "AI Transformation Service", "Service", "Converts records across formats using a chain of AI models.")
+        Component(validator, "Validation Service", "Service", "Checks that transformed record is complete and correct.")
+        Component(tx_log, "Transaction Log Service", "Service", "Records every event and tracks status.")
+        Component(metrics, "Metrics Service", "Service", "Aggregates transaction counts by status, direction, format.")
     }
-
-    ComponentDb(log_db, "Transaction Logs", "MongoDB", "Only saves timestamps, status, and system names. NO patient health data is kept.")
 }
 
-'Relationships
-Rel(ihomis, step_receive, "Sends patient record", "JSON")
-Rel(wah, step_receive, "Sends patient record", "JSON")
+Rel(admin, dashboard, "Monitors dashboard, views logs and config", "HTTPS")
 
-Rel(step_receive, step_consent, "Triggers", "In-Process")
-Rel(step_consent, step_pending, "If consent given", "In-Process")
-Rel(step_consent, step_quarantine, "If no consent", "In-Process")
-Rel(step_pending, step_ai, "Starts conversion", "In-Process")
-Rel(step_ai, step_validate, "On success", "In-Process")
-Rel(step_ai, step_fallback, "If AI busy", "In-Process")
-Rel(step_validate, step_forward, "If correct", "In-Process")
-Rel(step_validate, step_quarantine, "If bad data", "In-Process")
-Rel(step_forward, step_log, "Logs result", "In-Process")
-Rel(step_log, log_db, "Writes log", "MongoDB Driver")
-Rel(step_quarantine, log_db, "Writes log", "MongoDB Driver")
+Rel(dashboard, ingest_api, "Tests transforms", "POST /api/ingest")
+Rel(dashboard, tx_log, "Fetches logs", "GET /api/transactions")
+Rel(dashboard, metrics, "Fetches stats", "GET /api/metrics")
 
-Rel(step_forward, wah, "Delivers converted record", "HTTPS")
-Rel(step_forward, ihomis, "Delivers converted record", "HTTPS")
+Rel(requester, request_api, "Data request", "POST /api/request")
+Rel(provider, ingest_api, "Approved record", "POST /api/ingest")
+Rel(provider, decline_api, "Declines request", "POST /api/decline")
 
-Rel(step_ai, gemini, "Asks AI to convert", "HTTPS")
-Rel(step_fallback, groq, "Backup AI", "HTTPS")
+Rel(request_api, tx_log, "Logs request as Pending")
+Rel(decline_api, tx_log, "Updates to Quarantined")
 
-Rel(admin, dashboard, "Monitors system", "HTTPS")
-Rel(admin, review, "Manages records", "HTTPS")
-Rel(dashboard, log_db, "Reads logs", "MongoDB Driver")
-Rel(review, step_quarantine, "Reviews blocked records", "HTTPS")
+Rel(ingest_api, ai_svc, "Requests transformation")
+Rel(ingest_api, validator, "Validates output")
+Rel(ingest_api, tx_log, "Logs status and payload")
+
+Rel(ingest_api, requester, "Transformed record/bundle", "POST /api/webhook")
+Rel(request_api, provider, "Forwards data request", "POST /api/requests")
+Rel(decline_api, requester, "Notifies of decline", "POST /api/webhook")
+
+Rel(ai_svc, gemini, "Transformation request (Primary)")
+Rel(ai_svc, groq, "Transformation request (Fallback)")
+Rel(tx_log, supabase, "Reads/writes logs", "REST API")
+Rel(metrics, supabase, "Reads counts", "REST API")
 
 @enduml
