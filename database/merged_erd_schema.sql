@@ -138,10 +138,12 @@ CREATE TABLE `audit_logs` (
 CREATE TABLE `adapt_transaction_logs` (
   `id` CHAR(36) NOT NULL
     COMMENT 'UUID primary key',
-  `source_system` VARCHAR(100) NOT NULL
-    COMMENT 'Org name or system code that sent data',
-  `destination_system` VARCHAR(100) NOT NULL
-    COMMENT 'Org name or system code receiving data',
+  `request_id` VARCHAR(50) DEFAULT NULL
+    COMMENT 'Optional link to the data exchange request',
+  `source_system` VARCHAR(50) NOT NULL
+    COMMENT 'Provider ID that sent data',
+  `destination_system` VARCHAR(50) NOT NULL
+    COMMENT 'Provider ID receiving data',
   `source_format` VARCHAR(20) NOT NULL DEFAULT 'HL7V2'
     COMMENT 'HL7V2, FHIR_R4, or CDA_R2',
   `destination_format` VARCHAR(20) NOT NULL DEFAULT 'FHIR_R4'
@@ -161,7 +163,17 @@ CREATE TABLE `adapt_transaction_logs` (
   INDEX `idx_adapt_dest` (`destination_system`),
   INDEX `idx_adapt_src_fmt` (`source_format`),
   INDEX `idx_adapt_dest_fmt` (`destination_format`),
-  INDEX `idx_adapt_created` (`created_at` DESC)
+  INDEX `idx_adapt_created` (`created_at` DESC),
+  INDEX `idx_adapt_request_id` (`request_id`),
+  CONSTRAINT `fk_adapt_request`
+    FOREIGN KEY (`request_id`) REFERENCES `requests` (`request_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_adapt_source_provider`
+    FOREIGN KEY (`source_system`) REFERENCES `providers` (`provider_id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_adapt_dest_provider`
+    FOREIGN KEY (`destination_system`) REFERENCES `providers` (`provider_id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   COMMENT='[CUSTOM] ADAPT iPaaS AI transformation pipeline — tracks HL7v2 <-> FHIR R4 translations';
 
@@ -188,7 +200,8 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 --   providers (1:M) ──receives──> requests
 --   requests  (1:M) ──generates──> audit_logs
 --   providers (1:M) ──performs──> audit_logs
+--   requests  (1:M) ──triggers──> adapt_transaction_logs
+--   providers (1:M) ──sends──> adapt_transaction_logs
+--   providers (1:M) ──receives──> adapt_transaction_logs
 --
--- NOTE: WAH & iHOMIS tables are in separate schema files
---   (wah_schema.sql, ihomis_schema.sql) as test prototypes.
--- ============================================================
+
