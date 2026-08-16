@@ -1,84 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api';
 
 /**
- * GET /api/request — List data requests for an org
- * POST /api/request — Submit a new data request to WAH
+ * POST /api/request — Submit a data request to WAH via iPaaS
+ * iHOMIS requests patient data from WAH. Hardcoded as iHOMIS identity.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const orgId = searchParams.get('org_id');
-    const status = searchParams.get('status');
-
-    if (!orgId) {
-      return NextResponse.json({ success: false, message: 'org_id is required' }, { status: 400 });
-    }
-
-    let query = supabaseAdmin
-      .from('data_requests')
-      .select('*')
-      .eq('requesting_org_id', orgId)
-      .order('created_at', { ascending: false });
-
-    if (status) query = query.eq('status', status);
-
-    const { data, error } = await query;
-    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, data });
-  } catch (error) {
-    console.error('[Portal Request API] Error:', error);
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { org_id, philhealth_no, patient_name, request_reason } = body;
-
-    if (!org_id) {
-      return NextResponse.json({ success: false, message: 'org_id is required' }, { status: 400 });
-    }
+    const { philhealth_no, patient_name, request_reason } = body;
 
     if (!philhealth_no && !patient_name) {
       return NextResponse.json({ success: false, message: 'PhilHealth number or patient name is required' }, { status: 400 });
     }
 
-    // Fetch the org to get its data format
-    const { data: org, error: orgError } = await supabaseAdmin
-      .from('organizations')
-      .select('*')
-      .eq('id', org_id)
-      .single();
-
-    if (orgError || !org) {
-      return NextResponse.json({ success: false, message: 'Organization not found' }, { status: 404 });
-    }
-
-    // Create the data request record
-    const { data: reqData, error: reqError } = await supabaseAdmin
-      .from('data_requests')
-      .insert({
-        requesting_org_id: org_id,
-        target_system: 'WAH',
-        philhealth_no: philhealth_no || null,
-        patient_name: patient_name || null,
-        request_reason: request_reason || 'Patient data transfer request',
-        status: 'PENDING',
-      })
-      .select()
-      .single();
-
-    if (reqError) {
-      return NextResponse.json({ success: false, message: reqError.message }, { status: 500 });
-    }
-
-    console.log(`[Portal Request] Created request ${reqData.id} from ${org.name} for ${philhealth_no || patient_name}`);
+    console.log(`[iHOMIS Request] Requesting data from WAH for ${philhealth_no || patient_name}...`);
 
     // Forward request to iPaaS to fetch from WAH
     try {
@@ -86,54 +25,41 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          request_id: reqData.id,
-          requesting_org: org.name,
-          requesting_org_id: org.id,
-          destination_format: org.data_format,
+          requesting_org: 'iHOMIS',
+          requesting_org_id: 'IHOMIS-001',
+          destination_format: 'HL7V2',
           philhealth_no,
           patient_name,
+          request_reason: request_reason || 'Patient data transfer request',
         }),
       });
 
       const ipaasData = await ipaasRes.json();
 
       if (ipaasData.success) {
-        // We do NOT update to COMPLETED here. It remains PENDING until WAH approves.
-        console.log(`[Portal Request] Request sent to iPaaS successfully. Waiting for WAH approval.`);
+        console.log(`[iHOMIS Request] Request sent to iPaaS successfully. Waiting for WAH approval.`);
         return NextResponse.json({
           success: true,
-          request_id: reqData.id,
           status: 'PENDING',
           message: 'Data request submitted to WAH. Waiting for manual approval.',
         });
       } else {
-        await supabaseAdmin
-          .from('data_requests')
-          .update({
-            status: 'FAILED',
-            error_message: ipaasData.message || 'iPaaS request failed',
-          })
-          .eq('id', reqData.id);
-
         return NextResponse.json({
           success: false,
-          request_id: reqData.id,
           status: 'FAILED',
-          message: ipaasData.message || 'Failed to retrieve data from WAH',
+          message: ipaasData.message || 'Failed to send request to WAH',
         });
       }
     } catch (ipaasError) {
-      console.warn('[Portal Request] iPaaS connection failed:', ipaasError);
-      // Keep request as PENDING if iPaaS is unavailable
+      console.warn('[iHOMIS Request] iPaaS connection failed:', ipaasError);
       return NextResponse.json({
-        success: true,
-        request_id: reqData.id,
-        status: 'PENDING',
-        message: 'Request created. iPaaS will process it when available.',
-      });
+        success: false,
+        status: 'FAILED',
+        message: 'Could not connect to iPaaS. Is the server running?',
+      }, { status: 503 });
     }
   } catch (error) {
-    console.error('[Portal Request] Error:', error);
+    console.error('[iHOMIS Request] Error:', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }

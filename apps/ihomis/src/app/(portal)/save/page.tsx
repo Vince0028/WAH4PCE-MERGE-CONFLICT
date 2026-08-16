@@ -1,8 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ConsentFormModal from '@/components/ConsentFormModal';
-import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
@@ -21,14 +19,12 @@ const SAMPLE_DATA = {
   chief_complaint: 'Persistent cough and mild fever for 3 days',
   diagnosis_code: 'J18.9', diagnosis_desc: 'Pneumonia, unspecified organism', diagnosis_type: 'admitting',
   clinical_notes: 'Patient referred for further evaluation and management',
-  referring_facility_code: 'DOH-001', referring_facility_name: 'DOH General Hospital',
+  referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
   referring_physician: 'Dr. Maria Santos', referring_physician_license: 'PRC-12345',
   referral_reason: 'Specialist consult for respiratory condition', priority: 'ROUTINE',
 };
 
 export default function SavePatientPage() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{type:'success'|'error', msg:string}|null>(null);
   const [consentSigned, setConsentSigned] = useState(false);
@@ -41,33 +37,19 @@ export default function SavePatientPage() {
     bp_systolic: '', bp_diastolic: '', heart_rate: '', temperature: '',
     respiratory_rate: '', oxygen_saturation: '', weight_kg: '', height_cm: '',
     chief_complaint: '', diagnosis_code: '', diagnosis_desc: '', diagnosis_type: 'admitting',
-    clinical_notes: '', referring_facility_code: 'DOH-001', referring_facility_name: 'DOH General Hospital',
+    clinical_notes: '', referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
     referring_physician: '', referring_physician_license: '', referral_reason: '', priority: 'ROUTINE',
   });
 
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      // Set the referring facility to the org
-      setForm(prev => ({
-        ...prev,
-        referring_facility_code: o.code,
-        referring_facility_name: o.name,
-      }));
-    });
-  }, [router]);
-
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
-  const autoFill = () => setForm(prev => ({ ...prev, ...SAMPLE_DATA, referring_facility_code: org?.code || 'DOH-001', referring_facility_name: org?.name || 'DOH General Hospital' }));
+  const autoFill = () => setForm(prev => ({ ...prev, ...SAMPLE_DATA }));
 
   const handleSave = async () => {
     if (!form.patient_fname || !form.patient_lname || !form.philhealth_no) {
       showToast('error', 'Required: First Name, Last Name, PhilHealth No.');
       return;
     }
-    if (!org) return;
     setSaving(true);
     try {
       const payload = {
@@ -82,7 +64,7 @@ export default function SavePatientPage() {
       };
       const data = await safeFetch('/api/patients', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: org.id, patient_data: payload, consent_signed: consentSigned }),
+        body: JSON.stringify({ patient_data: payload, consent_signed: consentSigned }),
       });
       if (data.success) {
         showToast('success', 'Patient record saved.');
@@ -100,17 +82,13 @@ export default function SavePatientPage() {
     </div>
   );
 
-  if (!org) return null;
-
-  const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
-
   return (
     <>
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">New Patient Record</h1>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Save patient data locally. Data will be sent as <strong>{FORMAT_LABELS[org.data_format]}</strong> format when exchanged.
+              Save patient data locally. Data will be sent as <strong>HL7 v2</strong> format when exchanged.
             </p>
           </div>
           <button onClick={autoFill} className="portal-btn portal-btn-secondary text-xs">
@@ -173,7 +151,7 @@ export default function SavePatientPage() {
               <div><label className="portal-label">Priority</label>
                 <select className="portal-input" value={form.priority} onChange={e => update('priority', e.target.value)}>
                   <option value="ROUTINE">Routine</option><option value="URGENT">Urgent</option><option value="EMERGENCY">Emergency</option></select></div>
-              <Field label="Referring Facility" field="referring_facility_name" placeholder={org.name} />
+              <Field label="Referring Facility" field="referring_facility_name" placeholder="iHOMIS" />
               <Field label="Physician" field="referring_physician" placeholder="Dr. Maria Santos" />
             </div>
           </div>

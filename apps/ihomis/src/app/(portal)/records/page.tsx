@@ -1,7 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
@@ -13,14 +11,12 @@ interface PatientRecord {
   id: string; patient_name: string; philhealth_no: string; sex: string;
   dob: string; diagnosis_code: string; diagnosis_desc: string;
   priority: string; status: string; source: string;
-  data_payload: Record<string, unknown>;
+  hl7v2_payload: Record<string, unknown>;
   created_at: string;
   consent_signed: boolean;
 }
 
 export default function RecordsPage() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [records, setRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{type:'success'|'error', msg:string}|null>(null);
@@ -30,16 +26,10 @@ export default function RecordsPage() {
 
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
 
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      fetchRecords(o.id);
-    });
-  }, [router]);
+  useEffect(() => { fetchRecords(); }, []);
 
-  const fetchRecords = async (orgId: string) => {
-    const data = await safeFetch(`/api/patients?org_id=${orgId}&status=SAVED`);
+  const fetchRecords = async () => {
+    const data = await safeFetch('/api/patients?status=SAVED');
     setRecords(data.data || []);
     setLoading(false);
   };
@@ -49,7 +39,7 @@ export default function RecordsPage() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: 'QUEUED' }),
     });
-    if (data.success) { showToast('success', 'Moved to send queue'); if (org) fetchRecords(org.id); }
+    if (data.success) { showToast('success', 'Moved to send queue'); fetchRecords(); }
     else showToast('error', data.message || 'Failed');
   };
 
@@ -58,22 +48,20 @@ export default function RecordsPage() {
     setDeleting(true);
     try {
       const data = await safeFetch(`/api/patients?id=${deleteModal}`, { method: 'DELETE' });
-      if (data.success) { showToast('success', 'Record deleted'); if (org) fetchRecords(org.id); }
+      if (data.success) { showToast('success', 'Record deleted'); fetchRecords(); }
       else showToast('error', data.message || 'Failed');
     } catch { showToast('error', 'Failed'); }
     finally { setDeleting(false); setDeleteModal(null); }
   };
-
-  if (!org) return null;
 
   return (
     <>
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">Patient Records</h1>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved records for {org.name}. Move records to send queue for exchange.</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved records for iHOMIS. Move records to send queue for exchange.</p>
           </div>
-          <button onClick={() => { setLoading(true); fetchRecords(org.id); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
+          <button onClick={() => { setLoading(true); fetchRecords(); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
             Refresh
           </button>
@@ -128,7 +116,7 @@ export default function RecordsPage() {
                 </div>
                 {viewId === rec.id && (
                   <pre className="mt-3 p-3 rounded-lg text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', maxHeight: '400px' }}>
-                    {JSON.stringify(rec.data_payload, null, 2)}
+                    {JSON.stringify(rec.hl7v2_payload, null, 2)}
                   </pre>
                 )}
               </div>

@@ -1,7 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
@@ -13,15 +11,13 @@ interface PatientRecord {
   id: string; patient_name: string; philhealth_no: string; sex: string;
   dob: string; diagnosis_code: string; diagnosis_desc: string;
   priority: string; status: string; source: string;
-  data_payload: Record<string, unknown>;
+  hl7v2_payload: Record<string, unknown>;
   raw_source_payload: Record<string, unknown> | null;
   created_at: string;
   consent_signed: boolean;
 }
 
 export default function InboxPage() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [records, setRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewId, setViewId] = useState<string|null>(null);
@@ -30,16 +26,10 @@ export default function InboxPage() {
 
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
 
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      fetchInbox(o.id);
-    });
-  }, [router]);
+  useEffect(() => { fetchInbox(); }, []);
 
-  const fetchInbox = async (orgId: string) => {
-    const data = await safeFetch(`/api/patients?org_id=${orgId}&source=RECEIVED`);
+  const fetchInbox = async () => {
+    const data = await safeFetch('/api/patients?source=RECEIVED');
     setRecords(data.data || []);
     setLoading(false);
   };
@@ -49,13 +39,9 @@ export default function InboxPage() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: 'SAVED', source: 'LOCAL' }),
     });
-    if (data.success) { showToast('success', 'Record accepted into local records'); if (org) fetchInbox(org.id); }
+    if (data.success) { showToast('success', 'Record accepted into local records'); fetchInbox(); }
     else showToast('error', data.message || 'Failed');
   };
-
-  const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
-
-  if (!org) return null;
 
   return (
     <>
@@ -63,10 +49,10 @@ export default function InboxPage() {
           <div>
             <h1 className="text-lg font-bold">Inbox</h1>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Received records from WAH Hospital, converted to your {FORMAT_LABELS[org.data_format]} format.
+              Received records from WAH Hospital, converted to your HL7 v2 format.
             </p>
           </div>
-          <button onClick={() => { setLoading(true); fetchInbox(org.id); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
+          <button onClick={() => { setLoading(true); fetchInbox(); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
             Refresh
           </button>
@@ -121,9 +107,9 @@ export default function InboxPage() {
                 </div>
                 {viewId === rec.id && (
                   <div className="mt-3">
-                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-teal)' }}>Converted ({FORMAT_LABELS[org.data_format]}):</p>
+                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-teal)' }}>Converted (HL7 v2):</p>
                     <pre className="p-3 rounded-lg text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', maxHeight: '300px' }}>
-                      {JSON.stringify(rec.data_payload, null, 2)}
+                      {JSON.stringify(rec.hl7v2_payload, null, 2)}
                     </pre>
                   </div>
                 )}

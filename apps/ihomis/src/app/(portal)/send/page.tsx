@@ -1,7 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
@@ -13,15 +11,13 @@ interface PatientRecord {
   id: string; patient_name: string; philhealth_no: string; sex: string;
   dob: string; diagnosis_code: string; diagnosis_desc: string;
   priority: string; status: string; source: string;
-  data_payload: Record<string, unknown>;
+  hl7v2_payload: Record<string, unknown>;
   created_at: string;
   consent_signed: boolean;
   rejection_reason: string | null;
 }
 
 export default function SendPage() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [records, setRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string|null>(null);
@@ -33,18 +29,12 @@ export default function SendPage() {
 
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
 
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      fetchQueue(o.id);
-    });
-  }, [router]);
+  useEffect(() => { fetchQueue(); }, []);
 
-  const fetchQueue = async (orgId: string) => {
+  const fetchQueue = async () => {
     const [queuedRes, rejectedRes] = await Promise.all([
-      safeFetch(`/api/patients?org_id=${orgId}&status=QUEUED`),
-      safeFetch(`/api/patients?org_id=${orgId}&status=REJECTED`),
+      safeFetch('/api/patients?status=QUEUED'),
+      safeFetch('/api/patients?status=REJECTED'),
     ]);
     const all = [...(queuedRes.data || []), ...(rejectedRes.data || [])];
     all.sort((a: PatientRecord, b: PatientRecord) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -53,15 +43,14 @@ export default function SendPage() {
   };
 
   const handleSend = async (patientId: string) => {
-    if (!org) return;
     setSendingId(patientId);
     try {
       const data = await safeFetch('/api/send', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient_id: patientId, org_id: org.id }),
+        body: JSON.stringify({ patient_id: patientId }),
       });
-      if (data.success) { showToast('success', data.message); fetchQueue(org.id); }
-      else { showToast('error', data.message || 'Rejected by iPaaS'); fetchQueue(org.id); }
+      if (data.success) { showToast('success', data.message); fetchQueue(); }
+      else { showToast('error', data.message || 'Rejected by iPaaS'); fetchQueue(); }
     } catch { showToast('error', 'Failed to connect to iPaaS'); }
     finally { setSendingId(null); }
   };
@@ -71,7 +60,7 @@ export default function SendPage() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: 'QUEUED', rejection_reason: null }),
     });
-    if (data.success) { showToast('success', 'Re-queued for sending'); if (org) fetchQueue(org.id); }
+    if (data.success) { showToast('success', 'Re-queued for sending'); fetchQueue(); }
     else showToast('error', data.message || 'Failed');
   };
 
@@ -81,7 +70,7 @@ export default function SendPage() {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: 'SAVED' }),
     });
-    if (data.success) { showToast('success', 'Reverted to Records'); if (org) fetchQueue(org.id); }
+    if (data.success) { showToast('success', 'Reverted to Records'); fetchQueue(); }
     else showToast('error', data.message || 'Failed');
     setRevertingId(null);
   };
@@ -91,16 +80,11 @@ export default function SendPage() {
     setDeleting(true);
     try {
       const data = await safeFetch(`/api/patients?id=${deleteModal}`, { method: 'DELETE' });
-      if (data.success) { showToast('success', 'Record deleted'); if (org) fetchQueue(org.id); }
+      if (data.success) { showToast('success', 'Record deleted'); fetchQueue(); }
       else showToast('error', data.message || 'Failed');
     } catch { showToast('error', 'Failed'); }
     finally { setDeleting(false); setDeleteModal(null); }
   };
-
-  const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
-  const FORMAT_BADGE: Record<string, string> = { HL7V2: 'format-badge format-badge-hl7v2', FHIR_R4: 'format-badge format-badge-fhir', CDA_R2: 'format-badge format-badge-cda' };
-
-  if (!org) return null;
 
   return (
     <>
@@ -108,10 +92,10 @@ export default function SendPage() {
           <div>
             <h1 className="text-lg font-bold">Send to WAH</h1>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              Records queued for sending. {FORMAT_LABELS[org.data_format]} → FHIR R4 conversion via AI.
+              Records queued for sending. HL7 v2 → FHIR R4 conversion via AI.
           </p>
           </div>
-          <button onClick={() => { setLoading(true); if (org) fetchQueue(org.id); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
+          <button onClick={() => { setLoading(true); fetchQueue(); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
             Refresh
           </button>
@@ -139,7 +123,7 @@ export default function SendPage() {
                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{rec.dob || 'N/A'} · {rec.sex} · PhilHealth: {rec.philhealth_no}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={FORMAT_BADGE[org.data_format]}>{FORMAT_LABELS[org.data_format]}</span>
+                    <span className="format-badge format-badge-hl7v2">HL7 v2</span>
                     <span className="status-badge" style={{
                       background: isRejected ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
                       color: isRejected ? '#f87171' : '#fbbf24',
@@ -200,7 +184,7 @@ export default function SendPage() {
                 </div>
                 {viewId === rec.id && (
                   <pre className="mt-3 p-3 rounded-lg text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', maxHeight: '400px' }}>
-                    {JSON.stringify(rec.data_payload, null, 2)}
+                    {JSON.stringify(rec.hl7v2_payload, null, 2)}
                   </pre>
                 )}
               </div>

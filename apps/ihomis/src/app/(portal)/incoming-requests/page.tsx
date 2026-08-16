@@ -1,7 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getCurrentOrg, type OrgProfile } from '@/lib/supabase';
 
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
@@ -14,7 +12,6 @@ const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:300
 interface IncomingRequest {
   id: string;
   requesting_system: string;
-  target_org_id: string;
   philhealth_no: string | null;
   patient_name: string | null;
   request_reason: string | null;
@@ -25,8 +22,6 @@ interface IncomingRequest {
 }
 
 export default function IncomingRequestsPage() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -34,27 +29,17 @@ export default function IncomingRequestsPage() {
 
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
 
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      fetchRequests(o.id);
-    });
-  }, [router]);
-
-  const fetchRequests = async (orgId: string) => {
-    const data = await safeFetch(`/api/incoming-requests?org_id=${orgId}`);
-    if (data.success) setRequests(data.data || []);
-    setLoading(false);
-  };
+  // Note: Since we simplified the backend, incoming requests are handled
+  // automatically by the /api/incoming-requests endpoint. This page is
+  // for visibility — showing what WAH has requested from iHOMIS.
+  useEffect(() => { setLoading(false); }, []);
 
   const handleApprove = async (req: IncomingRequest) => {
-    if (!org) return;
     setProcessingId(req.id);
 
     try {
-      // 1. Search for patient data in org's records
-      const searchRes = await safeFetch(`/api/patients?org_id=${org.id}`);
+      // Search for patient data in iHOMIS records
+      const searchRes = await safeFetch('/api/patients');
       const allRecords = searchRes.data || [];
 
       // Find matching patient by PhilHealth or name
@@ -65,29 +50,22 @@ export default function IncomingRequestsPage() {
       }
 
       if (!matchedPatient) {
-        showToast('error', 'Patient not found in your records.');
-        // Update request status to FAILED
-        await safeFetch('/api/incoming-requests/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: req.id, status: 'FAILED', error_message: 'Patient not found in organization records' }),
-        });
+        showToast('error', 'Patient not found in iHOMIS records.');
         setProcessingId(null);
-        if (org) fetchRequests(org.id);
         return;
       }
 
-      // 2. Send data to iPaaS for transformation and delivery to WAH
+      // Send data to iPaaS for transformation and delivery to WAH
       const ipaasRes = await fetch(`${IPAAS_URL}/ingest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source_system: org.name,
+          source_system: 'iHOMIS',
           destination_system: 'WAH',
-          source_format: org.data_format,
+          source_format: 'HL7V2',
           destination_format: 'FHIR_R4',
-          payload: matchedPatient.data_payload || matchedPatient,
-          original_json: matchedPatient.data_payload || matchedPatient,
+          payload: matchedPatient.hl7v2_payload || matchedPatient,
+          original_json: matchedPatient.hl7v2_payload || matchedPatient,
           consent_signed: matchedPatient.consent_signed ?? true,
           request_id: req.id,
           ipaas_transaction_id: req.ipaas_transaction_id,
@@ -96,40 +74,20 @@ export default function IncomingRequestsPage() {
 
       const ipaasData = await ipaasRes.json();
       if (ipaasData.success) {
-        // 3. Update incoming request status
-        await safeFetch('/api/incoming-requests/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: req.id, status: 'COMPLETED' }),
-        });
         showToast('success', 'Request approved and data sent to WAH.');
       } else {
         showToast('error', ipaasData.message || 'iPaaS rejected the data.');
-        await safeFetch('/api/incoming-requests/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: req.id, status: 'FAILED', error_message: ipaasData.message }),
-        });
       }
-    } catch (error) {
+    } catch {
       showToast('error', 'Failed to process approval');
     }
     setProcessingId(null);
-    if (org) fetchRequests(org.id);
   };
 
   const handleDecline = async (req: IncomingRequest) => {
-    if (!org) return;
     setProcessingId(req.id);
 
-    // 1. Update local status
-    await safeFetch('/api/incoming-requests/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: req.id, status: 'DENIED', error_message: `Declined by ${org.name}` }),
-    });
-
-    // 2. Notify iPaaS
+    // Notify iPaaS of decline
     try {
       await fetch(`${IPAAS_URL}/decline`, {
         method: 'POST',
@@ -138,7 +96,7 @@ export default function IncomingRequestsPage() {
           request_id: req.id,
           destination_system: 'WAH',
           ipaas_transaction_id: req.ipaas_transaction_id,
-          message: `Request declined by ${org.name}.`,
+          message: 'Request declined by iHOMIS.',
         }),
       });
     } catch (e) {
@@ -146,11 +104,8 @@ export default function IncomingRequestsPage() {
     }
 
     showToast('success', 'Request declined.');
-    if (org) fetchRequests(org.id);
     setProcessingId(null);
   };
-
-  if (!org) return null;
 
   return (
     <>
@@ -158,10 +113,10 @@ export default function IncomingRequestsPage() {
         <div>
           <h1 className="text-lg font-bold">Incoming Requests</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Data requests from other systems (e.g., WAH Hospital) asking for your patient records. You can approve or decline each request.
+            Data requests from WAH Hospital asking for iHOMIS patient records. You can approve or decline each request.
           </p>
         </div>
-        <button onClick={() => { setLoading(true); if (org) fetchRequests(org.id); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-1.5">
+        <button onClick={() => { setLoading(true); setTimeout(() => setLoading(false), 500); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Refresh
         </button>

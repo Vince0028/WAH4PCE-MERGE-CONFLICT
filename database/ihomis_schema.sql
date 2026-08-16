@@ -43,6 +43,7 @@ CREATE TABLE ihomis_patients (
 
 CREATE INDEX IF NOT EXISTS idx_ihomis_status ON ihomis_patients (status);
 CREATE INDEX IF NOT EXISTS idx_ihomis_source ON ihomis_patients (source);
+CREATE INDEX IF NOT EXISTS idx_ihomis_philhealth ON ihomis_patients (philhealth_no);
 CREATE INDEX IF NOT EXISTS idx_ihomis_created ON ihomis_patients (created_at DESC);
 
 -- Auto-update trigger

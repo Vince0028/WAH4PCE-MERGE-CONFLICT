@@ -1,30 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getCurrentOrg, supabase, type OrgProfile } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-
-const FORMAT_INFO: Record<string, { label: string; desc: string; color: string; badgeClass: string }> = {
-  HL7V2: { label: 'HL7 v2.x', desc: 'Pipe-delimited message segments (MSH, PID, PV1, OBX, DG1)', color: '#60a5fa', badgeClass: 'format-badge format-badge-hl7v2' },
-  FHIR_R4: { label: 'PH Core FHIR R4', desc: 'JSON Transaction Bundle (Patient, Encounter, Observation, Condition)', color: '#34d399', badgeClass: 'format-badge format-badge-fhir' },
-  CDA_R2: { label: 'CDA R2', desc: 'XML Clinical Document Architecture Release 2', color: '#fbbf24', badgeClass: 'format-badge format-badge-cda' },
-};
+import { supabase } from '@/lib/supabase';
 
 export default function Dashboard() {
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
   const [stats, setStats] = useState({ total: 0, sent: 0, received: 0, pending: 0 });
-  const [requests, setRequests] = useState({ total: 0, completed: 0, pending: 0 });
 
   useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) { router.push('/login'); return; }
-      setOrg(o);
-      fetchStats(o.id);
-    });
-  }, [router]);
+    fetchStats();
+  }, []);
 
-  const fetchStats = async (orgId: string) => {
-    const { data: patients } = await supabase.from('org_patients').select('status').eq('org_id', orgId);
+  const fetchStats = async () => {
+    const { data: patients } = await supabase.from('ihomis_patients').select('status');
     if (patients) {
       setStats({
         total: patients.length,
@@ -33,38 +19,26 @@ export default function Dashboard() {
         pending: patients.filter((p: { status: string }) => ['SAVED', 'QUEUED'].includes(p.status)).length,
       });
     }
-    const { data: reqs } = await supabase.from('data_requests').select('status').eq('requesting_org_id', orgId);
-    if (reqs) {
-      setRequests({
-        total: reqs.length,
-        completed: reqs.filter((r: { status: string }) => r.status === 'COMPLETED').length,
-        pending: reqs.filter((r: { status: string }) => ['PENDING', 'PROCESSING'].includes(r.status)).length,
-      });
-    }
   };
-
-  if (!org) return <div className="flex items-center justify-center min-h-screen"><div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent)' }} /></div>;
-
-  const fmt = FORMAT_INFO[org.data_format];
 
   return (
     <>
         <div className="mb-6">
-          <h1 className="text-lg font-bold">Dashboard</h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Welcome, {org.name}</p>
+          <h1 className="text-lg font-bold">iHOMIS Dashboard</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Prototype — Testing AI Data Transformation</p>
         </div>
 
-        {/* Org Info */}
+        {/* System Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="portal-card p-5" style={{ borderLeft: `3px solid ${fmt.color}` }}>
-            <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>Organization</p>
-            <p className="text-base font-bold mt-1">{org.name}</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Code: {org.code}</p>
+          <div className="portal-card p-5" style={{ borderLeft: '3px solid #60a5fa' }}>
+            <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>System</p>
+            <p className="text-base font-bold mt-1">iHOMIS</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Code: IHOMIS-001</p>
           </div>
-          <div className="portal-card p-5" style={{ borderLeft: `3px solid ${fmt.color}` }}>
+          <div className="portal-card p-5" style={{ borderLeft: '3px solid #60a5fa' }}>
             <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>Data Format</p>
-            <p className="text-base font-bold mt-1">{fmt.label}</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{fmt.desc}</p>
+            <p className="text-base font-bold mt-1">HL7 v2.x</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Pipe-delimited message segments (MSH, PID, PV1, OBX, DG1)</p>
           </div>
           <div className="portal-card p-5" style={{ borderLeft: '3px solid var(--color-teal)' }}>
             <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>Exchange Target</p>
@@ -88,20 +62,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Data Requests Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {[
-            { label: 'Total Requests', value: requests.total, color: 'var(--color-text-primary)' },
-            { label: 'Completed', value: requests.completed, color: 'var(--color-success)' },
-            { label: 'Pending Requests', value: requests.pending, color: 'var(--color-warning)' },
-          ].map(m => (
-            <div key={m.label} className="portal-card p-5" style={{ borderLeft: `3px solid ${m.color}` }}>
-              <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>{m.label}</p>
-              <p className="text-2xl font-bold mt-1" style={{ color: m.color }}>{m.value}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Workflow */}
         <div className="portal-card p-6">
           <h2 className="text-sm font-bold mb-4">Data Exchange Workflow</h2>
@@ -112,7 +72,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold">Send Data</h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Send patient records to WAH. AI converts {fmt.label} → FHIR R4.</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Send patient records to WAH. AI converts HL7 v2 → FHIR R4.</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -121,7 +81,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold">Request Data</h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Request patient records from WAH. AI converts FHIR R4 → {fmt.label}.</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Request patient records from WAH. AI converts FHIR R4 → HL7 v2.</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -130,7 +90,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold">Receive Data</h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Receive converted records from WAH in your {fmt.label} format.</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Receive converted records from WAH in HL7 v2 format.</p>
               </div>
             </div>
           </div>

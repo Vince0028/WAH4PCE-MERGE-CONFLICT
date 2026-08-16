@@ -2,16 +2,10 @@
 import { useState, useEffect } from 'react';
 import WAHSidebar from '@/components/Sidebar';
 
-const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_API_URL || 'http://localhost:3001/api';
-
 async function safeFetch(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
   const text = await res.text();
   try { return JSON.parse(text); } catch { return { success: false, data: [] }; }
-}
-
-interface OrgOption {
-  id: string; name: string; code: string; data_format: string;
 }
 
 interface OutboundRequest {
@@ -26,11 +20,7 @@ interface OutboundRequest {
   created_at: string;
 }
 
-const FORMAT_LABELS: Record<string, string> = { HL7V2: 'HL7 v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
-
 export default function RequestDataPage() {
-  const [orgs, setOrgs] = useState<OrgOption[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<string>('');
   const [philhealth, setPhilhealth] = useState('');
   const [patientName, setPatientName] = useState('');
   const [reason, setReason] = useState('');
@@ -47,16 +37,6 @@ export default function RequestDataPage() {
     setReason('Patient transfer — follow-up care required');
   };
 
-  const fetchOrgs = async () => {
-    try {
-      const data = await safeFetch(`${PORTAL_URL}/orgs`);
-      if (data.success && data.data) {
-        setOrgs(data.data);
-        if (data.data.length > 0 && !selectedOrg) setSelectedOrg(data.data[0].id);
-      }
-    } catch { console.warn('[WAH] Could not fetch orgs'); }
-  };
-
   const fetchRequests = async () => {
     const data = await safeFetch('/api/outbound-requests');
     if (data.success) {
@@ -66,15 +46,11 @@ export default function RequestDataPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchOrgs(); fetchRequests(); const i = setInterval(fetchRequests, 5000); return () => clearInterval(i); }, []);
+  useEffect(() => { fetchRequests(); const i = setInterval(fetchRequests, 5000); return () => clearInterval(i); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedOrg) { showToast('error', 'Select a target organization'); return; }
     if (!philhealth && !patientName) { showToast('error', 'Provide PhilHealth No. or Patient Name'); return; }
-
-    const org = orgs.find(o => o.id === selectedOrg);
-    if (!org) return;
 
     setSubmitting(true);
     try {
@@ -82,16 +58,16 @@ export default function RequestDataPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          target_org: org.name,
-          target_org_id: org.id,
-          destination_format: org.data_format,
+          target_org: 'iHOMIS',
+          target_org_id: 'IHOMIS-001',
+          destination_format: 'HL7V2',
           philhealth_no: philhealth,
           patient_name: patientName,
           request_reason: reason,
         }),
       });
       if (data.success) {
-        showToast('success', `Request sent to ${org.name}`);
+        showToast('success', 'Request sent to iHOMIS');
         setPhilhealth(''); setPatientName(''); setReason('');
         fetchRequests();
       } else {
@@ -101,16 +77,14 @@ export default function RequestDataPage() {
     finally { setSubmitting(false); }
   };
 
-  const getSelectedOrg = () => orgs.find(o => o.id === selectedOrg);
-
   return (
     <>
       <WAHSidebar />
       <main className="flex-1 p-6 overflow-auto">
         <div className="mb-5">
-          <h1 className="text-lg font-semibold">Request Data from Organization</h1>
+          <h1 className="text-lg font-semibold">Request Data from iHOMIS</h1>
           <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Request patient records from a registered organization. Data will be converted to FHIR R4 automatically.
+            Request patient records from iHOMIS. Data will be converted from HL7 v2 → FHIR R4 automatically.
           </p>
         </div>
 
@@ -127,20 +101,13 @@ export default function RequestDataPage() {
             </button>
           </div>
 
-          {/* Destination Org Selector */}
-          <div className="mb-4">
-            <label className="wah-label">Target Organization</label>
-            <select value={selectedOrg} onChange={e => setSelectedOrg(e.target.value)} className="wah-input">
-              {orgs.length === 0 && <option>Loading organizations...</option>}
-              {orgs.map(o => (
-                <option key={o.id} value={o.id}>{o.name} ({o.code}) — {FORMAT_LABELS[o.data_format] || o.data_format}</option>
-              ))}
-            </select>
-            {getSelectedOrg() && (
-              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                Will request data in <strong>{FORMAT_LABELS[getSelectedOrg()!.data_format]}</strong> format, converted to <strong>FHIR R4</strong> by iPaaS
-              </p>
-            )}
+          {/* Destination Info */}
+          <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.1)' }}>
+            <p className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Requesting from</p>
+            <p className="text-sm font-medium mt-0.5">iHOMIS (IHOMIS-001) — <span style={{ color: '#3b82f6' }}>HL7 v2</span></p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Data in <strong>HL7 v2</strong> format will be converted to <strong>FHIR R4</strong> by iPaaS
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -159,7 +126,7 @@ export default function RequestDataPage() {
               <input type="text" className="wah-input" value={reason} onChange={e => setReason(e.target.value)} placeholder="Patient transfer, follow-up care, etc." />
             </div>
             <button type="submit" className="wah-btn wah-btn-primary text-sm px-5 py-2" disabled={submitting}>
-              {submitting ? 'Sending...' : 'Submit Request'}
+              {submitting ? 'Sending...' : 'Request from iHOMIS'}
             </button>
           </form>
         </div>
@@ -188,7 +155,7 @@ export default function RequestDataPage() {
           ) : (
             <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
               <table className="data-table">
-                <thead><tr><th>Organization</th><th>PhilHealth</th><th>Patient</th><th>Status</th><th>Date</th></tr></thead>
+                <thead><tr><th>Target</th><th>PhilHealth</th><th>Patient</th><th>Status</th><th>Date</th></tr></thead>
                 <tbody>
                   {requests.map(req => {
                     const statusColors: Record<string, { bg: string; color: string }> = {

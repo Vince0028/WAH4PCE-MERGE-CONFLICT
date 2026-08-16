@@ -1,14 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { getCurrentOrg, signOutOrg, type OrgProfile } from '@/lib/supabase';
-
-const FORMAT_LABELS: Record<string, { label: string; class: string }> = {
-  HL7V2: { label: 'HL7 v2', class: 'format-badge format-badge-hl7v2' },
-  FHIR_R4: { label: 'FHIR R4', class: 'format-badge format-badge-fhir' },
-  CDA_R2: { label: 'CDA R2', class: 'format-badge format-badge-cda' },
-};
+import { usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -22,29 +14,10 @@ const navItems = [
 
 export default function PortalSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [org, setOrg] = useState<OrgProfile | null>(null);
-
-  useEffect(() => {
-    getCurrentOrg().then(o => {
-      if (!o) {
-        router.push('/login');
-      } else {
-        setOrg(o);
-      }
-    });
-  }, [router]);
-
-  const handleLogout = async () => {
-    await signOutOrg();
-    router.push('/login');
-  };
-
-  const fmt = org ? FORMAT_LABELS[org.data_format] : null;
 
   return (
     <aside className="w-[250px] min-h-screen flex flex-col" style={{ background: 'var(--color-bg-sidebar)', borderRight: '1px solid var(--color-border)' }}>
-      {/* Org Header */}
+      {/* Header */}
       <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
@@ -53,15 +26,13 @@ export default function PortalSidebar() {
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-bold text-white leading-tight truncate">{org?.name || 'Loading...'}</h1>
+            <h1 className="text-sm font-bold text-white leading-tight truncate">iHOMIS</h1>
             <p className="text-[11px] leading-tight" style={{ color: 'var(--color-text-muted)' }}>
-              {org?.code || ''}
+              IHOMIS-001
             </p>
           </div>
         </div>
-        {fmt && (
-          <span className={fmt.class}>{fmt.label}</span>
-        )}
+        <span className="format-badge format-badge-hl7v2">HL7 v2</span>
       </div>
 
       {/* Navigation */}
@@ -79,22 +50,13 @@ export default function PortalSidebar() {
 
       {/* Footer */}
       <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
-            <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>iPaaS connected</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+          <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>iPaaS connected</span>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-xs font-medium w-full px-3 py-2 rounded-md transition-all"
-          style={{ color: 'var(--color-text-muted)', background: 'transparent' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#f87171'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sign Out
-        </button>
+        <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+          Prototype — Testing AI Transformation
+        </p>
       </div>
     </aside>
   );
