@@ -36,6 +36,8 @@ The output FHIR Bundle MUST contain:
    - name.given[1]: MIDDLENAME (Important: Do not omit the middle name)
    - name.family: LASTNAME
    - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid")
+   - telecom[0]: phone number from PID (system: "phone", value: the contact number from the last field of PID)
+   - address: from PID (line, city, district/province, postalCode, country)
 2. **Encounter**:
    - class, priority, participant (attending physician)
    - serviceProvider.display: sending facility from RF1 or PV1
