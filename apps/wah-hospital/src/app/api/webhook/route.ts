@@ -78,8 +78,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[WAH Webhook] DB save error:', error);
-      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+      console.error('[WAH Webhook] DB save error:', JSON.stringify(error, null, 2));
+      console.error('[WAH Webhook] Attempted insert:', JSON.stringify({
+        patient_name: patientName, philhealth_no: philhealthNo, gender, birth_date: birthDate,
+        diagnosis_code: diagCode, diagnosis_display: diagDisplay, status: 'RECEIVED', source: 'RECEIVED',
+      }, null, 2));
+      return NextResponse.json({ success: false, message: error.message || 'Database error', code: error.code }, { status: 500 });
     }
 
     if (request_id) {
