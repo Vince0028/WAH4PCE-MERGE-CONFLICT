@@ -395,6 +395,7 @@ const EXTRACTOR_ALIASES: Record<string, string[]> = {
   'Province': ['Province', 'Province/State'],
   'Barangay': ['Barangay'],
   'Suffix': ['Suffix'],
+  'PhilHealth No.': ['PhilHealth No.', 'PhilHealth ID'],
   'Diagnosis Description': ['Diagnosis Description', 'Description', 'Display'],
   'Referring Facility': ['Referring Facility', 'Facility'],
   'Physician License': ['Physician License'],
@@ -478,7 +479,9 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-warning)' }} />
             <h3 className="text-xs font-semibold uppercase tracking-wide">{source} — Data Sent</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">{srcFilledCount} / {srcTemplate.length} fields</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">
+              {srcFilledCount === srcTemplate.length ? `${srcTemplate.length} fields` : `${srcFilledCount} / ${srcTemplate.length} fields`}
+            </span>
           </div>
         </div>
         <div className="overflow-auto max-h-[600px]">
@@ -686,22 +689,43 @@ function MapperContent() {
   const [tx, setTx] = useState<Transaction | null>(null);
   const [allTx, setAllTx] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'json' | 'table'>('json');
 
-  useEffect(() => {
-    async function fetchData() {
+  const fetchData = async (isManualRefresh = false) => {
+    if (isManualRefresh) setRefreshing(true);
+    try {
       const data = await safeFetch('/api/transactions?limit=50');
       if (data.success) {
-        setAllTx(data.data || []);
-        if (txId) {
-          const found = data.data?.find((t: Transaction) => t.id === txId);
-          if (found) setTx(found);
-        } else if (data.data?.length > 0) {
-          setTx(data.data[0]);
+        const list: Transaction[] = data.data || [];
+        setAllTx(list);
+        if (list.length > 0) {
+          if (isManualRefresh) {
+            const hasNewer = allTx.length > 0 && list[0]?.id !== allTx[0]?.id;
+            if (hasNewer) {
+              setTx(list[0]);
+            } else {
+              const current = list.find((t: Transaction) => t.id === tx?.id);
+              setTx(current || list[0]);
+            }
+          } else {
+            if (txId) {
+              const found = list.find((t: Transaction) => t.id === txId);
+              if (found) setTx(found);
+              else setTx(list[0]);
+            } else {
+              setTx(list[0]);
+            }
+          }
         }
       }
+    } finally {
+      if (isManualRefresh) setRefreshing(false);
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [txId]);
 
@@ -734,15 +758,55 @@ function MapperContent() {
         ) : !tx ? (
           <div className="ipaas-card p-10 text-center">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1" className="mx-auto mb-3"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No transactions to display. Send data from iHOMIS or WAH first.</p>
+            <p className="text-sm mb-3" style={{ color: 'var(--color-text-muted)' }}>No transactions to display. Send data from iHOMIS or WAH first.</p>
+            <button
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              className="ipaas-btn ipaas-btn-secondary text-xs inline-flex items-center gap-1.5"
+            >
+              <svg className={refreshing ? 'animate-spin' : ''} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Refresh
+            </button>
           </div>
         ) : (
           <>
-            <div className="mb-4 flex items-center justify-between">
-              <select value={tx.id} onChange={e => { const found = allTx.find(t => t.id === e.target.value); if (found) setTx(found); }}
-                className="px-3 py-2 rounded-md text-xs outline-none w-full max-w-md" style={{ background: '#fff', border: '1px solid var(--color-border)' }}>
-                {allTx.map(t => <option key={t.id} value={t.id}>{t.id.slice(0, 8)} — {t.source_system} → {t.destination_system} ({t.status})</option>)}
-              </select>
+            <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-1 max-w-lg">
+                <select
+                  value={tx.id}
+                  onChange={e => { const found = allTx.find(t => t.id === e.target.value); if (found) setTx(found); }}
+                  className="px-3 py-2 rounded-md text-xs outline-none flex-1"
+                  style={{ background: '#fff', border: '1px solid var(--color-border)' }}
+                >
+                  {allTx.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.id.slice(0, 8)} — {t.source_system} → {t.destination_system} ({t.status})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => fetchData(true)}
+                  disabled={refreshing}
+                  className="ipaas-btn ipaas-btn-secondary text-xs flex items-center gap-1.5 shrink-0"
+                  title="Refresh transactions"
+                >
+                  <svg
+                    className={refreshing ? 'animate-spin' : ''}
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                  </svg>
+                  Refresh
+                </button>
+              </div>
 
               <div className="flex bg-[#f3f4f6] rounded-md p-1" style={{ border: '1px solid var(--color-border)' }}>
                 <button
