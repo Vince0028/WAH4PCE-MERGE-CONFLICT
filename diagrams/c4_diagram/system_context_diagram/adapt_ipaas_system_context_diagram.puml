@@ -1,33 +1,40 @@
 @startuml ADAPT_iPaaS_System_Context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-'Diagram Title
-title System Context Diagram for WAH4PCE
+title C4 Level 1 — System Context Diagram — WAH4PCE Interoperability
 
-'Actors
-Person(admin, "WAH4PCE Admin", "IT administrator overseeing the interoperability pipeline, monitoring metrics, and reviewing quarantined records.")
+' ===========================
+' EXTERNAL System
+' ===========================
+System_Ext(ihomis, "DOH iHOMIS\n(External)", "Department of Health Integrated Hospital Operations Management Information System.\nLegacy system using HL7 v2 format.\nRequests, provides, and receives health data bidirectionally.")
 
-'The Main System
-System(adapt_ipaas, "WAH4PCE Interoperability Server", "Inherited Batch 1 server upgraded with the ADAPT engine. Provides bidirectional AI translation between HL7 v2 and FHIR R4.")
+' ===========================
+' WAH4PCE SYSTEM BOUNDARY
+' The entire system is shown at a high level.
+' ===========================
+System_Boundary(wah4pce, "WAH4PCE Interoperability System") {
 
-'External Systems
-System_Ext(ihomis, "iHOMIS", "DOH Legacy Hospital System that sends and receives data in HL7 v2 + flat JSON format.")
-System_Ext(wah_hospital, "WAH Hospital", "Modern FHIR R4 System that sends and receives data in FHIR R4 Transaction Bundle format.")
-System_Ext(gemini, "Google Gemini AI", "Cloud AI Service used as the transformation engine via Model Context Protocol (MCP).")
-System_Ext(supabase, "MongoDB Database", "Document database used for temporary data staging and transaction audit logs.")
+    Person(admin, "WAH4PCE Admin", "IT administrator.\nAdministers and monitors the interoperability system.\nManages quarantined records.")
 
-'Relationships/ Interactions
-Rel(admin, adapt_ipaas, "Monitors dashboard, views logs, and manages quarantined records", "HTTPS")
+    System(wah, "WAH Hospital System\n(WAH4S, WAH4H, WAH4C)", "Internal Wide Area Health hospital sub-systems.\nStores and manages patient health records.\nSends and receives data in PH Core HL7 FHIR R4 format.\nBidirectional.")
 
-Rel(ihomis, adapt_ipaas, "Sends HL7 v2 records for transformation", "POST /api/ingest")
-Rel(adapt_ipaas, ihomis, "Sends transformed flat JSON records", "POST /api/webhook")
+    System(adapt, "ADAPT iPaaS", "AI-powered interoperability middleware.\nAccepts health data requests in HL7 v2 and FHIR R4.\nTranslates between formats using Local AI.\nValidates schema completeness and privacy consent (RA 10173).\nForwards transformed data to destination systems.")
+}
 
-Rel(wah_hospital, adapt_ipaas, "Sends FHIR R4 bundles for transformation", "POST /api/ingest")
-Rel(adapt_ipaas, wah_hospital, "Sends transformed FHIR R4 bundles", "POST /api/webhook")
+' ===========================
+' RELATIONSHIPS
+' Bidirectional data flows with format details.
+' ===========================
 
-Rel(adapt_ipaas, gemini, "Sends prompts for HL7 v2 <-> FHIR R4 translation", "Google SDK")
-Rel(gemini, adapt_ipaas, "Returns structured JSON translations", "JSON")
+' Admin → ADAPT
+Rel(admin, adapt, "Administers System\n(monitors dashboard, views logs,\nmanages quarantined records)", "HTTPS")
 
-Rel(adapt_ipaas, supabase, "Reads/writes transaction and audit logs", "REST API")
+' DOH iHOMIS ↔ ADAPT (bidirectional)
+Rel(ihomis, adapt, "Sends HL7 v2 patient records\nfor translation to FHIR R4.\nRequests FHIR R4 health data.", "POST /api/ingest\n[HL7 v2]")
+Rel(adapt, ihomis, "Forwards translated records\n(FHIR R4 → HL7 v2 flat JSON)", "POST /api/webhook\n[HL7 v2 flat JSON]")
+
+' WAH ↔ ADAPT (bidirectional)
+Rel(wah, adapt, "Sends FHIR R4 Bundles\nfor translation to HL7 v2.\nManages health data.", "POST /api/ingest\n[FHIR R4 Bundle]")
+Rel(adapt, wah, "Forwards translated records\n(HL7 v2 → FHIR R4 Bundle)", "POST /api/webhook\n[FHIR R4 Bundle]")
 
 @enduml

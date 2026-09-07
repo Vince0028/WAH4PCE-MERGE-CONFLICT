@@ -1,40 +1,84 @@
 @startuml WAH4PCE_Container
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-'Diagram Title
-title Container Diagram for WAH4PCE Interoperability Server
+title C4 Level 2 — Container Diagram — WAH4PCE Interoperability System
+caption Zooms into the WAH4PCE system boundary to show deployable applications, databases, and technology choices.
 
-'Actors
-Person(admin, "WAH4PCE Admin", "IT administrator overseeing the interoperability pipeline, monitoring metrics, and reviewing quarantined records.")
+' ===========================
+' EXTERNAL System (same as Context diagram)
+' ===========================
+System_Ext(ihomis, "DOH iHOMIS\n(External)", "DOH Legacy Hospital System.\nHL7 v2 format.\nBidirectional.")
 
-System_Boundary(wah4pce_boundary, "WAH4PCE Interoperability Server (ADAPT)") {
-    Container(web_app, "Web Dashboard", "Next.js, React", "Provides the admin dashboard for monitoring metrics, viewing transaction history, and managing quarantined records.")
-    
-    Container(api_app, "Interoperability Routing & ADAPT Engine", "Golang, MCP", "Inherited Batch 1 server upgraded with the ADAPT engine. Handles data routing, consent validation, and AI transformation using Gemini MCP.")
-    
-    ContainerDb(database, "Temporary Staging Database", "MongoDB", "Temporarily holds incoming health records for translation and stores sanitized audit logs. Ephemeral processing with no PHI stored permanently.")
+' ===========================
+' WAH4PCE SYSTEM BOUNDARY (zoomed in)
+' ===========================
+System_Boundary(wah4pce_boundary, "WAH4PCE Interoperability System") {
+
+    ' --- Same actors as Context diagram ---
+    Person(admin, "WAH4PCE Admin", "IT administrator.\nAdministers and monitors the system.")
+
+    ' --- WAH Hospital (INTERNAL, same as Context but showing sub-systems) ---
+    System_Boundary(wah_boundary, "WAH Hospital System (Internal)") {
+        Container(wah_s, "WAH4S", "FHIR R4 Application", "WAH Sub-system S.\nSends/receives FHIR R4 Bundles.\nManages patient health records.")
+        Container(wah_h, "WAH4H", "FHIR R4 Application", "WAH Sub-system H.\nSends/receives FHIR R4 Bundles.\nManages patient health records.")
+        Container(wah_c, "WAH4C", "FHIR R4 Application", "WAH Sub-system C.\nSends/receives FHIR R4 Bundles.\nManages patient health records.")
+    }
+
+    ' --- ADAPT iPaaS (zoomed in — showing deployable containers) ---
+    System_Boundary(adapt_boundary, "ADAPT iPaaS") {
+
+        Container(web_dashboard, "Admin Dashboard", "Web Application\n(React / Web UI)", "UCD: Administer System\n\nProvides real-time monitoring dashboard, transaction history viewer, data mapper visualization, and quarantined record management.")
+
+        Container(hl7_api, "HL7v2 Ingestion API", "Golang\nREST API Server", "UCD: Request Health Data (Example: HL7)\n\nExposes POST /api/ingest endpoint.\nAccepts HL7 v2 pipe-delimited messages.\nRoutes to processing pipeline.")
+
+        Container(fhir_api, "FHIR R4 Ingestion API", "Golang\nREST API Server", "UCD: Request FHIR 4 Health Data\n\nExposes POST /api/ingest endpoint.\nAccepts FHIR R4 Transaction Bundles.\nRoutes to processing pipeline.")
+
+        Container(consent_service, "Consent Validation Service", "Golang\nInternal Service", "UCD: Validate Privacy Consent\n\nEnforces RA 10173 (Data Privacy Act of 2012).\nBlocks and quarantines records without signed patient consent.")
+
+        Container(data_manager, "Health Data Manager", "Golang\nInternal Service", "UCD: Manage Health Data\n\nManages transaction lifecycle (PENDING → TRANSFORMING → SUCCESS / QUARANTINED).\nStores raw payloads, audit trails.\nReads/writes to MongoDB.")
+
+        Container(ai_engine, "AI Translation Engine", "Local AI\n(TBD — on-premise)", "UCD: Translate Data to/from PH Core HL7 FHIR R4 / HL7 v2\n\nBidirectional AI translation:\n• HL7 v2 → FHIR R4 Bundle\n• FHIR R4 → HL7 v2 flat JSON\nRuns locally, no cloud dependency.")
+
+        Container(schema_validator, "Schema & Completeness Validator", "Golang\nInternal Service", "UCD: Validate Schema & Completeness\n\nValidates FHIR R4 Bundles for Patient, Encounter, Condition, PhilHealth ID.\nValidates HL7 v2 for required fields and vitals.")
+
+        Container(forwarding_service, "Health Data Forwarding Service", "Golang\nWebhook Client", "UCD: Provide Health Data\n\nForwards transformed payloads to destination systems via POST /api/webhook.\nBidirectional: sends to iHOMIS (HL7 v2) and WAH (FHIR R4).")
+
+        ContainerDb(mongodb, "MongoDB", "MongoDB\nDocument Database", "Stores:\n• Transaction logs\n• Raw & transformed payloads\n• Audit trails\n• Quarantined records\n\nEphemeral staging — no PHI stored permanently.")
+    }
 }
 
-'External Systems
-System_Ext(ihomis, "iHOMIS", "DOH Legacy Hospital System (HL7 v2 + flat JSON).")
-System_Ext(wah_hospital, "WAH Hospital", "Modern FHIR R4 System (FHIR R4 Transaction Bundle).")
-System_Ext(gemini, "Google Gemini AI", "Cloud AI Service used as the transformation engine.")
+' ===========================
+' RELATIONSHIPS
+' ===========================
 
-'Relationships
-Rel_D(admin, web_app, "Monitors system health and manages records", "HTTPS")
+' Admin → Dashboard
+Rel_D(admin, web_dashboard, "Monitors dashboard,\nviews logs, manages records", "HTTPS / Browser")
 
-' Containers horizontal
-Rel_R(web_app, api_app, "Fetches metrics and transaction logs", "JSON/HTTPS")
-Rel_R(api_app, database, "Reads/writes transaction and audit logs", "REST/PostgREST")
+' DOH iHOMIS ↔ ADAPT (bidirectional)
+Rel(ihomis, hl7_api, "Sends HL7 v2 records", "POST /api/ingest\n[HL7 v2 pipe-delimited]")
+Rel(ihomis, fhir_api, "Sends FHIR R4 requests", "POST /api/ingest\n[FHIR R4 Bundle]")
+Rel(forwarding_service, ihomis, "Forwards translated HL7 v2", "POST /api/webhook\n[HL7 v2 flat JSON]")
 
-' External systems below the API app
-Rel_U(ihomis, api_app, "Sends HL7 v2 records for transformation", "POST /api/ingest", "JSON payload")
-Rel_D(api_app, ihomis, "Sends transformed flat JSON records", "POST /api/webhook", "JSON payload")
+' WAH ↔ ADAPT (bidirectional)
+Rel(wah_s, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel(wah_h, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel(wah_c, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel(forwarding_service, wah_s, "Forwards FHIR R4 Bundle", "POST /api/webhook")
+Rel(forwarding_service, wah_h, "Forwards FHIR R4 Bundle", "POST /api/webhook")
+Rel(forwarding_service, wah_c, "Forwards FHIR R4 Bundle", "POST /api/webhook")
 
-Rel_U(wah_hospital, api_app, "Sends FHIR R4 bundles for transformation", "POST /api/ingest", "JSON payload")
-Rel_D(api_app, wah_hospital, "Sends transformed FHIR R4 bundles", "POST /api/webhook", "JSON payload")
+' Internal processing pipeline
+Rel(hl7_api, consent_service, "1. Validates consent", "Internal call")
+Rel(fhir_api, consent_service, "1. Validates consent", "Internal call")
+Rel(consent_service, data_manager, "2. Stores as PENDING", "Internal call")
+Rel(data_manager, ai_engine, "3. Triggers AI translation\nHL7 v2 ↔ FHIR R4", "Internal call")
+Rel(ai_engine, schema_validator, "4. Validates output schema\n& completeness", "Internal call")
+Rel(schema_validator, forwarding_service, "5. Forwards to destination", "Internal call")
 
-Rel_D(api_app, gemini, "Sends transformation prompts and payload", "Google SDK/HTTPS")
-Rel_U(gemini, api_app, "Returns translated structured JSON", "JSON/HTTPS")
+' Data persistence
+Rel(data_manager, mongodb, "Reads/Writes\ntransaction logs,\nraw & transformed payloads", "MongoDB Driver")
+
+' Dashboard reads from manager
+Rel(web_dashboard, data_manager, "Queries metrics,\ntransactions, logs", "Internal REST API")
 
 @enduml
