@@ -96,105 +96,14 @@ Extract data from the FHIR Bundle resources (Patient, Encounter, Observation, Co
 All numeric vitals must be numbers, not strings. Missing fields should use empty string or 0.
 Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
 
-// ============================================
-// CDA R2 Prompts (3rd data format)
-// ============================================
-
-const CDA_R2_TO_FHIR_PROMPT = `You are a healthcare data transformation engine for the Philippine Local Health Information Exchange (LHIE).
-
-Your task: Convert the following CDA R2 (Clinical Document Architecture Release 2) XML document into a FULLY VALID PH Core HL7 FHIR R4 Transaction Bundle.
-
-CDA R2 Structure Reference:
-- <ClinicalDocument>: Root element
-- <recordTarget>/<patientRole>/<patient>: Patient demographics (name, gender, birthTime)
-- <recordTarget>/<patientRole>/<id>: PhilHealth ID (look for extension attribute)
-- <author>/<assignedAuthor>: Physician and organization info
-- <component>/<structuredBody>/<component>/<section>: Clinical sections
-  - Vital Signs section (code="8716-3"): Contains <observation> elements with LOINC codes
-  - Diagnosis section (code="29308-4"): Contains ICD-10 diagnosis info
-  - Chief Complaint section: Contains reason for visit
-
-Example CDA R2 input mapping:
-- Patient name: <patient>/<name>/<given> and <family>
-- Gender: <administrativeGenderCode code="M"/>
-- DOB: <birthTime value="19900515"/>
-- PhilHealth: <id extension="0102-0304-0506"/>
-- Vitals: <observation>/<code code="8480-6"/> (Systolic BP), <value value="120" unit="mmHg"/>
-- Diagnosis: <act>/<code code="J18.9" displayName="Pneumonia"/>
-
-The output FHIR Bundle MUST contain:
-1. **Patient** — PH Core Patient profile with PhilHealth identifier (system: "https://www.philhealth.gov.ph/memberid")
-2. **Encounter** — with status, class, priority, participant, serviceProvider
-3. **Observation** resources for each vital sign with LOINC codes
-4. **Condition** — from diagnosis with ICD-10 coding
-
-Bundle: type "transaction", fullUrl using "urn:uuid:" format, request with method "POST".
-Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
-
-const FHIR_TO_CDA_R2_PROMPT = `You are a healthcare data transformation engine for the Philippine Local Health Information Exchange (LHIE).
-
-Your task: Convert the following PH Core HL7 FHIR R4 Bundle into a CDA R2 (Clinical Document Architecture Release 2) compliant JSON representation.
-
-Since CDA R2 is XML-based, output a JSON object that represents the CDA document structure for easy processing:
-
-{
-  "documentType": "CDA_R2",
-  "typeId": { "root": "2.16.840.1.113883.1.3", "extension": "POCD_HD000040" },
-  "id": { "root": "2.16.840.1.113883.19", "extension": "generated-doc-id" },
-  "code": { "code": "34133-9", "codeSystem": "2.16.840.1.113883.6.1", "displayName": "Summarization of Episode Note" },
-  "effectiveTime": "YYYYMMDDHHMMSS",
-  "recordTarget": {
-    "patientRole": {
-      "id": { "root": "2.16.840.1.113883.4.3.608", "extension": "PhilHealth number from Patient.identifier" },
-      "patient": {
-        "name": { "given": ["first name", "middle name"], "family": "last name" },
-        "administrativeGenderCode": { "code": "M or F", "codeSystem": "2.16.840.1.113883.5.1" },
-        "birthTime": { "value": "YYYYMMDD from Patient.birthDate" }
-      },
-      "addr": { "streetAddressLine": "from Patient.address", "city": "city", "state": "province", "postalCode": "zip" },
-      "telecom": { "value": "phone number", "use": "HP" }
-    }
-  },
-  "author": {
-    "assignedAuthor": {
-      "assignedPerson": { "name": "physician name from Encounter.participant" },
-      "representedOrganization": { "name": "facility from Encounter.serviceProvider" }
-    }
-  },
-  "component": {
-    "structuredBody": {
-      "vitalSigns": {
-        "sectionCode": "8716-3",
-        "observations": [
-          { "code": "LOINC code", "displayName": "vital name", "value": number, "unit": "unit" }
-        ]
-      },
-      "diagnosis": {
-        "sectionCode": "29308-4",
-        "code": "ICD-10 code",
-        "displayName": "diagnosis description",
-        "text": "chief complaint"
-      },
-      "encounter": {
-        "priority": "ROUTINE/URGENT/EMERGENCY",
-        "referralReason": "reason text"
-      }
-    }
-  }
-}
-
-Extract all data from the FHIR Bundle resources. All numeric values must be numbers.
-Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
 
 // ============================================
 // Format type definitions
 // ============================================
-export type DataFormat = 'HL7V2' | 'FHIR_R4' | 'CDA_R2';
+export type DataFormat = 'HL7V2' | 'FHIR_R4';
 export type TransformDirection =
   | 'HL7V2_TO_FHIR_R4'
   | 'FHIR_R4_TO_HL7V2'
-  | 'CDA_R2_TO_FHIR_R4'
-  | 'FHIR_R4_TO_CDA_R2'
   // Legacy aliases
   | 'IHOMIS_TO_FHIR'
   | 'FHIR_TO_IHOMIS';
@@ -207,10 +116,6 @@ function getPromptForDirection(direction: TransformDirection): string {
     case 'FHIR_R4_TO_HL7V2':
     case 'FHIR_TO_IHOMIS':
       return FHIR_TO_HL7V2_PROMPT;
-    case 'CDA_R2_TO_FHIR_R4':
-      return CDA_R2_TO_FHIR_PROMPT;
-    case 'FHIR_R4_TO_CDA_R2':
-      return FHIR_TO_CDA_R2_PROMPT;
     default:
       return HL7V2_TO_FHIR_PROMPT;
   }
@@ -224,8 +129,6 @@ export function getTransformDirection(sourceFormat: DataFormat, destFormat: Data
   const validDirections: Record<string, TransformDirection> = {
     'HL7V2_TO_FHIR_R4': 'HL7V2_TO_FHIR_R4',
     'FHIR_R4_TO_HL7V2': 'FHIR_R4_TO_HL7V2',
-    'CDA_R2_TO_FHIR_R4': 'CDA_R2_TO_FHIR_R4',
-    'FHIR_R4_TO_CDA_R2': 'FHIR_R4_TO_CDA_R2',
   };
   return validDirections[key] || 'HL7V2_TO_FHIR_R4';
 }

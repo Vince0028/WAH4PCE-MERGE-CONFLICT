@@ -33,10 +33,9 @@ export async function GET() {
     const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
 
     // Fetch format-specific stats
-    const [hl7v2Res, fhirRes, cdaRes] = await Promise.all([
+    const [hl7v2Res, fhirRes] = await Promise.all([
       supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }).eq('source_format', 'HL7V2'),
       supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }).eq('source_format', 'FHIR_R4'),
-      supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }).eq('source_format', 'CDA_R2'),
     ]);
 
     return NextResponse.json({
@@ -57,7 +56,6 @@ export async function GET() {
         // Format stats
         hl7v2_count: hl7v2Res.count || 0,
         fhir_count: fhirRes.count || 0,
-        cda_count: cdaRes.count || 0,
       },
     });
   } catch (error) {

@@ -10,8 +10,8 @@ import { validateTransformation } from '@/lib/validator';
  * stores it in Supabase, triggers AI transformation, validates,
  * and forwards to the destination system.
  *
- * Now supports dynamic organization names and 3 data formats:
- * HL7V2, FHIR_R4, CDA_R2
+ * Now supports dynamic organization names and 2 data formats:
+ * HL7V2, FHIR_R4
  */
 export async function POST(request: NextRequest) {
   try {

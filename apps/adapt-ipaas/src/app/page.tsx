@@ -12,7 +12,7 @@ interface Metrics {
   total_records: number; success_count: number; pending_count: number;
   quarantined_count: number; transforming_count: number; success_rate: number;
   org_to_wah: number; wah_to_org: number;
-  hl7v2_count: number; fhir_count: number; cda_count: number;
+  hl7v2_count: number; fhir_count: number;
 }
 
 interface Transaction {
@@ -51,13 +51,12 @@ export default function Dashboard() {
     const m: Record<string, { bg: string; color: string }> = {
       HL7V2: { bg: 'rgba(59,130,246,0.08)', color: '#3b82f6' },
       FHIR_R4: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
-      CDA_R2: { bg: 'rgba(245,158,11,0.08)', color: '#f59e0b' },
     };
     return m[fmt] || m.HL7V2;
   };
 
   const formatLabel = (fmt: string) => {
-    const m: Record<string, string> = { HL7V2: 'HL7v2', FHIR_R4: 'FHIR R4', CDA_R2: 'CDA R2' };
+    const m: Record<string, string> = { HL7V2: 'HL7v2', FHIR_R4: 'FHIR R4' };
     return m[fmt] || fmt;
   };
 
@@ -99,7 +98,7 @@ export default function Dashboard() {
                   <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </div>
-                  <div><p className="text-sm font-medium">Org → WAH</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>HL7v2/CDA R2 → FHIR R4</p></div>
+                  <div><p className="text-sm font-medium">Org → WAH</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>HL7v2 → FHIR R4</p></div>
                 </div>
                 <p className="text-3xl font-bold" style={{ color: '#2563eb' }}>{metrics?.org_to_wah || 0}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
@@ -109,7 +108,7 @@ export default function Dashboard() {
                   <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                   </div>
-                  <div><p className="text-sm font-medium">WAH → Org</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2/CDA R2</p></div>
+                  <div><p className="text-sm font-medium">WAH → Org</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2</p></div>
                 </div>
                 <p className="text-3xl font-bold" style={{ color: '#8b5cf6' }}>{metrics?.wah_to_org || 0}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
@@ -117,11 +116,10 @@ export default function Dashboard() {
             </div>
 
             {/* Format Breakdown */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               {[
                 { label: 'HL7 v2.x', count: metrics?.hl7v2_count || 0, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
                 { label: 'FHIR R4', count: metrics?.fhir_count || 0, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
-                { label: 'CDA R2', count: metrics?.cda_count || 0, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
               ].map(f => (
                 <div key={f.label} className="ipaas-card p-4">
                   <div className="flex items-center gap-2 mb-2">
