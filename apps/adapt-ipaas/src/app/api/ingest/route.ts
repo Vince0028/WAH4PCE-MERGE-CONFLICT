@@ -181,9 +181,17 @@ export async function POST(request: NextRequest) {
     }
 
     // --- 6. Forward to destination system ---
-    const webhookUrl = destination_system === 'WAH'
-      ? (process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook')
-      : (process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook');
+    // External systems can pass `webhook_url` to receive the transformed payload.
+    // Falls back to env vars, then localhost defaults for local dev.
+    const resolveWebhookUrl = (): string => {
+      // 1. Explicit webhook_url in the request body (for external integrations)
+      if (body.webhook_url) return body.webhook_url;
+      // 2. Environment variable per system
+      if (destination_system === 'WAH') return process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook';
+      // 3. Default to iHOMIS
+      return process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook';
+    };
+    const webhookUrl = resolveWebhookUrl();
 
     let forwardSuccess = false;
     let forwardError = '';
