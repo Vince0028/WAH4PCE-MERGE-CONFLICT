@@ -441,19 +441,28 @@ function findValueForTemplateField(
 }
 
 function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<string, unknown> | null, transformed: Record<string, unknown> | null, source: string, dest: string }) {
-  const srcFields = useMemo(() => raw ? extractDataFields(raw) : [], [raw]);
+  const srcExtracted = useMemo(() => raw ? extractDataFields(raw) : [], [raw]);
   const destExtracted = useMemo(() => transformed ? extractDataFields(transformed) : [], [transformed]);
+  const srcTemplate = useMemo(() => getDestTemplate(source), [source]);
   const destTemplate = useMemo(() => getDestTemplate(dest), [dest]);
+  const isSrcWAH = source.toLowerCase().includes('wah');
   const isDestWAH = dest.toLowerCase().includes('wah');
 
-  // Build right-side rows: ALL template fields, filled or empty
+  // Build left-side rows: ALL source template fields with values from raw payload
+  const srcRows = useMemo(() => {
+    return srcTemplate.map(tf => {
+      const val = findValueForTemplateField(tf.label, srcExtracted, isSrcWAH);
+      return { ...tf, value: val || '' };
+    });
+  }, [srcTemplate, srcExtracted, isSrcWAH]);
+
+  const srcFilledCount = srcRows.filter(r => r.value !== '').length;
+
+  // Build right-side rows: ALL dest template fields, filled or empty
   const destRows = useMemo(() => {
     return destTemplate.map(tf => {
-      // First try to find in the actual extracted transformed data
       const fromTransformed = findValueForTemplateField(tf.label, destExtracted, isDestWAH);
       if (fromTransformed) return { ...tf, value: fromTransformed, status: 'Filled' as const };
-
-      // Not found
       return { ...tf, value: '', status: 'Empty' as const };
     });
   }, [destTemplate, destExtracted, isDestWAH]);
@@ -469,7 +478,7 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-warning)' }} />
             <h3 className="text-xs font-semibold uppercase tracking-wide">{source} — Data Sent</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">{srcFields.length} fields</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">{srcFilledCount} / {srcTemplate.length} fields</span>
           </div>
         </div>
         <div className="overflow-auto max-h-[600px]">
@@ -481,24 +490,22 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
               </tr>
             </thead>
             <tbody>
-              {(() => { let lastCat = ''; return srcFields.map((row, i) => {
+              {(() => { let lastCat = ''; return srcRows.map((row, i) => {
                 const showCat = row.category !== lastCat;
                 lastCat = row.category;
+                const hasFill = row.value !== '';
                 return (
                   <Fragment key={`src-${i}`}>{showCat && (
                     <tr className="border-t-2 border-t-gray-200">
                       <td colSpan={2} className="px-3 pt-3 pb-1 font-semibold text-gray-700 text-[11px] uppercase tracking-wide">{row.category}</td>
                     </tr>
                   )}
-                  <tr className="hover:bg-gray-50 border-b border-[#e5e7eb] last:border-0 transition-colors">
-                    <td className="px-3 py-2" style={{ color: 'var(--color-text-muted)' }}>{row.label}</td>
-                    <td className="px-3 py-2 font-mono font-medium">{row.value}</td>
+                  <tr className={`hover:bg-gray-50 border-b border-[#e5e7eb] last:border-0 transition-colors ${!hasFill ? 'bg-gray-50/50' : ''}`}>
+                    <td className="px-3 py-2" style={{ color: hasFill ? 'var(--color-text-muted)' : '#d1d5db' }}>{row.label}</td>
+                    <td className="px-3 py-2 font-mono font-medium" style={{ color: hasFill ? undefined : '#d1d5db' }}>{hasFill ? row.value : '—'}</td>
                   </tr></Fragment>
                 );
               }); })()}
-              {srcFields.length === 0 && (
-                <tr><td colSpan={2} className="p-8 text-center text-gray-500">No data.</td></tr>
-              )}
             </tbody>
           </table>
         </div>
