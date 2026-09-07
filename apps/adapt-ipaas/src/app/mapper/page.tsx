@@ -72,26 +72,29 @@ function extractHL7Data(payload: Record<string, unknown>): { category: string; l
 // ─── Extract meaningful data from WAH FHIR bundles ───
 function extractFHIRData(payload: Record<string, unknown>): { category: string; label: string; value: string }[] {
   const rows: { category: string; label: string; value: string }[] = [];
-  const add = (cat: string, label: string, val: unknown) => { if (val != null && String(val)) rows.push({ category: cat, label, value: String(val) }); };
+  const add = (cat: string, label: string, val: unknown) => { if (val != null && String(val).trim()) rows.push({ category: cat, label, value: String(val).trim() }); };
 
   // Navigate FHIR bundle
   const entries = (payload as any)?.entry || [];
   const resources = entries.map((e: any) => e?.resource).filter(Boolean);
-  // Also handle top-level if payload is itself a resource list
   if (resources.length === 0 && (payload as any)?.resourceType) {
     resources.push(payload);
   }
+
+  let chiefComplaintFound = false;
 
   for (const res of resources) {
     const rt = res?.resourceType;
     if (rt === 'Patient') {
       const name = res.name?.[0] || {};
-      add('Patient', 'Given Name', (name.given || []).join(' '));
+      const givenArr = name.given || [];
+      add('Patient', 'Given Name', givenArr[0]); // First given name only
+      add('Patient', 'Middle Name', givenArr.length > 1 ? givenArr.slice(1).join(' ') : null); // Second+ given name = middle
       add('Patient', 'Family Name', name.family);
       add('Patient', 'Suffix', name.suffix?.[0]);
       add('Patient', 'Birth Date', res.birthDate);
       add('Patient', 'Gender', res.gender);
-      add('Patient', 'Marital Status', res.maritalStatus?.text || res.maritalStatus?.coding?.[0]?.display);
+      add('Patient', 'Marital Status', res.maritalStatus?.text || res.maritalStatus?.coding?.[0]?.display || res.maritalStatus?.coding?.[0]?.code);
       // PhilHealth
       for (const id of (res.identifier || [])) {
         if (id.system?.includes('philhealth') || id.type?.coding?.[0]?.code === 'SB') {
@@ -111,10 +114,18 @@ function extractFHIRData(payload: Record<string, unknown>): { category: string; 
     }
     if (rt === 'Encounter') {
       add('Encounter', 'Class', res.class?.display || res.class?.code);
-      add('Encounter', 'Priority', res.priority?.coding?.[0]?.display || res.priority?.coding?.[0]?.code || res.priority?.text);
-      add('Encounter', 'Reason', res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display);
-      add('Encounter', 'Facility', res.serviceProvider?.display);
-      add('Encounter', 'Physician', res.participant?.[0]?.individual?.display);
+      add('Encounter', 'Priority', res.priority?.coding?.[0]?.display || res.priority?.coding?.[0]?.code || res.priority?.text || res.priority);
+      // Reason — check multiple paths
+      const reason = res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display || res.reason?.[0]?.concept?.text || res.reason?.[0]?.concept?.coding?.[0]?.display;
+      add('Encounter', 'Reason', reason);
+      // Chief complaint can also be in Encounter.reasonCode
+      if (reason && !chiefComplaintFound) {
+        // We'll use this as fallback for chief complaint later
+      }
+      // Facility — check multiple paths
+      add('Encounter', 'Facility', res.serviceProvider?.display || res.serviceProvider?.reference || res.location?.[0]?.location?.display);
+      // Physician — check multiple paths
+      add('Encounter', 'Physician', res.participant?.[0]?.individual?.display || res.participant?.[0]?.actor?.display);
     }
     if (rt === 'Observation') {
       const display = res.code?.text || res.code?.coding?.[0]?.display || 'Observation';
@@ -131,14 +142,33 @@ function extractFHIRData(payload: Record<string, unknown>): { category: string; 
       add('Diagnosis', 'ICD-10 Code', res.code?.coding?.[0]?.code);
       add('Diagnosis', 'Description', res.code?.coding?.[0]?.display || res.code?.text);
       add('Diagnosis', 'Clinical Status', res.clinicalStatus?.coding?.[0]?.code);
-      add('Diagnosis', 'Chief Complaint', res.note?.[0]?.text);
+      // Chief complaint — check note, category text, or extension
+      const complaint = res.note?.[0]?.text || res.category?.[0]?.text;
+      if (complaint) {
+        add('Diagnosis', 'Chief Complaint', complaint);
+        chiefComplaintFound = true;
+      }
     }
     if (rt === 'ServiceRequest') {
-      add('Referral', 'Reason', res.reasonCode?.[0]?.text);
+      add('Referral', 'Reason', res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display);
       add('Referral', 'Priority', res.priority);
       add('Referral', 'Requester', res.requester?.display);
     }
   }
+
+  // If chief complaint wasn't found in Condition, try Encounter reasonCode
+  if (!chiefComplaintFound) {
+    for (const res of resources) {
+      if (res?.resourceType === 'Encounter') {
+        const reason = res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display || res.reason?.[0]?.concept?.text;
+        if (reason) {
+          add('Diagnosis', 'Chief Complaint', reason);
+          break;
+        }
+      }
+    }
+  }
+
   return rows;
 }
 

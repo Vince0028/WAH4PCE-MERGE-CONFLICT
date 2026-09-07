@@ -27,14 +27,23 @@ HL7 v2 segment reference:
 - PID: Patient ID, name (format: LASTNAME^FIRSTNAME^MIDDLENAME), DOB, sex, address, PhilHealth number
 - PV1: Patient Visit (class, attending physician, priority)
 - OBX: Observation (vital signs with LOINC codes)
-- DG1: Diagnosis (ICD-10 code, description)
+- DG1: Diagnosis (ICD-10 code, description, chief complaint)
 - RF1: Referral info (priority, reason, facility)
 
 The output FHIR Bundle MUST contain:
-1. **Patient** — PH Core Patient profile with PhilHealth identifier (system: "https://www.philhealth.gov.ph/memberid"), meta profile: "http://fhir.ph/StructureDefinition/ph-core-patient"
-2. **Encounter** — with status, class, priority, participant, serviceProvider
-3. **Observation** resources for each OBX segment (vital signs with LOINC codes, units of measure)
-4. **Condition** — from DG1 segment with ICD-10 coding
+1. **Patient**:
+   - name.given[0]: FIRSTNAME
+   - name.given[1]: MIDDLENAME (Important: Do not omit the middle name)
+   - name.family: LASTNAME
+   - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid")
+2. **Encounter**:
+   - class, priority, participant (attending physician)
+   - serviceProvider.display: sending facility from RF1 or PV1
+   - reasonCode[0].text: referral reason from RF1
+3. **Observation**: resources for each OBX segment (vital signs with LOINC codes, units of measure)
+4. **Condition**:
+   - code: ICD-10 coding from DG1
+   - note[0].text: chief complaint from the last field of DG1
 
 Bundle: type "transaction", fullUrl using "urn:uuid:" format, request with method "POST".
 Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
