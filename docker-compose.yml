@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  adapt-ipaas:
+    build:
+      context: .
+      args:
+        APP_NAME: adapt-ipaas
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/adapt-ipaas/.env.local
+    environment:
+      # Override localhost with Docker internal networking
+      - IHOMIS_WEBHOOK_URL=http://ihomis:3000/api/webhook
+      # WAH_WEBHOOK_URL will be loaded from your .env.local and should point to the real WAH clinic URL when ready
+
+  ihomis:
+    build:
+      context: .
+      args:
+        APP_NAME: ihomis
+    ports:
+      - "3001:3000"
+    env_file:
+      - ./apps/ihomis/.env.local
+    environment:
+      # Override localhost with Docker internal networking
+      - NEXT_PUBLIC_IPAAS_API_URL=http://adapt-ipaas:3000/api
+    depends_on:
+      - adapt-ipaas

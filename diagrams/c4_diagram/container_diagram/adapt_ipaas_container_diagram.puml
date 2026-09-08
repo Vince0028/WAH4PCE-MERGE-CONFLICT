@@ -52,20 +52,24 @@ System_Boundary(wah4pce_boundary, "WAH4PCE Interoperability System") {
 ' ===========================
 
 ' Admin → Dashboard
-Rel_D(admin, web_dashboard, "Monitors dashboard,\nviews logs, manages records", "HTTPS / Browser")
+Rel(admin, web_dashboard, "Monitors dashboard,\nviews logs, manages records", "HTTPS / Browser")
+
+' Layout: WAH left → ADAPT center → iHOMIS right
+wah_boundary -[hidden]R-> adapt_boundary
+adapt_boundary -[hidden]R-> ihomis
 
 ' DOH iHOMIS ↔ ADAPT (bidirectional)
-Rel(ihomis, hl7_api, "Sends HL7 v2 records", "POST /api/ingest\n[HL7 v2 pipe-delimited]")
-Rel(ihomis, fhir_api, "Sends FHIR R4 requests", "POST /api/ingest\n[FHIR R4 Bundle]")
-Rel(forwarding_service, ihomis, "Forwards translated HL7 v2", "POST /api/webhook\n[HL7 v2 flat JSON]")
+Rel_L(ihomis, hl7_api, "Sends HL7 v2 records", "POST /api/ingest\n[HL7 v2 pipe-delimited]")
+Rel_L(ihomis, fhir_api, "Sends FHIR R4 requests", "POST /api/ingest\n[FHIR R4 Bundle]")
+Rel_R(forwarding_service, ihomis, "Forwards translated HL7 v2", "POST /api/webhook\n[HL7 v2 flat JSON]")
 
 ' WAH ↔ ADAPT (bidirectional)
-Rel(wah_s, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
-Rel(wah_h, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
-Rel(wah_c, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
-Rel(forwarding_service, wah_s, "Forwards FHIR R4 Bundle", "POST /api/webhook")
-Rel(forwarding_service, wah_h, "Forwards FHIR R4 Bundle", "POST /api/webhook")
-Rel(forwarding_service, wah_c, "Forwards FHIR R4 Bundle", "POST /api/webhook")
+Rel_R(wah_s, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel_R(wah_h, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel_R(wah_c, fhir_api, "Sends FHIR R4 Bundle", "POST /api/ingest")
+Rel_L(forwarding_service, wah_s, "Forwards FHIR R4 Bundle", "POST /api/webhook")
+Rel_L(forwarding_service, wah_h, "Forwards FHIR R4 Bundle", "POST /api/webhook")
+Rel_L(forwarding_service, wah_c, "Forwards FHIR R4 Bundle", "POST /api/webhook")
 
 ' Internal processing pipeline
 Rel(hl7_api, consent_service, "1. Validates consent", "Internal call")

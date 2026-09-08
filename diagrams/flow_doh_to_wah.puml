@@ -25,7 +25,7 @@ skinparam arrow {
 
 title **Prototype visualization DOH to WAH**
 
-rectangle "iHOMIS\n(Dummy system using open source)" as IHOMIS
+rectangle "iHOMIS\n(Legacy System)" as IHOMIS
 rectangle "Send data to\nexternal system" as SEND_EXT
 rectangle "PAAS for External Interoperability" as PAAS
 rectangle "Temporary Database" as TEMP_DB

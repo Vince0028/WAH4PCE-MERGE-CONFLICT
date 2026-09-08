@@ -1,0 +1,61 @@
+@startuml ADAPT_iPaaS_System_Context_V2
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C4 Level 1 — System Context Diagram V2 — WAH4PCE Interoperability\n(UCD-aligned version — every use case as its own box)
+
+' ===========================
+' EXTERNAL System
+' ===========================
+System_Ext(ihomis, "DOH iHOMIS\n(External)", "DOH Legacy Hospital System.\nHL7 v2 format.\nRequests, provides, and receives health data bidirectionally.")
+
+' ===========================
+' WAH4PCE SYSTEM BOUNDARY
+' Every UCD use case = its own System box
+' ===========================
+System_Boundary(wah4pce, "WAH4PCE Interoperability System") {
+
+    Person(admin, "WAH4PCE Admin", "IT administrator.\nAdministers and monitors the system.")
+
+    System(wah, "WAH Hospital System\n(WAH4S, WAH4H, WAH4C)", "Internal hospital sub-systems.\nFHIR R4 format.\nBidirectional.")
+
+    System(req_hl7, "Request Health Data\n(Example: HL7)", "Handles incoming HL7 v2\nhealth data requests.")
+
+    System(req_fhir, "Request FHIR 4\nHealth Data", "Handles incoming FHIR R4\nhealth data requests.")
+
+    System(administer, "Administer System", "Dashboard for monitoring,\nlogs, and quarantine management.")
+
+    System(provide, "Provide Health Data", "Forwards transformed data\nto destination systems.")
+
+    System(manage, "Manage Health Data", "Transaction lifecycle,\nrecords, and audit trails.")
+
+    System(translate, "Translate Data to/from\nPH Core HL7 FHIR R4\n/ HL7 v2", "AI-powered bidirectional\nformat translation.")
+
+    System(validate_schema, "Validate Schema &\nCompleteness", "Validates payloads for\nrequired fields.")
+
+    System(validate_consent, "Validate Privacy\nConsent", "RA 10173 Data Privacy Act\ncompliance.")
+}
+
+' ===========================
+' RELATIONSHIPS
+' ===========================
+
+Rel(admin, administer, "Administers System", "HTTPS")
+
+Rel(ihomis, req_hl7, "Request Health Data (HL7)", "POST /api/ingest")
+Rel(ihomis, req_fhir, "Request FHIR 4 Health Data", "POST /api/ingest")
+Rel(provide, ihomis, "Provide Health Data (HL7 v2)", "POST /api/webhook")
+
+Rel(wah, req_fhir, "Request FHIR 4 Health Data", "POST /api/ingest")
+Rel(wah, provide, "Provide Health Data (FHIR R4)", "POST /api/ingest")
+Rel(provide, wah, "Provide Health Data (FHIR R4)", "POST /api/webhook")
+Rel(wah, manage, "Manage Health Data")
+
+Rel(req_hl7, validate_consent, "<<include>>")
+Rel(req_fhir, validate_consent, "<<include>>")
+Rel(req_hl7, translate, "<<include>>")
+Rel(req_fhir, translate, "<<include>>")
+Rel(translate, validate_schema, "<<include>>")
+Rel(translate, provide, "<<include>>")
+Rel(manage, translate, "Triggers translation")
+
+@enduml
