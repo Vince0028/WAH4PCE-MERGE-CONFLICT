@@ -43,6 +43,23 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
+      <div className="mt-auto px-5 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <button
+          onClick={async () => {
+            const { useRouter } = await import('next/navigation');
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-[13px] font-medium text-[rgba(255,255,255,0.45)] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-all"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Log Out
+        </button>
+      </div>
     </aside>
   );
 }
