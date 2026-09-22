@@ -1,0 +1,106 @@
+@startuml WAH4PCE_Interoperability_Activity_Diagram
+
+skinparam style strictuml
+skinparam SwimlaneBorderThickness 2
+skinparam ActivityBackgroundColor #E8F8F5
+skinparam ActivityBorderColor #117A65
+skinparam ArrowColor #2C3E50
+
+title WAH4PCE Interoperability - Traceable Activity Diagram
+
+|WAH4PCE Admin|
+|WAH (WAH4H/WAH4S/WAH4C)|
+|IPaaS (System & ADAPT)|
+|External (DOH iHomis)|
+
+' ==========================================
+' UC-01: Administer System
+' ==========================================
+|WAH4PCE Admin|
+start
+:UC-01 (1): Opens IPaaS login portal\nand enters credentials;
+|IPaaS (System & ADAPT)|
+if (Valid Credentials?) then (No)
+  #FADBD8:UC-01 (Exc 1.1): Invalid Credentials\n(Access denied, logs event);
+  stop
+else (Yes)
+  :UC-01 (1.1): Checks credentials\nand creates access token;
+  :UC-01 (1.2): Displays administration dashboard;
+endif
+|WAH4PCE Admin|
+:UC-01 (2): Selects management function\nand enters config changes;
+|IPaaS (System & ADAPT)|
+:UC-01 (2.1): Saves changes, updates routing state,\nand records in audit trail;
+stop
+
+' ==========================================
+' CORE DATA PIPELINE (UC-06/07 -> UC-02 -> UC-03 -> UC-04 -> UC-05)
+' ==========================================
+|External (DOH iHomis)|
+start
+:UC-06/07 (1): Sends health-data query\nthrough API gateway;
+|IPaaS (System & ADAPT)|
+:UC-06/07 (1.1): Checks actor's identity,\ntoken, and authorization scope;
+
+' Start UC-02 Provide Health Data
+:UC-02 (1.1): Starts core processing pipeline\nand checks incoming API payload;
+
+' Start UC-03 Validate Schema & Completeness
+:UC-03 (1.1): Receives payload from core pipeline;
+:UC-03 (1.2): Checks payload against registered schema\nand required fields;
+if (Validation Fails?) then (Yes)
+  #FADBD8:UC-03 (Exc 1.2): Validation Failure\n(Transfer stopped, returns HTTP 400);
+  stop
+else (No)
+endif
+
+' Start UC-04 Translate Data
+:UC-04 (1.1): Sends validated payload to\nADAPT transformation service;
+:UC-04 (1.2): ADAPT analyzes source format\nand applies mapping rules;
+
+' Start UC-05 Validate Privacy Consent
+:UC-04 (1.3): Pauses transformation to\ninclude Validate Privacy Consent;
+:UC-05 (1.1): Extracts standard patient identifier;
+:UC-05 (1.2): Checks consent registry for sharing rules;
+:UC-05 (1.3): Compares rules with current transaction;
+if (Consent Denied?) then (Yes)
+  #FADBD8:UC-05 (Exc 1.3): Consent Denied\n(Payload purged, returns HTTP 403);
+  stop
+else (No)
+  :UC-05 (1.4): Sends approval token to ADAPT;
+endif
+
+' Finish UC-04
+:UC-04 (1.4): Completes transformation and returns\nstandardized payload to pipeline;
+
+' Finish UC-03
+:UC-03 (1.4): Sends validation-success result\nback to core pipeline;
+
+' Finish UC-02 & UC-06/07
+:UC-02 (1.3): Completes the transaction, returns\nappropriate response, finishes routing;
+
+|External (DOH iHomis)|
+:UC-06/07 (1.3): Receives formatted HL7/FHIR response;
+stop
+
+' ==========================================
+' UC-08: Manage Health Data
+' ==========================================
+|WAH (WAH4H/WAH4S/WAH4C)|
+start
+:UC-08 (1): Sends HTTP PUT, POST, or PATCH\nrequest to modify existing record;
+|IPaaS (System & ADAPT)|
+:UC-08 (1.1): Checks actor's write permission;
+:UC-08 (1.2): Uses Provide Health Data pipeline\nto process the update;
+note right: Follows the same UC-02/03/04/05\ncore pipeline steps shown above
+if (Record Locked / Conflict?) then (Yes)
+  #FADBD8:UC-08 (Exc 1.3): Record Locked / Conflict\n(Rejects update with HTTP 409);
+  stop
+else (No)
+  #D4EFDF:UC-08 (1.3): Applies update, creates new\nrecord version, returns HTTP 200/204;
+endif
+|WAH (WAH4H/WAH4S/WAH4C)|
+:Record Updated;
+stop
+
+@enduml
