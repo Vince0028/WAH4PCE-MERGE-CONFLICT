@@ -8,21 +8,83 @@ async function safeFetch(url: string, opts?: RequestInit) {
   try { return JSON.parse(text); } catch { return { success: false, message: 'Invalid response' }; }
 }
 
-const SAMPLE_DATA = {
-  patient_fname: 'Juan', patient_lname: 'Dela Cruz', patient_mname: 'Santos', patient_suffix: '',
-  dob: '1990-05-15', sex: 'M', civil_status: 'M',
-  philhealth_no: '0102-0304-0506', contact_no: '0917-123-4567',
-  address_street: '123 Rizal Street', address_barangay: 'Brgy. San Antonio',
-  address_city: 'Makati City', address_province: 'Metro Manila', address_zip: '1200',
-  bp_systolic: '120', bp_diastolic: '80', heart_rate: '72', temperature: '36.5',
-  respiratory_rate: '18', oxygen_saturation: '98', weight_kg: '65', height_cm: '170',
-  chief_complaint: 'Persistent cough and mild fever for 3 days',
-  diagnosis_code: 'J18.9', diagnosis_desc: 'Pneumonia, unspecified organism', diagnosis_type: 'admitting',
-  clinical_notes: 'Patient referred for further evaluation and management',
-  referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
-  referring_physician: 'Dr. Maria Santos', referring_physician_license: 'PRC-12345',
-  referral_reason: 'Specialist consult for respiratory condition', priority: 'ROUTINE',
-};
+const SAMPLE_DATA = [
+  {
+    patient_fname: 'Juan', patient_lname: 'Dela Cruz', patient_mname: 'Santos', patient_suffix: '',
+    dob: '1990-05-15', sex: 'M', civil_status: 'M',
+    philhealth_no: '0102-0304-0506', contact_no: '0917-123-4567',
+    address_street: '123 Rizal Street', address_barangay: 'Brgy. San Antonio',
+    address_city: 'Makati City', address_province: 'Metro Manila', address_zip: '1200',
+    bp_systolic: '120', bp_diastolic: '80', heart_rate: '72', temperature: '36.5',
+    respiratory_rate: '18', oxygen_saturation: '98', weight_kg: '65', height_cm: '170',
+    chief_complaint: 'Persistent cough and mild fever for 3 days',
+    diagnosis_code: 'J18.9', diagnosis_desc: 'Pneumonia, unspecified organism', diagnosis_type: 'admitting',
+    clinical_notes: 'Patient referred for further evaluation and management',
+    referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
+    referring_physician: 'Dr. Maria Santos', referring_physician_license: 'PRC-12345',
+    referral_reason: 'Specialist consult for respiratory condition', priority: 'ROUTINE',
+  },
+  {
+    patient_fname: 'Maria', patient_lname: 'Clara', patient_mname: 'Garcia', patient_suffix: '',
+    dob: '1985-08-20', sex: 'F', civil_status: 'S',
+    philhealth_no: '0204-0608-1012', contact_no: '0918-987-6543',
+    address_street: '456 Bonifacio Avenue', address_barangay: 'Brgy. Poblacion',
+    address_city: 'Quezon City', address_province: 'Metro Manila', address_zip: '1101',
+    bp_systolic: '110', bp_diastolic: '70', heart_rate: '68', temperature: '37.0',
+    respiratory_rate: '16', oxygen_saturation: '99', weight_kg: '55', height_cm: '160',
+    chief_complaint: 'Severe headache and nausea',
+    diagnosis_code: 'R51', diagnosis_desc: 'Headache', diagnosis_type: 'admitting',
+    clinical_notes: 'Observation for potential migraine',
+    referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
+    referring_physician: 'Dr. Jose Rizal', referring_physician_license: 'PRC-54321',
+    referral_reason: 'Neurology consult', priority: 'URGENT',
+  },
+  {
+    patient_fname: 'Pedro', patient_lname: 'Penduko', patient_mname: 'Batumbakal', patient_suffix: 'Jr.',
+    dob: '1975-12-01', sex: 'M', civil_status: 'M',
+    philhealth_no: '0306-0912-1518', contact_no: '0920-111-2222',
+    address_street: '789 Mabini St', address_barangay: 'Brgy. San Jose',
+    address_city: 'Manila', address_province: 'Metro Manila', address_zip: '1000',
+    bp_systolic: '140', bp_diastolic: '90', heart_rate: '85', temperature: '36.8',
+    respiratory_rate: '20', oxygen_saturation: '96', weight_kg: '80', height_cm: '175',
+    chief_complaint: 'Chest pain radiating to left arm',
+    diagnosis_code: 'I20.9', diagnosis_desc: 'Angina pectoris, unspecified', diagnosis_type: 'admitting',
+    clinical_notes: 'Suspected acute coronary syndrome',
+    referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
+    referring_physician: 'Dr. Antonio Luna', referring_physician_license: 'PRC-98765',
+    referral_reason: 'Cardiology consult', priority: 'STAT',
+  },
+  {
+    patient_fname: 'Luz', patient_lname: 'Viminda', patient_mname: 'Isla', patient_suffix: '',
+    dob: '2000-01-10', sex: 'F', civil_status: 'S',
+    philhealth_no: '0408-1216-2024', contact_no: '0933-444-5555',
+    address_street: '101 Mango Ave', address_barangay: 'Brgy. Lahug',
+    address_city: 'Cebu City', address_province: 'Cebu', address_zip: '6000',
+    bp_systolic: '115', bp_diastolic: '75', heart_rate: '78', temperature: '38.2',
+    respiratory_rate: '22', oxygen_saturation: '97', weight_kg: '50', height_cm: '155',
+    chief_complaint: 'Abdominal pain and vomiting',
+    diagnosis_code: 'R10.4', diagnosis_desc: 'Other and unspecified abdominal pain', diagnosis_type: 'admitting',
+    clinical_notes: 'Rule out appendicitis',
+    referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
+    referring_physician: 'Dr. Emilio Aguinaldo', referring_physician_license: 'PRC-24680',
+    referral_reason: 'Surgery consult', priority: 'URGENT',
+  },
+  {
+    patient_fname: 'Andres', patient_lname: 'Bonifacio', patient_mname: 'Supremo', patient_suffix: '',
+    dob: '1982-11-30', sex: 'M', civil_status: 'W',
+    philhealth_no: '0510-1520-2530', contact_no: '0945-666-7777',
+    address_street: '88 Katipunan Rd', address_barangay: 'Brgy. Balara',
+    address_city: 'Quezon City', address_province: 'Metro Manila', address_zip: '1108',
+    bp_systolic: '130', bp_diastolic: '85', heart_rate: '80', temperature: '36.9',
+    respiratory_rate: '18', oxygen_saturation: '98', weight_kg: '70', height_cm: '168',
+    chief_complaint: 'Laceration on right forearm',
+    diagnosis_code: 'S51.8', diagnosis_desc: 'Open wound of other parts of forearm', diagnosis_type: 'admitting',
+    clinical_notes: 'Needs suturing and tetanus toxoid',
+    referring_facility_code: 'IHOMIS-001', referring_facility_name: 'iHOMIS',
+    referring_physician: 'Dr. Apolinario Mabini', referring_physician_license: 'PRC-13579',
+    referral_reason: 'Wound care', priority: 'ROUTINE',
+  }
+];
 
 export default function SavePatientPage() {
   const [saving, setSaving] = useState(false);
@@ -43,7 +105,10 @@ export default function SavePatientPage() {
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
-  const autoFill = () => setForm(prev => ({ ...prev, ...SAMPLE_DATA }));
+  const autoFill = () => {
+    const randomData = SAMPLE_DATA[Math.floor(Math.random() * SAMPLE_DATA.length)];
+    setForm(prev => ({ ...prev, ...randomData }));
+  };
 
   const handleSave = async () => {
     if (!form.patient_fname || !form.patient_lname || !form.philhealth_no) {

@@ -9,16 +9,58 @@ async function safeFetch(url: string, opts?: RequestInit) {
   try { return JSON.parse(text); } catch { return { success: false, message: 'Invalid response from server' }; }
 }
 
-const WAH_SAMPLE = {
-  family: 'Reyes', given: 'Ana', middle: 'Cruz', suffix: '', gender: 'female',
-  birthDate: '1988-11-20', philhealthNo: '0506-0708-0910', phone: '0918-765-4321',
-  addressLine: '456 Bonifacio Avenue', city: 'Quezon City', province: 'Metro Manila', postalCode: '1100', maritalStatus: 'M',
-  encClass: 'AMB', encPriority: 'routine',
-  reasonText: 'Follow-up consultation for hypertension management', facilityName: 'WAH General Clinic', physicianName: 'Dr. Ana Reyes',
-  bpSys: '135', bpDia: '85', hr: '78', temp: '36.8', rr: '16', spo2: '97', weight: '58', height: '160',
-  diagCode: 'I10', diagDisplay: 'Essential (primary) hypertension', diagClinical: 'active',
-  chiefComplaint: 'Elevated blood pressure during routine check-up',
-};
+const WAH_SAMPLE = [
+  {
+    family: 'Reyes', given: 'Ana', middle: 'Cruz', suffix: '', gender: 'female',
+    birthDate: '1988-11-20', philhealthNo: '0506-0708-0910', phone: '0918-765-4321',
+    addressLine: '456 Bonifacio Avenue', city: 'Quezon City', province: 'Metro Manila', postalCode: '1100', maritalStatus: 'M',
+    encClass: 'AMB', encPriority: 'routine',
+    reasonText: 'Follow-up consultation for hypertension management', facilityName: 'WAH General Clinic', physicianName: 'Dr. Ana Reyes',
+    bpSys: '135', bpDia: '85', hr: '78', temp: '36.8', rr: '16', spo2: '97', weight: '58', height: '160',
+    diagCode: 'I10', diagDisplay: 'Essential (primary) hypertension', diagClinical: 'active',
+    chiefComplaint: 'Elevated blood pressure during routine check-up',
+  },
+  {
+    family: 'Mercado', given: 'Luis', middle: 'Gomez', suffix: 'Sr.', gender: 'male',
+    birthDate: '1965-03-14', philhealthNo: '1122-3344-5566', phone: '0922-333-4444',
+    addressLine: '789 Kalayaan St', city: 'Pasig City', province: 'Metro Manila', postalCode: '1600', maritalStatus: 'M',
+    encClass: 'EMER', encPriority: 'stat',
+    reasonText: 'Sudden onset of severe abdominal pain', facilityName: 'WAH General Clinic', physicianName: 'Dr. Carlos Mendoza',
+    bpSys: '150', bpDia: '95', hr: '92', temp: '37.5', rr: '22', spo2: '95', weight: '75', height: '172',
+    diagCode: 'R10.0', diagDisplay: 'Acute abdomen', diagClinical: 'active',
+    chiefComplaint: 'Sharp pain in lower right quadrant',
+  },
+  {
+    family: 'Santos', given: 'Elena', middle: 'Bautista', suffix: '', gender: 'female',
+    birthDate: '1995-07-22', philhealthNo: '9988-7766-5544', phone: '0999-888-7777',
+    addressLine: '101 Mango Ave, Brgy. Lahug', city: 'Cebu City', province: 'Cebu', postalCode: '6000', maritalStatus: 'S',
+    encClass: 'AMB', encPriority: 'urgent',
+    reasonText: 'High fever and chills for 4 days', facilityName: 'WAH General Clinic', physicianName: 'Dr. Patricia Lim',
+    bpSys: '110', bpDia: '70', hr: '105', temp: '39.2', rr: '20', spo2: '98', weight: '52', height: '158',
+    diagCode: 'A90', diagDisplay: 'Dengue fever, unspecified', diagClinical: 'active',
+    chiefComplaint: 'Fever, body aches, and fatigue',
+  },
+  {
+    family: 'Villanueva', given: 'Jose', middle: 'Alcantara', suffix: '', gender: 'male',
+    birthDate: '2010-09-05', philhealthNo: '1234-5678-9012', phone: '0915-123-9876',
+    addressLine: '33 Sunflower St', city: 'Baguio City', province: 'Benguet', postalCode: '2600', maritalStatus: 'S',
+    encClass: 'AMB', encPriority: 'routine',
+    reasonText: 'Allergic reaction and skin rash', facilityName: 'WAH General Clinic', physicianName: 'Dr. Ramon Perez',
+    bpSys: '105', bpDia: '65', hr: '88', temp: '36.5', rr: '18', spo2: '99', weight: '45', height: '150',
+    diagCode: 'L50.9', diagDisplay: 'Urticaria, unspecified', diagClinical: 'active',
+    chiefComplaint: 'Itchy red welts all over arms and chest',
+  },
+  {
+    family: 'Garcia', given: 'Carmen', middle: 'Fernandez', suffix: '', gender: 'female',
+    birthDate: '1950-12-10', philhealthNo: '5566-7788-9900', phone: '0905-555-6666',
+    addressLine: '202 Sampaguita Lane', city: 'Davao City', province: 'Davao del Sur', postalCode: '8000', maritalStatus: 'W',
+    encClass: 'AMB', encPriority: 'routine',
+    reasonText: 'Routine check-up for diabetes management', facilityName: 'WAH General Clinic', physicianName: 'Dr. Roberto Cruz',
+    bpSys: '140', bpDia: '85', hr: '72', temp: '36.6', rr: '16', spo2: '96', weight: '68', height: '155',
+    diagCode: 'E11.9', diagDisplay: 'Type 2 diabetes mellitus without complications', diagClinical: 'active',
+    chiefComplaint: 'Occasional numbness in toes',
+  }
+];
 
 export default function SaveFHIRRecordPage() {
   const [saving, setSaving] = useState(false);
@@ -38,7 +80,10 @@ export default function SaveFHIRRecordPage() {
 
   const update = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }));
   const showToast = (type: 'success'|'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 4000); };
-  const autoFill = () => setForm(prev => ({ ...prev, ...WAH_SAMPLE }));
+  const autoFill = () => {
+    const randomData = WAH_SAMPLE[Math.floor(Math.random() * WAH_SAMPLE.length)];
+    setForm(p => ({ ...p, ...randomData }));
+  };
 
   const buildFHIRBundle = () => {
     const patientId = `urn:uuid:patient-${Date.now()}`;
