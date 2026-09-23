@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { calculateMappingPercentage, calculateSourceFillCount } from '@/lib/mapping-calc';
 
 async function safeFetch(url: string) {
   const res = await fetch(url);
@@ -10,7 +11,10 @@ async function safeFetch(url: string) {
 
 interface Transaction {
   id: string; source_system: string; destination_system: string;
+  source_format: string; destination_format: string;
   status: string; error_message: string | null; created_at: string;
+  raw_payload?: Record<string, unknown> | null;
+  transformed_payload?: Record<string, unknown> | null;
 }
 
 export default function TransactionsPage() {
@@ -45,6 +49,46 @@ export default function TransactionsPage() {
     };
     return m[s] || m.PENDING;
   };
+
+  const formatBadgeStyle = (fmt: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      HL7V2: { bg: 'rgba(59,130,246,0.08)', color: '#3b82f6' },
+      FHIR_R4: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
+    };
+    return m[fmt] || m.HL7V2;
+  };
+
+  const formatLabel = (fmt: string) => {
+    const m: Record<string, string> = { HL7V2: 'HL7v2', FHIR_R4: 'FHIR R4' };
+    return m[fmt] || fmt;
+  };
+
+  const pctColor = (pct: number) => {
+    if (pct >= 85) return '#059669'; // green
+    if (pct >= 60) return '#d97706'; // amber
+    return '#dc2626'; // red
+  };
+
+  const txMappings = useMemo(() => {
+    const map: Record<string, { src: number; dest: number; srcFilled: number; srcTotal: number; destFilled: number; destTotal: number }> = {};
+    for (const tx of transactions) {
+      if (tx.status !== 'SUCCESS') {
+        map[tx.id] = { src: 0, dest: 0, srcFilled: 0, srcTotal: 0, destFilled: 0, destTotal: 0 };
+        continue;
+      }
+      const srcResult = calculateSourceFillCount(tx.raw_payload || null, tx.source_system);
+      const destResult = calculateMappingPercentage(tx.transformed_payload || null, tx.destination_system);
+      map[tx.id] = {
+        src: srcResult.percentage,
+        dest: destResult.percentage,
+        srcFilled: srcResult.filledFields,
+        srcTotal: srcResult.totalFields,
+        destFilled: destResult.filledFields,
+        destTotal: destResult.totalFields,
+      };
+    }
+    return map;
+  }, [transactions]);
 
   return (
     <>
@@ -87,27 +131,62 @@ export default function TransactionsPage() {
             </div>
           ) : (
             <table className="data-table">
-              <thead><tr><th>ID</th><th>Source</th><th>Destination</th><th>Status</th><th>Error</th><th>Created</th></tr></thead>
+              <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Status</th><th>Date</th></tr></thead>
               <tbody>
                 {transactions.map(tx => {
                   const st = statusStyle(tx.status);
+                  const srcFmt = formatBadgeStyle(tx.source_format);
+                  const dstFmt = formatBadgeStyle(tx.destination_format);
+                  const mapping = txMappings[tx.id];
+                  const hasMappingData = tx.status === 'SUCCESS' && mapping && mapping.destTotal > 0;
+                  
                   return (
                     <tr key={tx.id} onClick={() => window.location.href = `/mapper?id=${tx.id}`} style={{ cursor: 'pointer' }}>
-                      <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}</td>
+                      <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
+                      <td className="text-sm">{tx.source_system} → {tx.destination_system}</td>
                       <td>
-                        <span className="inline-flex items-center gap-1.5 text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: tx.source_system === 'iHOMIS' ? '#2563eb' : '#059669' }} />
-                          {tx.source_system}
-                        </span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>→</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                      </td>
+                      {/* Source mapping % */}
+                      <td>
+                        {hasMappingData ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                              <div className="h-full rounded-full transition-all" style={{ width: `${mapping.src}%`, background: pctColor(mapping.src) }} />
+                            </div>
+                            <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.src) }}>{mapping.src}%</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.srcFilled}/{mapping.srcTotal}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
+                      </td>
+                      {/* Destination mapping % */}
+                      <td>
+                        {hasMappingData ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                              <div className="h-full rounded-full transition-all" style={{ width: `${mapping.dest}%`, background: pctColor(mapping.dest) }} />
+                            </div>
+                            <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.dest) }}>{mapping.dest}%</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.destFilled}/{mapping.destTotal}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
                       </td>
                       <td>
-                        <span className="inline-flex items-center gap-1.5 text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: tx.destination_system === 'iHOMIS' ? '#2563eb' : '#059669' }} />
-                          {tx.destination_system}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="ipaas-badge self-start" style={{ background: st.bg, color: st.color }}>{tx.status}</span>
+                          {tx.error_message && (
+                            <span className="text-[10px] max-w-[120px] truncate" style={{ color: '#dc2626' }} title={tx.error_message}>
+                              {tx.error_message}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td><span className="ipaas-badge" style={{ background: st.bg, color: st.color }}>{tx.status}</span></td>
-                      <td className="text-xs max-w-[180px] truncate" style={{ color: 'var(--color-text-muted)' }}>{tx.error_message || '—'}</td>
                       <td className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</td>
                     </tr>
                   );
