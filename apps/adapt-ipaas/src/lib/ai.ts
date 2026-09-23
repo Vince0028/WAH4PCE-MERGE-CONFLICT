@@ -35,6 +35,7 @@ The output FHIR Bundle MUST contain:
 2. **Encounter**:
    - status: "finished", class: "AMB"
    - serviceProvider.display: referring_facility_name
+   - participant[0].individual.display: referring_physician
    - reasonCode[0].text: referral_reason or chief_complaint
    - priority: ROUTINE/URGENT/EMERGENCY
 3. **Observation** (Create a resource for EACH valid numeric vital sign in the "vitals" object using these LOINC codes):
