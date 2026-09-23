@@ -81,3 +81,40 @@ CREATE TRIGGER update_ihomis_patients_modtime
 -- ============================================
 ALTER TABLE ihomis_patients ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all for prototype" ON ihomis_patients FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================
+-- 2. iHOMIS Incoming Requests Table
+-- ============================================
+-- Stores data requests from other organizations (e.g. WAH)
+-- requesting patient data from iHOMIS.
+
+DROP TABLE IF EXISTS ihomis_incoming_requests CASCADE;
+
+CREATE TABLE ihomis_incoming_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+
+  requesting_system VARCHAR(100) NOT NULL,
+  request_id UUID,
+  philhealth_no VARCHAR(30),
+  patient_name VARCHAR(200),
+  request_reason TEXT,
+  ipaas_transaction_id UUID,
+
+  status VARCHAR(20) DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'COMPLETED', 'DENIED', 'FAILED')),
+  error_message TEXT,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ihomis_incoming_status ON ihomis_incoming_requests (status);
+CREATE INDEX IF NOT EXISTS idx_ihomis_incoming_created ON ihomis_incoming_requests (created_at DESC);
+
+DROP TRIGGER IF EXISTS update_ihomis_incoming_modtime ON ihomis_incoming_requests;
+CREATE TRIGGER update_ihomis_incoming_modtime
+  BEFORE UPDATE ON ihomis_incoming_requests
+  FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+ALTER TABLE ihomis_incoming_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for prototype" ON ihomis_incoming_requests FOR ALL USING (true) WITH CHECK (true);

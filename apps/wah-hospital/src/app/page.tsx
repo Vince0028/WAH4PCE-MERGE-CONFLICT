@@ -29,7 +29,7 @@ export default function WAHDashboard() {
         </div>
         <div className="wah-card p-6">
           <h2 className="text-sm font-semibold mb-4">Data Exchange Workflow</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(5,150,105,0.08)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -40,27 +40,18 @@ export default function WAHDashboard() {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.08)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium">2. Send via iPaaS</h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>AI converts FHIR R4 → HL7 v2</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
               <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(37,99,235,0.08)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
               </div>
               <div>
-                <h3 className="text-sm font-medium">3. Receive</h3>
+                <h3 className="text-sm font-medium">2. Receive Data</h3>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Get converted FHIR R4 from iHOMIS</p>
               </div>
             </div>
           </div>
           <div className="flex gap-3 mt-5 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
             <a href="/save" className="wah-btn wah-btn-primary text-sm">New FHIR Record</a>
-            <a href="/records" className="wah-btn wah-btn-secondary text-sm">Records & Send</a>
+            <a href="/records" className="wah-btn wah-btn-secondary text-sm">Records</a>
           </div>
         </div>
       </main>

@@ -20,32 +20,36 @@ export const MODEL_FALLBACKS = [
 
 const HL7V2_TO_FHIR_PROMPT = `You are a healthcare data transformation engine for the Philippine Local Health Information Exchange (LHIE).
 
-Your task: Convert the following HL7 v2.x message (pipe-delimited segments: MSH, PID, PV1, OBX, DG1, RF1) into a FULLY VALID PH Core HL7 FHIR R4 Transaction Bundle.
-
-HL7 v2 segment reference:
-- MSH: Message Header (sending facility, timestamp)
-- PID: Patient ID, name (format: LASTNAME^FIRSTNAME^MIDDLENAME), DOB, sex, address, PhilHealth number
-- PV1: Patient Visit (class, attending physician, priority)
-- OBX: Observation (vital signs with LOINC codes)
-- DG1: Diagnosis (ICD-10 code, description, chief complaint)
-- RF1: Referral info (priority, reason, facility)
+Your task: Convert the input flat JSON patient record (representing a simplified HL7 v2 payload) into a FULLY VALID PH Core HL7 FHIR R4 Transaction Bundle.
 
 The output FHIR Bundle MUST contain:
 1. **Patient**:
-   - name.given[0]: FIRSTNAME
-   - name.given[1]: MIDDLENAME (Important: Do not omit the middle name)
-   - name.family: LASTNAME
-   - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid")
-   - telecom[0]: phone number from PID (system: "phone", value: the contact number from the last field of PID)
-   - address: from PID (line, city, district/province, postalCode, country)
+   - name.given[0]: patient_fname
+   - name.given[1]: patient_mname
+   - name.family: patient_lname
+   - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid") from philhealth_no
+   - telecom[0]: phone (system: "phone", value: contact_no)
+   - address: line[0]: address_street, line[1]: address_barangay, city: address_city, district: address_province, postalCode: address_zip
+   - gender: M=male, F=female
+   - birthDate: dob
 2. **Encounter**:
-   - class, priority, participant (attending physician)
-   - serviceProvider.display: sending facility from RF1 or PV1
-   - reasonCode[0].text: referral reason from RF1
-3. **Observation**: resources for each OBX segment (vital signs with LOINC codes, units of measure)
+   - status: "finished", class: "AMB"
+   - serviceProvider.display: referring_facility_name
+   - reasonCode[0].text: referral_reason or chief_complaint
+   - priority: ROUTINE/URGENT/EMERGENCY
+3. **Observation** (Create a resource for EACH valid numeric vital sign in the "vitals" object using these LOINC codes):
+   - bp_systolic: 8480-6 (Systolic blood pressure)
+   - bp_diastolic: 8462-4 (Diastolic blood pressure)
+   - heart_rate: 8867-4 (Heart rate)
+   - temperature: 8310-5 (Body temperature)
+   - respiratory_rate: 9279-1 (Respiratory rate)
+   - oxygen_saturation: 2708-6 (Oxygen saturation)
+   - weight_kg: 29463-7 (Body weight)
+   - height_cm: 8302-2 (Body height)
+   *Ensure each Observation includes valueQuantity with the numeric value and appropriate unit.*
 4. **Condition**:
-   - code: ICD-10 coding from DG1
-   - note[0].text: chief complaint from the last field of DG1
+   - code: ICD-10 coding from diagnosis_code
+   - note[0].text: chief_complaint
 
 Bundle: type "transaction", fullUrl using "urn:uuid:" format, request with method "POST".
 Output ONLY valid JSON. No markdown, no code fences, no explanation.`;

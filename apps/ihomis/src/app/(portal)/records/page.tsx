@@ -34,15 +34,6 @@ export default function RecordsPage() {
     setLoading(false);
   };
 
-  const handleQueue = async (id: string) => {
-    const data = await safeFetch('/api/patients', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status: 'QUEUED' }),
-    });
-    if (data.success) { showToast('success', 'Moved to send queue'); fetchRecords(); }
-    else showToast('error', data.message || 'Failed');
-  };
-
   const handleDelete = async () => {
     if (!deleteModal) return;
     setDeleting(true);
@@ -59,7 +50,7 @@ export default function RecordsPage() {
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">Patient Records</h1>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved records for iHOMIS. Move records to send queue for exchange.</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved patient records for iHOMIS.</p>
           </div>
           <button onClick={() => { setLoading(true); fetchRecords(); }} className="portal-btn portal-btn-secondary text-xs flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -104,9 +95,6 @@ export default function RecordsPage() {
                   <div><span style={{ color: 'var(--color-text-muted)' }}>Created:</span> <strong>{new Date(rec.created_at).toLocaleDateString()}</strong></div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => handleQueue(rec.id)} className="portal-btn portal-btn-primary text-xs px-3 py-1.5">
-                    Move to Send Queue
-                  </button>
                   <button onClick={() => setDeleteModal(rec.id)} className="portal-btn portal-btn-danger text-xs px-3 py-1.5">Delete</button>
                   <button onClick={() => setViewId(viewId === rec.id ? null : rec.id)}
                     className="text-xs font-medium flex items-center gap-1 ml-auto" style={{ color: 'var(--color-accent-bright)' }}>

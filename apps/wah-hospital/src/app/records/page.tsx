@@ -138,7 +138,6 @@ export default function RecordsPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [deleteModal, setDeleteModal] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [movingId, setMovingId] = useState<string | null>(null);
   const [showConsent, setShowConsent] = useState(false);
   const [consentEdits, setConsentEdits] = useState<Record<string, boolean>>({});
 
@@ -190,19 +189,6 @@ export default function RecordsPage() {
       else showToast('error', data.message || 'Failed');
     } catch { showToast('error', 'Failed to save'); }
     finally { setSaving(false); }
-  };
-
-  const handleMoveToSend = async (id: string) => {
-    setMovingId(id);
-    try {
-      const data = await safeFetch('/api/patients', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'QUEUED' }),
-      });
-      if (data.success) { showToast('success', 'Moved to Send Queue'); fetchRecords(); }
-      else showToast('error', data.message || 'Failed');
-    } catch { showToast('error', 'Failed'); }
-    finally { setMovingId(null); }
   };
 
   const handleDelete = async () => {
@@ -264,11 +250,6 @@ export default function RecordsPage() {
                     <div><span style={{ color: 'var(--color-text-muted)' }}>Created:</span> <strong>{new Date(rec.created_at).toLocaleDateString()}</strong></div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {rec.status === 'SAVED' && rec.source === 'LOCAL' && (
-                      <button onClick={() => handleMoveToSend(rec.id)} disabled={movingId === rec.id} className="wah-btn wah-btn-primary text-xs px-3 py-1.5">
-                        {movingId === rec.id ? 'Moving...' : 'Move to Send Queue'}
-                      </button>
-                    )}
                     {!isEditing && <button onClick={() => startEdit(rec)} className="wah-btn wah-btn-secondary text-xs px-3 py-1.5">Edit</button>}
                     <button onClick={() => setDeleteModal(rec.id)} className="wah-btn text-xs px-3 py-1.5" style={{ color: 'var(--color-error)', border: '1px solid rgba(220,38,38,0.2)' }}>Delete</button>
                     <button onClick={() => { setExpandedId(isExpanded ? null : rec.id); if (isExpanded) setEditId(null); setViewMode('summary'); }}

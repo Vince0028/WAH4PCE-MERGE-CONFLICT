@@ -15,6 +15,7 @@ interface IncomingRequest {
   philhealth_no: string | null;
   patient_name: string | null;
   request_reason: string | null;
+  request_id: string | null;
   ipaas_transaction_id: string | null;
   status: string;
   error_message: string | null;
@@ -32,7 +33,16 @@ export default function IncomingRequestsPage() {
   // Note: Since we simplified the backend, incoming requests are handled
   // automatically by the /api/incoming-requests endpoint. This page is
   // for visibility — showing what WAH has requested from iHOMIS.
-  useEffect(() => { setLoading(false); }, []);
+  const fetchRequests = async () => {
+    const data = await safeFetch('/api/incoming-requests');
+    if (data.success) {
+      const sorted = (data.data || []).sort((a: IncomingRequest, b: IncomingRequest) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRequests(sorted);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchRequests(); const i = setInterval(fetchRequests, 5000); return () => clearInterval(i); }, []);
 
   const handleApprove = async (req: IncomingRequest) => {
     setProcessingId(req.id);
@@ -67,16 +77,27 @@ export default function IncomingRequestsPage() {
           payload: matchedPatient.hl7v2_payload || matchedPatient,
           original_json: matchedPatient.hl7v2_payload || matchedPatient,
           consent_signed: matchedPatient.consent_signed ?? true,
-          request_id: req.id,
+          request_id: req.request_id || req.id,
           ipaas_transaction_id: req.ipaas_transaction_id,
         }),
       });
 
       const ipaasData = await ipaasRes.json();
       if (ipaasData.success) {
+        // Update request status to COMPLETED
+        await safeFetch('/api/incoming-requests', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: req.id, status: 'COMPLETED' }),
+        });
         showToast('success', 'Request approved and data sent to WAH.');
+        fetchRequests();
       } else {
+        await safeFetch('/api/incoming-requests', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: req.id, status: 'FAILED', error_message: ipaasData.message || 'iPaaS rejected the data' }),
+        });
         showToast('error', ipaasData.message || 'iPaaS rejected the data.');
+        fetchRequests();
       }
     } catch {
       showToast('error', 'Failed to process approval');
@@ -93,7 +114,7 @@ export default function IncomingRequestsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          request_id: req.id,
+          request_id: req.request_id || req.id,
           destination_system: 'WAH',
           ipaas_transaction_id: req.ipaas_transaction_id,
           message: 'Request declined by iHOMIS.',
@@ -103,7 +124,14 @@ export default function IncomingRequestsPage() {
       console.error('Failed to notify iPaaS of decline', e);
     }
 
+    // Update request status to DENIED
+    await safeFetch('/api/incoming-requests', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: req.id, status: 'DENIED' }),
+    });
+
     showToast('success', 'Request declined.');
+    fetchRequests();
     setProcessingId(null);
   };
 

@@ -65,16 +65,7 @@ export default function Dashboard() {
         {/* Workflow */}
         <div className="portal-card p-6">
           <h2 className="text-sm font-bold mb-4">Data Exchange Workflow</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="flex gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-accent-glow)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold">Send Data</h3>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Send patient records to WAH. AI converts HL7 v2 → FHIR R4.</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex gap-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-teal-glow)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal)" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
