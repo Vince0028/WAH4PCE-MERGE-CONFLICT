@@ -30,7 +30,7 @@ export async function GET() {
     const toWah = toWahRes.count || 0;
     const fromWah = fromWahRes.count || 0;
 
-    const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
+    const successRate = total > 0 ? Number(((success / total) * 100).toFixed(1)) : 0;
 
     // Fetch format-specific stats
     const [hl7v2Res, fhirRes] = await Promise.all([

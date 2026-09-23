@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { calculateMappingPercentage, calculateSourceFillCount } from '@/lib/mapping-calc';
 
 async function safeFetch(url: string) {
   const res = await fetch(url);
@@ -19,6 +20,8 @@ interface Transaction {
   id: string; source_system: string; destination_system: string;
   source_format: string; destination_format: string;
   status: string; created_at: string;
+  raw_payload?: Record<string, unknown> | null;
+  transformed_payload?: Record<string, unknown> | null;
 }
 
 export default function Dashboard() {
@@ -36,6 +39,36 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchData(); const i = setInterval(fetchData, 10000); return () => clearInterval(i); }, []);
+
+  // Pre-compute mapping percentages for all transactions
+  const txMappings = useMemo(() => {
+    const map: Record<string, { src: number; dest: number; srcFilled: number; srcTotal: number; destFilled: number; destTotal: number }> = {};
+    for (const tx of recentTx) {
+      if (tx.status !== 'SUCCESS') {
+        map[tx.id] = { src: 0, dest: 0, srcFilled: 0, srcTotal: 0, destFilled: 0, destTotal: 0 };
+        continue;
+      }
+      const srcResult = calculateSourceFillCount(tx.raw_payload || null, tx.source_system);
+      const destResult = calculateMappingPercentage(tx.transformed_payload || null, tx.destination_system);
+      map[tx.id] = {
+        src: srcResult.percentage,
+        dest: destResult.percentage,
+        srcFilled: srcResult.filledFields,
+        srcTotal: srcResult.totalFields,
+        destFilled: destResult.filledFields,
+        destTotal: destResult.totalFields,
+      };
+    }
+    return map;
+  }, [recentTx]);
+
+  // Average mapping % across successful transactions
+  const avgMapping = useMemo(() => {
+    const successTx = recentTx.filter(tx => tx.status === 'SUCCESS' && txMappings[tx.id]?.destTotal > 0);
+    if (successTx.length === 0) return 0;
+    const sum = successTx.reduce((acc, tx) => acc + (txMappings[tx.id]?.dest || 0), 0);
+    return Number((sum / successTx.length).toFixed(1));
+  }, [recentTx, txMappings]);
 
   const statusStyle = (s: string) => {
     const m: Record<string, { bg: string; color: string }> = {
@@ -60,6 +93,19 @@ export default function Dashboard() {
     return m[fmt] || fmt;
   };
 
+  // Color for mapping percentage
+  const pctColor = (pct: number) => {
+    if (pct >= 85) return '#059669'; // green
+    if (pct >= 60) return '#d97706'; // amber
+    return '#dc2626'; // red
+  };
+
+  const pctBg = (pct: number) => {
+    if (pct >= 85) return 'rgba(5,150,105,0.08)';
+    if (pct >= 60) return 'rgba(217,119,6,0.08)';
+    return 'rgba(220,38,38,0.08)';
+  };
+
   return (
     <>
       <Sidebar />
@@ -76,10 +122,11 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Main Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
               {[
                 { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
                 { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
+                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
                 { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                 { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
               ].map(m => (
@@ -145,12 +192,14 @@ export default function Dashboard() {
               ) : (
               <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                 <table className="data-table">
-                  <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Status</th><th>Date</th></tr></thead>
+                  <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Status</th><th>Date</th></tr></thead>
                   <tbody>
                     {recentTx.map(tx => {
                       const st = statusStyle(tx.status);
                       const srcFmt = formatBadgeStyle(tx.source_format);
                       const dstFmt = formatBadgeStyle(tx.destination_format);
+                      const mapping = txMappings[tx.id];
+                      const hasMappingData = tx.status === 'SUCCESS' && mapping && mapping.destTotal > 0;
                       return (
                         <tr key={tx.id} onClick={() => window.location.href = `/mapper?id=${tx.id}`} style={{ cursor: 'pointer' }}>
                           <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
@@ -159,6 +208,34 @@ export default function Dashboard() {
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
                             <span style={{ color: 'var(--color-text-muted)' }}>→</span>
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                          </td>
+                          {/* Source mapping % */}
+                          <td>
+                            {hasMappingData ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                                  <div className="h-full rounded-full transition-all" style={{ width: `${mapping.src}%`, background: pctColor(mapping.src) }} />
+                                </div>
+                                <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.src) }}>{mapping.src}%</span>
+                                <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.srcFilled}/{mapping.srcTotal}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+                          {/* Destination mapping % */}
+                          <td>
+                            {hasMappingData ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                                  <div className="h-full rounded-full transition-all" style={{ width: `${mapping.dest}%`, background: pctColor(mapping.dest) }} />
+                                </div>
+                                <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.dest) }}>{mapping.dest}%</span>
+                                <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.destFilled}/{mapping.destTotal}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
                           </td>
                           <td><span className="ipaas-badge" style={{ background: st.bg, color: st.color }}>{tx.status}</span></td>
                           <td className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</td>
