@@ -1,0 +1,153 @@
+---
+
+### Executive Verdict
+
+**No, the current system is NOT accurate to and does NOT fully follow the diagrams in `FinalDiagrams`.**
+
+While the **high-level business flow** (receiving HL7/FHIR, checking RA 10173 consent, AI transformation, bundle validation, webhook forwarding, metrics, and payload unhashing) is functionally simulated, **the underlying technology stack, module boundaries, data store, AI protocol, and component specifications in the codebase significantly diverge from what is depicted in the diagrams**.
+
+---
+
+### Overall Compliance Scorecard (ADAPT System Only)
+
+| Architectural Dimension | Diagram Specification (`FinalDiagrams`) | Actual Codebase Reality (`apps/adapt-ipaas`) | Status |
+| --- | --- | --- | --- |
+| **Backend Runtime & Language** | **Golang** (Go HTTP Handlers, Goroutines, `.go` packages) | **TypeScript / Next.js 16** (Node.js Route Handlers) | ❌ **Non-Compliant** |
+| **Data Layer & Storage** | **MongoDB** (Ephemeral Document Staging, Bronze/Silver/Gold) | **PostgreSQL via Supabase** (`adapt_transaction_logs`) | ❌ **Non-Compliant** |
+| **AI Translation Runtime** | **Local LLM Engine** via **MCP / gRPC / JSON** | **Cloud Gemini API + Groq SDK** over HTTPS | ❌ **Non-Compliant** |
+| **Fallback Mechanism** | **Deterministic Syntactic Fallback** (`fallback_mapper.go`) | **AI Model Fallback Chain** (Gemini $\rightarrow$ Groq LLMs) | ❌ **Non-Compliant** |
+| **Pipeline Staging** | Multi-stage **Bronze Ingest $\rightarrow$ Silver Cleanse $\rightarrow$ Gold Transform** | Single linear Next.js route execution | ❌ **Non-Compliant** |
+| **PHI / Data Retention** | **Zero permanent PHI** (Sanitized non-PHI logs only) | Permanent raw & transformed PHI stored in Supabase | ❌ **Non-Compliant** |
+| **API Security** | **mTLS certificates**, Bearer tokens, authorized client scopes | Unauthenticated API routes (API paths bypassed by middleware) | ❌ **Non-Compliant** |
+| **UI Routing & Client** | `/dashboard`, `/logs`, `/mapper` + `ADAPT API Client` | `/` (root), `/transactions`, `/mapper` + inline `fetch` | ⚠️ **Partial Match** |
+| **Functional Pipeline Rules** | RA 10173 Consent Gatekeeper, FHIR R4 & PH Core Validation | Fully implemented in ingest/route.ts & validator.ts | ✅ **Compliant** |
+
+---
+
+### Box-by-Box Audit Across All 7 Diagrams
+
+#### 1. System Context Diagram (`System Context Diagram.png`)
+
+| Box / Element | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`<<system>> WAH4PCE Interoperability Server (ADAPT)`** | Executes core Provide Health Data pipeline: Validate Schema & Completeness, Translate Data, Validate Privacy Consent. | Implemented in apps/adapt-ipaas. | ✅ **Yes** (logic matches) |
+| **`<<internal_system>> Local LLM`** | Localized LLM engine communicating via **MCP / JSON**. | Uses Google Gemini (`@google/generative-ai`) and Groq cloud APIs via HTTPS in ai.ts. **No MCP or Local LLM exists.** | ❌ **No** |
+| **`<<external_system>> MongoDB Database`** | Temporary document staging database for raw/cleansed payloads and sanitized audit logs. | Implemented using **Supabase (PostgreSQL)** in supabase.ts. **No MongoDB connection exists.** | ❌ **No** |
+| **`Administer System` arrow** | HTTPS / Next.js Dashboard | Next.js frontend exists in apps/adapt-ipaas/src/app. | ✅ **Yes** |
+
+---
+
+#### 2. System Container Diagram (High Level) (`System Container DIagram (High).png`.png))
+
+| Box / Container | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`<<container>> Web Dashboard`** | Next.js, React: visual administrative oversight, monitor metrics, view quarantined records. | Implemented in page.tsx and transactions/page.tsx. | ✅ **Yes** |
+| **`<<container>> Interoperability Routing & ADAPT Engine`** | **Golang, MCP**: High-concurrency middleware executing Provide Health Data. | Implemented in **TypeScript / Next.js Route Handlers** (ingest/route.ts). **No Golang or MCP.** | ❌ **No** |
+| **`<<container>> Temporary Staging Database`** | **MongoDB**: Ephemeral processing with zero permanent PHI. | Supabase PostgreSQL storing records permanently with full PHI in `adapt_transaction_logs`. | ❌ **No** |
+| **`<<container>> Local LLM Engine`** | **Inference Runtime**: Localized LLM for semantic translation via MCP. | Cloud-hosted remote AI APIs (Gemini & Groq) called via standard REST client. | ❌ **No** |
+
+---
+
+#### 3. System Container Diagram (Low Level) (`System Container Diagram (Low).png`.png))
+
+| Box / Container | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`Web Dashboard`** | Next.js, React: Administer System (pipeline health, queue, quarantine). | Handled in Next.js frontend pages. | ✅ **Yes** |
+| **`Ingest API Service`** | **Golang HTTP Handler**: Exposes `POST /api/ingest`. | `POST /api/ingest` exists, but is a **Next.js App Router TypeScript handler** (ingest/route.ts). | ⚠️ **Partial** (endpoint exists, language is not Go) |
+| **`Provide Health Data Pipeline Engine`** | **Golang Concurrency Worker**: Coordinates Bronze Ingest, Silver Cleansing, Gold Transformation. | No worker or Bronze/Silver/Gold staging stages. Logic is executed synchronously in a single HTTP request handler. | ❌ **No** |
+| **`Validate Schema & Completeness Service`** | **Golang Service**: Isolates missing PhilHealth IDs and flags Quarantine. | Implemented in TypeScript in validator.ts. Checks PhilHealth IDs and flags errors. | ⚠️ **Partial** (logic exists, not a separate Go service) |
+| **`Validate Privacy Consent Gatekeeper`** | **Golang Service**: Enforces signed patient consent flags & validity under RA 10173. | Implemented in ingest/route.ts#L52-L81. Blocks unconsented records with HTTP 422 `QUARANTINED`. | ⚠️ **Partial** (rule matches, not a separate Go service) |
+| **`Translate Data to/from PH Core Engine`** | **Golang / MCP Client**: Routes to Local LLM with deterministic fallback. | Implemented in ai.ts using `@google/generative-ai` SDK. | ⚠️ **Partial** (prompts convert PH Core FHIR, but no Go/MCP) |
+| **`Deterministic Syntactic Fallback`** | **Algorithmic Mapping Safety Net**: Invoked on AI 429 / downtime; returns Gold mapped payload. | **Missing.** ai.ts#L8-L15 only falls back to alternate LLMs (Groq). If all LLMs fail, the transaction fails. No deterministic rule mapper exists. | ❌ **No** |
+| **`Temporary Staging & Audit Database`** | **MongoDB**: Bronze/Silver/Gold payload staging & sanitized audit logs. | Supabase PostgreSQL table `adapt_transaction_logs`. | ❌ **No** |
+| **`Local LLM`** | Inference Runtime: Semantic mapping over MCP. | Remote cloud APIs. | ❌ **No** |
+
+---
+
+#### 4. Component Diagram (High Level) (`Component Diagram (High).png`.png))
+
+| Package / Component | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **UI: `Admin Dashboard`** | Next.js UI: monitors metrics, views audit logs, reviews quarantine. | Present in page.tsx and transactions/page.tsx. | ✅ **Yes** |
+| **API: `Ingest API`** | `POST /api/ingest`: Coordinates validation & transformation. | Present at api/ingest/route.ts. | ✅ **Yes** |
+| **API: `Decline API`** | `POST /api/decline`: Handles transaction declines & isolates to Quarantine. | Present at api/decline/route.ts. | ✅ **Yes** |
+| **API: `Request API`** | `POST /api/request`: Handles bidirectional health data requests. | Present at api/request/route.ts. | ✅ **Yes** |
+| **Core: `Metrics Service`** | Aggregates transaction counts by status, direction, format. | Present at api/metrics/route.ts. | ✅ **Yes** |
+| **Core: `AI Transformation Service`** | Executes Translate Data via Local LLM with fallback. | Implemented in ai.ts (cloud LLMs, not local). | ⚠️ **Partial** |
+| **Core: `Deterministic Syntactic Fallback`** | Rule-based syntactic mapper safety net. | **Not implemented.** | ❌ **No** |
+| **Core: `Validation Service`** | Executes Validate Schema & Privacy Consent. | Implemented across validator.ts and ingest/route.ts. | ✅ **Yes** |
+| **Core: `Transaction Log Service`** | Records event history, pipeline transactions, sanitizes PHI. | Handled via Supabase calls, but **does not sanitize PHI** (stores raw payloads). | ⚠️ **Partial** |
+| **Core: `Local LLM Engine`** | Internal model engine for semantic translation (MCP/gRPC). | Cloud APIs. | ❌ **No** |
+| **Core: `Staging & Audit Database`** | MongoDB: stores logs, metrics, quarantine staging. | Supabase PostgreSQL. | ❌ **No** |
+
+---
+
+#### 5. Component Diagram (Low Level - API Layer) (`Component Diagram (Low - API).png`.png))
+
+| Component & Specified Filename | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`HTTP Router & Dispatcher` (`router.go`)** | Inspects routes, verifies TLS, dispatches to controllers. | Next.js App Router internal routing. No `router.go` file exists. | ❌ **No** |
+| **`Auth & Scope Middleware` (`auth_middleware.go`)** | Validates **mTLS certificates**, Bearer tokens & client scopes. | middleware.ts only validates admin cookie JWT for dashboard pages and explicitly excludes `/api` paths. **No mTLS, Bearer token, or scope validation.** | ❌ **No** |
+| **`Ingest Controller` (`ingest_controller.go`)** | Handles `POST /api/ingest`: parses HL7 v2 and FHIR R4. | api/ingest/route.ts. | ⚠️ **Partial** (route exists, but in TS) |
+| **`Decline Controller` (`decline_controller.go`)** | Handles `POST /api/decline`: intercepts rejected requests. | api/decline/route.ts. | ⚠️ **Partial** (route exists, but in TS) |
+| **`Request Controller` (`request_controller.go`)** | Handles `POST /api/request`: registers pending queries. | api/request/route.ts. | ⚠️ **Partial** (route exists, but in TS) |
+| **`Webhook Dispatcher Client` (`webhook_client.go`)** | Asynchronous HTTP worker firing transformed payloads to destination URLs. | Inline `fetch(webhookUrl, ...)` calls inside ingest/route.ts#L200-L219. Not an async background worker or separate module. | ⚠️ **Partial** |
+
+---
+
+#### 6. Component Diagram (Low Level - Core Services) (`Component Diagram (Low - Core Services).png`.png))
+
+| Component & Specified Filename | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`Provide Health Data Orchestrator` (`orchestrator.go`)** | Coordinates Bronze/Silver/Gold pipelines via **goroutines**. | No goroutines or orchestrator module; synchronous code in `route.ts`. | ❌ **No** |
+| **`Validate Schema & Completeness` (`schema_validator.go`)** | Verifies PH Core FHIR / HL7 structure and PhilHealth ID. | Implemented in validator.ts. | ⚠️ **Partial** (rules match, file is TS) |
+| **`Privacy Consent Gatekeeper` (`consent_gatekeeper.go`)** | Enforces signed patient consent flags & validity under RA 10173. | Inline check in ingest/route.ts#L53-L81. | ⚠️ **Partial** (logic matches, not a separate module) |
+| **`Semantic AI Translator` (`ai_translator.go`)** | AI mapping via `[MCP / gRPC Inference]` to Local LLM. | Implemented in ai.ts using Gemini REST API. | ⚠️ **Partial** |
+| **`Deterministic Syntactic Fallback` (`fallback_mapper.go`)** | Algorithmic rule-based mapper activated on AI 429 downtime. | **Missing.** | ❌ **No** |
+| **`Quarantine Queue Manager` (`quarantine.go`)** | Isolates malformed payloads/consent failures to MongoDB. | Inline update to `status: 'QUARANTINED'` in Supabase. | ⚠️ **Partial** (behavior matches, not a separate module) |
+| **`Sanitized Transaction Logger` (`audit_logger.go`)** | Writes non-PHI metadata audit trails & performance telemetry to MongoDB. | Writes to Supabase table `adapt_transaction_logs`, but **includes raw PHI**. | ❌ **No** |
+
+---
+
+#### 7. Component Diagram (Low Level - UI Layer) (`Component Diagram (Low - UI).png`.png))
+
+| Component | Diagram Specification | Codebase Implementation | Accurate? |
+| --- | --- | --- | --- |
+| **`App Router & Layout`** | Controls authenticated routing to `/dashboard`, `/logs`, `/mapper`. | Paths in codebase are `/` (root), `/transactions`, and `/mapper`. **`/dashboard` and `/logs` do not exist as distinct routes.** | ⚠️ **Partial** |
+| **`Auth & Session Manager`** | JWT / Session Context: manages credentials, token storage, session refresh. | Implemented via middleware.ts and /api/auth. | ✅ **Yes** |
+| **`Metrics & Health Monitor`** | Renders real-time throughput, success/failure counts, latency. | Implemented in page.tsx. | ✅ **Yes** |
+| **`Transaction Log Viewer`** | React table displaying searchable non-PHI audit logs, timestamps, status flags. | Implemented in transactions/page.tsx. | ✅ **Yes** |
+| **`Payload Comparison & Unhash`** | Side-by-side raw vs. transformed view & **SHA-256 payload unhashing**. | Implemented in mapper/page.tsx#L586-L650 with `sha256()` hashing and toggle reveal. | ✅ **Yes** |
+| **`ADAPT API Client`** | Axios / Fetch Service encapsulating REST calls to backend (`/api/metrics`, `/api/logs`, `/api/ingest`, `/api/request`). | Pages call `fetch()` directly or use an ad-hoc local helper `safeFetch()`; transactions endpoint is `/api/transactions` rather than `/api/logs`. | ⚠️ **Partial** |
+
+---
+
+### Key Inaccuracies & Architectural Differences
+
+1. **Language & Concurrency Model (Golang vs. Next.js)**:
+    - The diagrams specify that the entire ADAPT middleware runtime (API router, pipeline engine, consent gatekeeper, schema validator, orchestrator) is built with **Golang** using **goroutines** and individual `.go` source files.
+    - The codebase has **0 Go files** for ADAPT. Everything is running inside Next.js 16 Route Handlers in Node.js.
+2. **Data Layer (MongoDB vs. Supabase PostgreSQL)**:
+    - Every diagram specifies **MongoDB** as the temporary document staging database for raw/cleansed payloads.
+    - The codebase does not import or connect to MongoDB. All transaction data is stored in **PostgreSQL via Supabase** (supabase.ts).
+3. **AI Protocol & Deployment (Local LLM via MCP/gRPC vs. Cloud APIs)**:
+    - The diagrams show a **Local LLM Engine** running in an inference runtime communicating over **Model Context Protocol (MCP)** or **gRPC**.
+    - The codebase calls **Google Gemini cloud endpoints** and **Groq cloud endpoints** using API keys over public HTTPS.
+4. **Missing Deterministic Fallback**:
+    - The diagrams prominently feature a **Deterministic Syntactic Fallback** (`fallback_mapper.go`) that executes algorithmic mapping if AI models fail or return HTTP 429.
+    - In the codebase, ai.ts simply tries another cloud LLM model. There is no rule-based code translator if AI models are exhausted.
+5. **Data Privacy & Ephemeral Storage (PHI Retention)**:
+    - The diagrams state: *"Ephemeral processing with zero permanent PHI"* and *"Writes non-PHI metadata audit trails"*.
+    - In reality, ingest/route.ts#L68 and line 227 store the full `raw_payload` and `transformed_payload` (including patient names, addresses, contact numbers, and diagnosis) permanently in Supabase without automated purging or tokenization.
+6. **Security & Authorization**:
+    - The diagrams require **mTLS certificates**, Bearer tokens, and client scopes in `auth_middleware.go`.
+    - The codebase's middleware.ts explicitly bypasses all `/api` routes from authentication, and there is no mTLS checking.
+
+---
+
+### Summary Conclusion
+
+- If this audit is for an **academic panel, defense, or compliance check**, the current repository **does not strictly follow the architecture drawn in `FinalDiagrams`**. The diagrams reflect a **proposed/production Golang + MongoDB + Local MCP LLM** design (matching the theoretical architecture in `paper.txt`), whereas the codebase contains a **functional prototype implemented in Next.js + TypeScript + Supabase + Cloud Gemini/Groq**.
+- To achieve strict 100% compliance with every box in `FinalDiagrams`, you would need either:
+    1. **Update the codebase** to implement the missing components (e.g., deterministic fallback mapper, route aliases `/dashboard` and `/logs`, non-PHI sanitization, and mTLS/API key middleware), or
+    2. **Harmonize the diagrams** with the current prototype reality (updating container technologies to Next.js/TypeScript, Supabase/PostgreSQL, and Google Gemini Cloud SDK).

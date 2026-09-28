@@ -1,0 +1,36 @@
+@startuml ContainerDiagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(dohClinician, "DOH Clinician")
+Person(wahClinician, "WAH Clinician")
+Person(admin, "iPaaS Administrator")
+
+System_Boundary(c1, "ADAPT LHIE Platform") {
+    Container(ihomisApp, "iHOMIS Web App", "React / Next.js", "Web interface for managing legacy DOH patient records, HL7 v2 payload generation, and inbox audit.")
+    Container(wahApp, "WAH Hospital Web App", "React / Next.js", "Web interface for managing modern FHIR R4 patient bundles, inbox auditing, and record dispatch.")
+    
+    Container(ipaasApi, "ADAPT iPaaS Core Engine", "Next.js / Node.js", "Handles bi-directional AI transformations, FHIR R4 validation, consent verification, and webhook dispatch.")
+    
+    ContainerDb(ihomisDb, "iHOMIS Database", "PostgreSQL (Supabase #1)", "Stores legacy patient records (ihomis_patients) and original raw payloads.")
+    ContainerDb(wahDb, "WAH Database", "PostgreSQL (Supabase #2)", "Stores FHIR R4 patient bundles (wah_patients) and original raw payloads.")
+    ContainerDb(ipaasDb, "iPaaS Transaction Logs DB", "PostgreSQL (Supabase #3)", "Stores transaction metadata, status, audit logs, and error messages (adapt_transaction_logs).")
+}
+
+System_Ext(geminiApi, "Google Gemini AI API", "Multi-model fallback engine (Gemini 2.5 Flash, 1.5 Pro) for structured JSON payload transformation.")
+
+Rel(dohClinician, ihomisApp, "Uses", "HTTPS")
+Rel(wahClinician, wahApp, "Uses", "HTTPS")
+Rel(admin, ipaasApi, "Monitors metrics and logs", "HTTPS")
+
+Rel(ihomisApp, ihomisDb, "Reads/Writes", "SQL / Supabase SDK")
+Rel(wahApp, wahDb, "Reads/Writes", "SQL / Supabase SDK")
+
+Rel(ihomisApp, ipaasApi, "Dispatches HL7 v2 payloads", "HTTPS / REST API")
+Rel(wahApp, ipaasApi, "Dispatches FHIR R4 bundles", "HTTPS / REST API")
+
+Rel(ipaasApi, ipaasDb, "Logs transactions and status", "SQL / Supabase SDK")
+Rel(ipaasApi, geminiApi, "Triggers AI data transformation", "HTTPS / REST API")
+
+Rel(ipaasApi, wahApp, "Delivers transformed FHIR bundle", "HTTPS / REST Webhook")
+Rel(ipaasApi, ihomisApp, "Delivers transformed iHOMIS JSON", "HTTPS / REST Webhook")
+@enduml

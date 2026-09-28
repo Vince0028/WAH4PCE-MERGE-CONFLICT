@@ -1,0 +1,60 @@
+@startuml ERD
+
+entity "IHOMIS_PATIENTS" as ihomis_patients {
+  * id : UUID <<PK>>
+  --
+  patient_name : VARCHAR(200)
+  philhealth_no : VARCHAR(30)
+  sex : VARCHAR(1)
+  dob : DATE
+  diagnosis_code : VARCHAR(20)
+  diagnosis_desc : TEXT
+  priority : VARCHAR(20)
+  hl7v2_payload : JSONB
+  raw_source_payload : JSONB
+  consent_signed : BOOLEAN
+  status : VARCHAR(20)
+  source : VARCHAR(20)
+  rejection_reason : TEXT
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+entity "WAH_PATIENTS" as wah_patients {
+  * id : UUID <<PK>>
+  --
+  patient_name : VARCHAR(200)
+  philhealth_no : VARCHAR(30)
+  gender : VARCHAR(10)
+  birth_date : DATE
+  diagnosis_code : VARCHAR(20)
+  diagnosis_display : TEXT
+  fhir_bundle : JSONB
+  raw_source_payload : JSONB
+  consent_signed : BOOLEAN
+  status : VARCHAR(20)
+  source : VARCHAR(20)
+  rejection_reason : TEXT
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+entity "ADAPT_TRANSACTION_LOGS" as adapt_transaction_logs {
+  * id : UUID <<PK>>
+  --
+  source_system : VARCHAR(10)
+  destination_system : VARCHAR(10)
+  raw_payload : JSONB
+  transformed_payload : JSONB
+  status : VARCHAR(20)
+  error_message : TEXT
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+ihomis_patients ||--o{ adapt_transaction_logs : "dispatches payload as source"
+wah_patients ||--o{ adapt_transaction_logs : "dispatches payload as source"
+adapt_transaction_logs ||--o| wah_patients : "delivers transformed bundle to"
+adapt_transaction_logs ||--o| ihomis_patients : "delivers transformed JSON to"
+
+@enduml
