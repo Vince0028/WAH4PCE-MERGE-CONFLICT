@@ -1,0 +1,24 @@
+@startuml ContextDiagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(dohClinician, "DOH Clinician", "Manages patient records in legacy iHOMIS, queues records for transmission, and reviews incoming FHIR conversions.")
+Person(wahClinician, "WAH Clinician", "Manages FHIR R4 patient records in modern WAH hospital system, queues records for transmission, and reviews incoming HL7 conversions.")
+Person(admin, "iPaaS Administrator", "Monitors data transformation metrics, reviews quarantined payloads, and manages integration health.")
+
+System(adaptIPaas, "ADAPT LHIE iPaaS", "AI-powered integration middleware that performs bi-directional transformation between HL7 v2 and FHIR R4 payloads with schema validation and transaction logging.")
+
+System_Ext(ihomisSystem, "iHOMIS System", "DOH legacy hospital information system operating on HL7 v2 pipe-delimited message formats.")
+System_Ext(wahSystem, "WAH Hospital System", "Modern hospital platform operating on HL7 FHIR R4 standard bundles.")
+System_Ext(geminiApi, "Google Gemini AI API", "Generative AI engine providing multi-model fallback data translation and mapping between HL7 v2 and FHIR R4.")
+
+Rel(dohClinician, ihomisSystem, "Uses", "HTTPS")
+Rel(wahClinician, wahSystem, "Uses", "HTTPS")
+Rel(admin, adaptIPaas, "Monitors and manages", "HTTPS")
+
+Rel(ihomisSystem, adaptIPaas, "Sends HL7 v2 payloads", "HTTPS/REST")
+Rel(wahSystem, adaptIPaas, "Sends FHIR R4 bundles", "HTTPS/REST")
+Rel(adaptIPaas, ihomisSystem, "Delivers converted iHOMIS JSON", "HTTPS/REST")
+Rel(adaptIPaas, wahSystem, "Delivers converted FHIR R4 bundles", "HTTPS/REST")
+
+Rel(adaptIPaas, geminiApi, "Generates transformations and prompt mappings", "HTTPS/REST")
+@enduml

@@ -1,0 +1,62 @@
+@startuml ComponentDiagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+Container(ihomisApp, "iHOMIS Web App", "React / Next.js")
+Container(wahApp, "WAH Hospital Web App", "React / Next.js")
+ContainerDb(database, "iPaaS Transaction DB", "PostgreSQL / Supabase")
+System_Ext(geminiApi, "Google Gemini AI API", "External API")
+
+Container_Boundary(api, "ADAPT iPaaS Engine (Next.js)") {
+ Component(ingestCtrl, "Ingest Controller", "Next.js API Route (/api/ingest)", 
+"Receives incoming payload requests from hospital nodes and initiates pipeline.")
+
+ Component(consentSvc, "Consent Validator", "TypeScript Module", 
+"Validates Patient Data Privacy Consent (RA 10173 compliance).")
+ 
+ Component(aiTransformSvc, "AI Transformation Service", "TypeScript Module 
+(gemini.ts)", "Constructs prompts and requests structured JSON conversion 
+between HL7 v2 and FHIR R4.")
+
+ Component(fallbackMgr, "Model Fallback Manager", "TypeScript Module", 
+"Cycles through backup Gemini models upon rate limit (429/503) errors.")
+ 
+ Component(fhirValidator, "FHIR R4 Bundle Validator", "TypeScript Module 
+(validator.ts)", "Validates transformed bundles against PH Core FHIR profiles 
+and required resource schemas.")
+
+ Component(webhookRouter, "Webhook Router", "TypeScript Module", "Routes 
+transformed payloads to target hospital webhooks.")
+
+ Component(quarantineSvc, "Quarantine Handler", "TypeScript Module", 
+"Quarantines invalid payloads or missing consent records.")
+ 
+ Component(metricsCtrl, "Metrics and Log Controller", "Next.js API Route 
+(/api/metrics)", "Provides real-time transaction logs and dashboard analytics.")
+
+ Component(dbAccess, "Database Access Layer", "Supabase Client (supabase.ts)", 
+"Abstracts SQL queries for transaction logging.")
+}
+
+Rel(ihomisApp, ingestCtrl, "POST /api/ingest (HL7 v2)")
+Rel(wahApp, ingestCtrl, "POST /api/ingest (FHIR R4)")
+
+Rel(ingestCtrl, consentSvc, "Validates Consent")
+Rel(consentSvc, quarantineSvc, "Missing Consent")
+Rel(consentSvc, aiTransformSvc, "Passed Consent")
+
+Rel(aiTransformSvc, fallbackMgr, "Invokes Fallback")
+Rel(aiTransformSvc, geminiApi, "Generates payload conversion", "HTTPS")
+
+Rel(aiTransformSvc, fhirValidator, "Validates FHIR Bundle")
+Rel(fhirValidator, quarantineSvc, "Invalid Bundle")
+Rel(fhirValidator, webhookRouter, "Validated Bundle")
+
+Rel(webhookRouter, wahApp, "POST /api/webhook (FHIR R4)")
+Rel(webhookRouter, ihomisApp, "POST /api/webhook (iHOMIS JSON)")
+
+Rel(ingestCtrl, dbAccess, "Logs PENDING status")
+Rel(webhookRouter, dbAccess, "Updates SUCCESS status")
+Rel(quarantineSvc, dbAccess, "Updates QUARANTINED status")
+Rel(metricsCtrl, dbAccess, "Reads analytics data")
+Rel(dbAccess, database, "Executes SQL operations")
+@enduml
