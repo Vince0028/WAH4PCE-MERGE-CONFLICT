@@ -3,6 +3,8 @@
  * Reused by both the Data Mapper page and the Dashboard to compute
  * how many destination fields were successfully filled by the AI transformation.
  */
+import type { TransformDirection } from './ai';
+
 
 // ─── Templates ───
 
@@ -387,4 +389,124 @@ export function calculateSourceFillCount(
     emptyFields: total - filled,
     percentage: pct,
   };
+}
+
+/**
+ * Deterministic algorithmic fallback mapper
+ * Used when AI models fail or rate limit
+ */
+export function fallbackTransform(
+  payload: Record<string, unknown>,
+  direction: TransformDirection
+): Record<string, unknown> {
+  const extracted = extractDataFields(payload);
+  const isDestWAH = direction === 'HL7V2_TO_FHIR_R4' || direction === 'IHOMIS_TO_FHIR';
+  
+  const getVal = (label: string) => {
+    return findValueForTemplateField(label, extracted, isDestWAH) || '';
+  };
+
+  if (isDestWAH) {
+    const bundle: Record<string, unknown> = {
+      resourceType: 'Bundle',
+      type: 'transaction',
+      entry: [
+        {
+          resource: {
+            resourceType: 'Patient',
+            identifier: [
+              { system: 'https://www.philhealth.gov.ph/memberid', value: getVal('PhilHealth ID') }
+            ],
+            name: [{
+              family: getVal('Family Name'),
+              given: [getVal('Given Name')],
+              // Use direct search for Suffix as it's not in the main WAH template
+              suffix: [extracted.find(f => f.label === 'Suffix')?.value || '']
+            }],
+            gender: getVal('Gender'),
+            birthDate: getVal('Birth Date'),
+            telecom: [{ value: getVal('Phone') }],
+            address: [{
+              line: [getVal('Address')],
+              city: getVal('City')
+            }]
+          }
+        },
+        {
+          resource: {
+            resourceType: 'Encounter',
+            class: { code: getVal('Class') || 'AMB' },
+            priority: { text: getVal('Priority') },
+            reasonCode: [{ text: getVal('Reason') }],
+            serviceProvider: { display: getVal('Facility') },
+            participant: [{ individual: { display: getVal('Physician') } }]
+          }
+        },
+        {
+          resource: {
+            resourceType: 'Condition',
+            code: {
+              coding: [{ code: getVal('ICD-10 Code'), display: getVal('Display') }]
+            },
+            clinicalStatus: { coding: [{ code: getVal('Clinical Status') }] },
+            note: [{ text: getVal('Chief Complaint') }]
+          }
+        }
+      ]
+    };
+
+    const addVital = (label: string, code: string, display: string) => {
+      const val = getVal(label);
+      if (val) {
+        (bundle.entry as Array<unknown>).push({
+          resource: {
+            resourceType: 'Observation',
+            code: { coding: [{ code, display }] },
+            valueQuantity: { value: Number(val) || val }
+          }
+        });
+      }
+    };
+
+    addVital('BP Systolic', '8480-6', 'Systolic blood pressure');
+    addVital('BP Diastolic', '8462-4', 'Diastolic blood pressure');
+    addVital('Heart Rate', '8867-4', 'Heart rate');
+    addVital('Temperature', '8310-5', 'Body temperature');
+    addVital('Respiratory Rate', '9279-1', 'Respiratory rate');
+    addVital('SpO2', '2708-6', 'Oxygen saturation');
+    addVital('Weight (kg)', '29463-7', 'Body weight');
+    addVital('Height (cm)', '8302-2', 'Body height');
+
+    return bundle;
+  } else {
+    // FHIR_R4_TO_HL7V2 or FHIR_TO_IHOMIS
+    return {
+      patient_fname: getVal('First Name'),
+      patient_lname: getVal('Last Name'),
+      patient_mname: getVal('Middle Name'),
+      dob: getVal('Date of Birth'),
+      sex: getVal('Sex'),
+      civil_status: getVal('Civil Status'),
+      philhealth_no: getVal('PhilHealth No.'),
+      contact_no: getVal('Contact No.'),
+      address_street: getVal('Street'),
+      address_city: getVal('City'),
+      vitals: {
+        bp_systolic: getVal('BP Systolic'),
+        bp_diastolic: getVal('BP Diastolic'),
+        heart_rate: getVal('Heart Rate'),
+        temperature: getVal('Temperature'),
+        respiratory_rate: getVal('Respiratory Rate'),
+        oxygen_saturation: getVal('SpO2'),
+        weight_kg: getVal('Weight (kg)'),
+        height_cm: getVal('Height (cm)')
+      },
+      chief_complaint: getVal('Chief Complaint'),
+      diagnosis_code: getVal('ICD-10 Code'),
+      diagnosis_desc: getVal('Diagnosis Description'),
+      priority: getVal('Priority'),
+      referring_facility_name: getVal('Referring Facility'),
+      referring_physician: getVal('Physician')
+    };
+  }
 }

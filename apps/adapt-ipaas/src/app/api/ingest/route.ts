@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { transformWithAI, getTransformDirection } from '@/lib/ai';
 import type { DataFormat } from '@/lib/ai';
 import { validateTransformation } from '@/lib/validator';
+import { fallbackTransform } from '@/lib/mapping-calc';
 
 /**
  * POST /api/ingest
@@ -133,27 +134,38 @@ export async function POST(request: NextRequest) {
 
     console.log(`[iPaaS Ingest] Transaction ${transactionId} → TRANSFORMING`);
 
-    // --- 4. AI Transformation ---
+    // --- 4. AI Transformation & Fallback ---
     const direction = getTransformDirection(sourceFormat, destFormat);
-    const transformResult = await transformWithAI(payload, direction);
+    let transformResult = await transformWithAI(payload, direction);
 
     if (!transformResult.success || !transformResult.data) {
-      await supabaseAdmin
-        .from('adapt_transaction_logs')
-        .update({
+      console.warn(`[iPaaS Ingest] AI failed: ${transformResult.error}. Engaging Deterministic Syntactic Fallback for Transaction ${transactionId}.`);
+      try {
+        const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
+        transformResult = {
+          success: true,
+          data: fallbackData,
+          error: null,
+          usedModel: 'Algorithmic Fallback Mapper'
+        };
+      } catch (fallbackErr) {
+        await supabaseAdmin
+          .from('adapt_transaction_logs')
+          .update({
+            status: 'QUARANTINED',
+            error_message: `AI failed and fallback crashed: ${fallbackErr}`,
+          })
+          .eq('id', transactionId);
+
+        console.error(`[iPaaS Ingest] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
+
+        return NextResponse.json({
+          success: false,
+          transaction_id: transactionId,
           status: 'QUARANTINED',
-          error_message: transformResult.error || 'AI transformation returned no data',
-        })
-        .eq('id', transactionId);
-
-      console.error(`[iPaaS Ingest] Transaction ${transactionId} QUARANTINED: ${transformResult.error}`);
-
-      return NextResponse.json({
-        success: false,
-        transaction_id: transactionId,
-        status: 'QUARANTINED',
-        message: `Transformation failed: ${transformResult.error}`,
-      }, { status: 422 });
+          message: `Transformation failed entirely`,
+        }, { status: 422 });
+      }
     }
 
     // --- 5. Validate the transformed output ---
