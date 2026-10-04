@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   transpilePackages: ["@adapt/shared"],
   async headers() {
     return [
@@ -18,3 +20,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

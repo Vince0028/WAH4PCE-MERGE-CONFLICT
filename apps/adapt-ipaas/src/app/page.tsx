@@ -140,10 +140,10 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Direction + Format Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            {/* Secondary Stats (Asymmetric Grid) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
               {/* Direction Cards */}
-              <div className="ipaas-card p-5">
+              <div className="ipaas-card p-5 md:col-span-6 lg:col-span-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -153,7 +153,8 @@ export default function Dashboard() {
                 <p className="text-3xl font-bold" style={{ color: '#2563eb' }}>{metrics?.org_to_wah || 0}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
               </div>
-              <div className="ipaas-card p-5">
+              
+              <div className="ipaas-card p-5 md:col-span-6 lg:col-span-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -163,20 +164,18 @@ export default function Dashboard() {
                 <p className="text-3xl font-bold" style={{ color: '#8b5cf6' }}>{metrics?.wah_to_org || 0}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
               </div>
-            </div>
 
-            {/* Format Breakdown */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Format Breakdown */}
               {[
                 { label: 'HL7 v2.x', count: metrics?.hl7v2_count || 0, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
                 { label: 'FHIR R4', count: metrics?.fhir_count || 0, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
               ].map(f => (
-                <div key={f.label} className="ipaas-card p-4">
+                <div key={f.label} className="ipaas-card p-4 md:col-span-6 lg:col-span-2 flex flex-col justify-center">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold px-2 py-0.5 rounded-none" style={{ background: f.bg, color: f.color }}>{f.label}</span>
                   </div>
                   <p className="text-xl font-bold" style={{ color: f.color }}>{f.count}</p>
-                  <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
+                  <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
                 </div>
               ))}
             </div>
