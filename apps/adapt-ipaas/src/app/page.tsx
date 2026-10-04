@@ -12,7 +12,7 @@ async function safeFetch(url: string) {
 interface Metrics {
   total_records: number; success_count: number; pending_count: number;
   quarantined_count: number; transforming_count: number; success_rate: number;
-  org_to_wah: number; wah_to_org: number;
+  ihomis_to_wah: number; wah_to_ihomis: number;
   hl7v2_count: number; fhir_count: number;
 }
 
@@ -122,47 +122,45 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Main Metrics (Asymmetric Bento Grid) */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
               {[
-                { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', cols: 'md:col-span-12 lg:col-span-6', size: 'text-5xl', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
-                { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', cols: 'md:col-span-6 lg:col-span-3', size: 'text-3xl', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
-                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), cols: 'md:col-span-6 lg:col-span-3', size: 'text-3xl', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
-                { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', cols: 'md:col-span-6 lg:col-span-6', size: 'text-2xl', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-                { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', cols: 'md:col-span-6 lg:col-span-6', size: 'text-2xl', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+                { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
+                { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
+                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
+                { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
               ].map(m => (
-                <div key={m.label} className={`ipaas-card p-6 flex flex-col justify-between ${m.cols}`} style={{ borderLeft: `4px solid ${m.color}` }}>
-                  <div className="flex items-center gap-2 mb-3" style={{ color: m.color }}>
+                <div key={m.label} className="ipaas-card p-4 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 mb-2" style={{ color: m.color }}>
                     {m.icon}
-                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{m.label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{m.label}</span>
                   </div>
-                  <p className={`${m.size} font-black tracking-tighter`}>{m.value}</p>
+                  <p className="text-3xl font-black tracking-tighter">{m.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Secondary Stats (Asymmetric Grid) */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {/* Direction Cards */}
-              <div className="ipaas-card p-5 md:col-span-6 lg:col-span-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <div className="ipaas-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-none flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </div>
-                  <div><p className="text-sm font-medium">Org → WAH</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>HL7v2 → FHIR R4</p></div>
+                  <div><p className="text-xs font-medium">iHOMIS → WAH</p><p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>HL7v2 → FHIR R4</p></div>
                 </div>
-                <p className="text-3xl font-bold" style={{ color: '#2563eb' }}>{metrics?.org_to_wah || 0}</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
+                <p className="text-2xl font-bold" style={{ color: '#2563eb' }}>{metrics?.ihomis_to_wah || 0}</p>
               </div>
               
-              <div className="ipaas-card p-5 md:col-span-6 lg:col-span-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              <div className="ipaas-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-none flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                   </div>
-                  <div><p className="text-sm font-medium">WAH → Org</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2</p></div>
+                  <div><p className="text-xs font-medium">WAH → iHOMIS</p><p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2</p></div>
                 </div>
-                <p className="text-3xl font-bold" style={{ color: '#8b5cf6' }}>{metrics?.wah_to_org || 0}</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>records transformed</p>
+                <p className="text-2xl font-bold" style={{ color: '#8b5cf6' }}>{metrics?.wah_to_ihomis || 0}</p>
               </div>
 
               {/* Format Breakdown */}
@@ -170,12 +168,12 @@ export default function Dashboard() {
                 { label: 'HL7 v2.x', count: metrics?.hl7v2_count || 0, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
                 { label: 'FHIR R4', count: metrics?.fhir_count || 0, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
               ].map(f => (
-                <div key={f.label} className="ipaas-card p-4 md:col-span-6 lg:col-span-2 flex flex-col justify-center">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-none" style={{ background: f.bg, color: f.color }}>{f.label}</span>
+                <div key={f.label} className="ipaas-card p-4 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-none" style={{ background: f.bg, color: f.color }}>{f.label}</span>
                   </div>
-                  <p className="text-xl font-bold" style={{ color: f.color }}>{f.count}</p>
-                  <p className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
+                  <p className="text-2xl font-bold" style={{ color: f.color }}>{f.count}</p>
+                  <p className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
                 </div>
               ))}
             </div>
@@ -189,7 +187,7 @@ export default function Dashboard() {
               {recentTx.length === 0 ? (
                 <div className="p-10 text-center">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1" className="mx-auto mb-3"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No transactions yet. Send data from an organization or WAH.</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No transactions yet. Send data from iHOMIS or WAH.</p>
                 </div>
               ) : (
               <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
@@ -255,3 +253,4 @@ export default function Dashboard() {
     </>
   );
 }
+

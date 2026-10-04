@@ -48,8 +48,8 @@ export async function GET() {
         transforming_count: transforming,
         success_rate: successRate,
         // Direction stats
-        org_to_wah: toWah,
-        wah_to_org: fromWah,
+        ihomis_to_wah: toWah,
+        wah_to_ihomis: fromWah,
         // Legacy aliases
         ihomis_to_wah: toWah,
         wah_to_ihomis: fromWah,

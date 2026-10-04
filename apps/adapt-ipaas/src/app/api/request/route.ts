@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         destination_system: destSystem,
         source_format: srcFormat,
         destination_format: dstFormat,
-        raw_payload: { request_id, philhealth_no, patient_name, direction: isWAHRequesting ? 'WAH_TO_ORG' : 'ORG_TO_WAH' },
+        raw_payload: { request_id, philhealth_no, patient_name, direction: isWAHRequesting ? 'wah_to_ihomis' : 'ihomis_to_wah' },
         status: 'PENDING',
       })
       .select()
