@@ -25,8 +25,8 @@ export default function LoginPage() {
   return (
     <div className="p-8 sm:p-10 shadow-xl rounded-2xl border border-slate-100 bg-white">
       <div className="text-center mb-8">
-        <div className="w-32 h-32 mx-auto mb-5 flex items-center justify-center">
-           <Image src="/WAH_logo.png" alt="WAH Logo" width={128} height={128} className="object-contain" priority />
+        <div className="w-48 h-32 mx-auto mb-2 flex items-center justify-center overflow-hidden">
+           <Image src="/WAH_logo.png" alt="WAH Logo" width={300} height={300} className="object-contain scale-[2] mix-blend-multiply" priority />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-800 mb-2">Adapt System Portal</h1>
         <p className="text-sm text-slate-500 font-medium">

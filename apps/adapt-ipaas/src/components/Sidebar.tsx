@@ -15,8 +15,8 @@ export default function Sidebar() {
     <aside className="w-[240px] min-h-screen flex flex-col" style={{ background: 'var(--color-bg-sidebar)' }}>
       <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md p-1">
-            <Image src="/WAH_logo.png" alt="WAH Logo" width={32} height={32} className="object-contain" priority />
+          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md p-1 overflow-hidden">
+            <Image src="/WAH_logo.png" alt="WAH Logo" width={32} height={32} className="object-contain scale-[1.7]" priority />
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white leading-tight">ADAPT iPaaS</h1>
