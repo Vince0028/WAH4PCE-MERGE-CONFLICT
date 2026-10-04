@@ -12,46 +12,46 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-[240px] min-h-screen flex flex-col border-r" style={{ background: 'var(--color-bg-sidebar)', borderColor: 'var(--color-border)' }}>
-      <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+    <aside className="w-[240px] min-h-screen flex flex-col border-r" style={{ background: 'var(--color-bg-sidebar)', borderColor: 'var(--color-border-sidebar)' }}>
+      <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border-sidebar)' }}>
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 flex items-center justify-center bg-white rounded-none p-1 overflow-hidden">
             <Image src="/WAH_logo.png" alt="WAH Logo" width={32} height={32} className="object-contain scale-[1.7]" priority />
           </div>
           <div>
-            <h1 className="text-sm font-bold leading-tight text-gray-900">ADAPT iPaaS</h1>
-            <p className="text-[11px] leading-tight" style={{ color: 'var(--color-text-sidebar)' }}>Integration Platform</p>
+            <h1 className="text-sm font-bold leading-tight text-white">ADAPT iPaaS</h1>
+            <p className="text-[11px] leading-tight text-slate-400">Integration Platform</p>
           </div>
         </div>
       </div>
       <nav className="flex-1 p-3 flex flex-col gap-0.5">
-        <p className="text-[10px] font-bold uppercase tracking-wider px-3 py-2" style={{ color: 'var(--color-text-muted)' }}>Menu</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider px-3 py-2 text-slate-500">Menu</p>
         {navItems.map(item => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return <Link key={item.href} href={item.href} className={`ipaas-sidebar-link ${isActive ? 'active' : ''}`}>{item.icon}<span>{item.label}</span></Link>;
         })}
       </nav>
-      <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-        <p className="text-[10px] font-bold uppercase mb-2" style={{ color: 'var(--color-text-muted)' }}>Systems</p>
+      <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
+        <p className="text-[10px] font-bold uppercase mb-2 text-slate-500">Systems</p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
-            <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>iHOMIS — :3001</span>
+            <span className="text-[11px] text-slate-400">iHOMIS — :3001</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
-            <span className="text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>WAH Hospital — :3002</span>
+            <span className="text-[11px] text-slate-400">WAH Hospital — :3002</span>
           </div>
         </div>
       </div>
-      <div className="mt-auto px-5 py-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="mt-auto px-5 py-4 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
         <button
           onClick={async () => {
             const { useRouter } = await import('next/navigation');
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
           }}
-          className="flex w-full items-center gap-2 px-3 py-2 rounded-none text-[13px] font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all"
+          className="flex w-full items-center gap-2 px-3 py-2 rounded-none text-[13px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

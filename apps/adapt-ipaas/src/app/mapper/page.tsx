@@ -760,8 +760,31 @@ function MapperContent() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent-bright)' }} />
+          <div className="flex gap-4 h-[calc(100vh-140px)] w-full">
+            <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
+              <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-4 bg-gray-200" /></div>
+              <div className="flex-1 p-4 space-y-2">
+                {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+              </div>
+            </div>
+            <div className="w-12 flex flex-col gap-2 items-center pt-20">
+              <div className="w-8 h-8 bg-gray-200 animate-pulse" />
+              <div className="w-8 h-8 bg-gray-200 animate-pulse" />
+            </div>
+            <div className="flex-1 flex flex-col gap-4">
+              <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
+                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-4 bg-gray-200" /></div>
+                <div className="flex-1 p-4 space-y-2">
+                  {[...Array(8)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+                </div>
+              </div>
+              <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
+                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-24 h-4 bg-gray-200" /></div>
+                <div className="flex-1 p-4 space-y-2">
+                  {[...Array(6)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+                </div>
+              </div>
+            </div>
           </div>
         ) : !tx ? (
           <div className="ipaas-card p-10 text-center">
