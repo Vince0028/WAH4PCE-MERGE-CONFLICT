@@ -30,14 +30,14 @@
 /* Cards */
 .ipaas-card {
   background: var(--color-bg-card); border: 1px solid var(--color-border);
-  border-radius: 8px; transition: box-shadow 0.15s ease;
+  border-radius: 0; transition: box-shadow 0.15s ease;
 }
 .ipaas-card:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 
 /* Sidebar */
 .ipaas-sidebar-link {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 6px;
+  padding: 9px 12px; border-radius: 0;
   color: var(--color-text-sidebar); font-size: 13px; font-weight: 500;
   transition: all 0.15s ease; text-decoration: none;
 }
@@ -47,7 +47,7 @@
 /* Buttons */
 .ipaas-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: 0; font-size: 13px; font-weight: 500;
   border: none; cursor: pointer; transition: all 0.15s ease;
 }
 .ipaas-btn-primary { background: var(--color-accent); color: #fff; }
@@ -58,7 +58,7 @@
 /* Badges */
 .ipaas-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 0; font-size: 11px; font-weight: 600;
 }
 
 /* Status badges */
@@ -89,14 +89,14 @@
 /* JSON viewer */
 .json-viewer {
   background: var(--color-bg-primary); border: 1px solid var(--color-border);
-  border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', monospace;
+  border-radius: 0; padding: 12px; font-family: 'JetBrains Mono', monospace;
   font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap;
 }
 
 /* Toast */
 .toast {
   position: fixed; bottom: 20px; right: 20px; padding: 10px 16px;
-  border-radius: 6px; font-size: 13px; font-weight: 500; z-index: 9999;
+  border-radius: 0; font-size: 13px; font-weight: 500; z-index: 9999;
   animation: fadeIn 0.2s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 .toast-success { background: #fff; border: 1px solid var(--color-success); color: var(--color-success); }

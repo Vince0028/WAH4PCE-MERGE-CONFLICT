@@ -34,7 +34,7 @@ export default function MetricCard({ title, value, suffix = '', variant, icon }:
   return (
     <div className={`glass-card p-6 metric-gradient-${variant} animate-fade-in`}>
       <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+        <div className="w-10 h-10 rounded-none flex items-center justify-center"
           style={{
             background: variant === 'purple' ? 'rgba(139, 92, 246, 0.15)' :
                          variant === 'green' ? 'rgba(16, 185, 129, 0.15)' :

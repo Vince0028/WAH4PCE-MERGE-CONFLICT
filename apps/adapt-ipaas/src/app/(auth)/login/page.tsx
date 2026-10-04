@@ -23,7 +23,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="p-8 sm:p-10 shadow-xl rounded-2xl border border-slate-100 bg-white">
+    <div className="p-8 sm:p-10 shadow-xl rounded-none border border-slate-100 bg-white">
       <div className="text-center mb-8">
         <div className="w-48 h-32 mx-auto mb-2 flex items-center justify-center overflow-hidden">
            <Image src="/WAH_logo.png" alt="WAH Logo" width={300} height={300} className="object-contain scale-[2] mix-blend-multiply" priority />
@@ -48,7 +48,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="e.g., staff@hospital.com"
-            className="flex h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="flex h-11 w-full rounded-none border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             required
             disabled={loading}
           />
@@ -66,7 +66,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="flex h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="flex h-11 w-full rounded-none border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             required
             disabled={loading}
           />
@@ -74,7 +74,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 mt-4 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="w-full h-11 mt-4 text-sm font-bold text-white bg-blue-600 rounded-none shadow-sm hover:bg-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
           {loading ? "Authenticating..." : "Log in"}
         </button>

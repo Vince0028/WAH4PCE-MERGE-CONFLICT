@@ -101,7 +101,7 @@ export default function TransactionsPage() {
 
         <div className="flex gap-3 mb-5 flex-wrap">
           <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-            className="px-3 py-2 rounded-md text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+            className="px-3 py-2 rounded-none text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
             <option value="">All Statuses</option>
             <option value="SUCCESS">Success</option>
             <option value="PENDING">Pending</option>
@@ -109,7 +109,7 @@ export default function TransactionsPage() {
             <option value="QUARANTINED">Quarantined</option>
           </select>
           <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(0); }}
-            className="px-3 py-2 rounded-md text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+            className="px-3 py-2 rounded-none text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
             <option value="">All Sources</option>
             <option value="iHOMIS">iHOMIS (DOH)</option>
             <option value="WAH">WAH Hospital</option>
@@ -145,9 +145,9 @@ export default function TransactionsPage() {
                       <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
                       <td className="text-sm">{tx.source_system} → {tx.destination_system}</td>
                       <td>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
                         <span style={{ color: 'var(--color-text-muted)' }}>→</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
                       </td>
                       {/* Source mapping % */}
                       <td>

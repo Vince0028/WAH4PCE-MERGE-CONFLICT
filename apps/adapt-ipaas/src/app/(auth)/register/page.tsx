@@ -48,7 +48,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="p-8 sm:p-10 shadow-2xl rounded-xl border border-white/10 bg-[#2a2a45]">
+    <div className="p-8 sm:p-10 shadow-2xl rounded-none border border-white/10 bg-[#2a2a45]">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Create an account</h1>
         <p className="text-sm text-[#a5a5c0]">
@@ -57,7 +57,7 @@ export default function RegisterPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-md bg-red-500/10 border border-red-500/50 text-red-500 text-sm">
+        <div className="mb-4 p-3 rounded-none bg-red-500/10 border border-red-500/50 text-red-500 text-sm">
           {error}
         </div>
       )}
@@ -76,7 +76,7 @@ export default function RegisterPage() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="johndoe"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-10 w-full rounded-none border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
             required
             disabled={loading}
           />
@@ -94,7 +94,7 @@ export default function RegisterPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-10 w-full rounded-none border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
             required
             disabled={loading}
           />
@@ -112,7 +112,7 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@example.com"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-10 w-full rounded-none border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
             required
             disabled={loading}
           />
@@ -130,7 +130,7 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-10 w-full rounded-none border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
             required
             disabled={loading}
           />
@@ -148,7 +148,7 @@ export default function RegisterPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-10 w-full rounded-none border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
             required
             disabled={loading}
           />

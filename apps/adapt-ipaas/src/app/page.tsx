@@ -121,18 +121,21 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Main Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {/* Main Metrics (Asymmetric Bento Grid) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
               {[
-                { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
-                { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
-                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
-                { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-                { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+                { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', cols: 'md:col-span-12 lg:col-span-6', size: 'text-5xl', icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
+                { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', cols: 'md:col-span-6 lg:col-span-3', size: 'text-3xl', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
+                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), cols: 'md:col-span-6 lg:col-span-3', size: 'text-3xl', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
+                { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', cols: 'md:col-span-6 lg:col-span-6', size: 'text-2xl', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', cols: 'md:col-span-6 lg:col-span-6', size: 'text-2xl', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
               ].map(m => (
-                <div key={m.label} className="ipaas-card p-5" style={{ borderLeft: `3px solid ${m.color}` }}>
-                  <div className="flex items-center gap-2 mb-2" style={{ color: m.color }}>{m.icon}<span className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>{m.label}</span></div>
-                  <p className="text-2xl font-bold">{m.value}</p>
+                <div key={m.label} className={`ipaas-card p-6 flex flex-col justify-between ${m.cols}`} style={{ borderLeft: `4px solid ${m.color}` }}>
+                  <div className="flex items-center gap-2 mb-3" style={{ color: m.color }}>
+                    {m.icon}
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{m.label}</span>
+                  </div>
+                  <p className={`${m.size} font-black tracking-tighter`}>{m.value}</p>
                 </div>
               ))}
             </div>
@@ -142,7 +145,7 @@ export default function Dashboard() {
               {/* Direction Cards */}
               <div className="ipaas-card p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
+                  <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </div>
                   <div><p className="text-sm font-medium">Org → WAH</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>HL7v2 → FHIR R4</p></div>
@@ -152,7 +155,7 @@ export default function Dashboard() {
               </div>
               <div className="ipaas-card p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
+                  <div className="w-7 h-7 rounded-none flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                   </div>
                   <div><p className="text-sm font-medium">WAH → Org</p><p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2</p></div>
@@ -170,7 +173,7 @@ export default function Dashboard() {
               ].map(f => (
                 <div key={f.label} className="ipaas-card p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: f.bg, color: f.color }}>{f.label}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-none" style={{ background: f.bg, color: f.color }}>{f.label}</span>
                   </div>
                   <p className="text-xl font-bold" style={{ color: f.color }}>{f.count}</p>
                   <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
@@ -205,9 +208,9 @@ export default function Dashboard() {
                           <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
                           <td className="text-sm">{tx.source_system} → {tx.destination_system}</td>
                           <td>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
                             <span style={{ color: 'var(--color-text-muted)' }}>→</span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
                           </td>
                           {/* Source mapping % */}
                           <td>

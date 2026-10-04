@@ -479,7 +479,7 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-warning)' }} />
             <h3 className="text-xs font-semibold uppercase tracking-wide">{source} — Data Sent</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-none bg-gray-100 text-gray-500 ml-auto">
               {srcFilledCount === srcTemplate.length ? `${srcTemplate.length} fields` : `${srcFilledCount} / ${srcTemplate.length} fields`}
             </span>
           </div>
@@ -520,7 +520,7 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-success)' }} />
             <h3 className="text-xs font-semibold uppercase tracking-wide">{dest} — Data Received</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-auto">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-none bg-gray-100 text-gray-500 ml-auto">
               {filledCount} filled · {emptyCount} empty
             </span>
           </div>
@@ -549,7 +549,7 @@ function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<strin
                     <td className="px-3 py-2" style={{ color: isFilled ? 'var(--color-text-muted)' : '#d1d5db' }}>{row.label}</td>
                     <td className="px-3 py-2 font-mono font-medium" style={{ color: isFilled ? undefined : '#d1d5db' }}>{isFilled ? row.value : '—'}</td>
                     <td className="px-3 py-2 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${isFilled ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#991b1b]'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider ${isFilled ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#991b1b]'}`}>
                         {row.status}
                       </span>
                     </td>
@@ -604,7 +604,7 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: dotColor }} />
           <h3 className="text-xs font-semibold uppercase tracking-wide">{label}</h3>
         </div>
-        <div className="p-8 text-center rounded" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
+        <div className="p-8 text-center rounded-none" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
           <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Transformation pending or failed</p>
         </div>
       </div>
@@ -617,7 +617,7 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: dotColor }} />
           <h3 className="text-xs font-semibold uppercase tracking-wide">{label}</h3>
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-none" style={{
             background: revealed ? 'rgba(139,92,246,0.08)' : 'rgba(245,158,11,0.08)',
             color: revealed ? '#8b5cf6' : '#f59e0b',
           }}>
@@ -626,7 +626,7 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
         </div>
         <button
           onClick={() => setRevealed(!revealed)}
-          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-all"
+          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-none transition-all"
           style={{
             background: revealed ? 'rgba(220,38,38,0.06)' : 'rgba(139,92,246,0.06)',
             color: revealed ? '#dc2626' : '#8b5cf6',
@@ -654,7 +654,7 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
         </button>
       </div>
       <pre
-        className="p-3 rounded text-xs overflow-auto"
+        className="p-3 rounded-none text-xs overflow-auto"
         style={{
           background: 'var(--color-bg-primary)',
           border: '1px solid var(--color-border)',
@@ -777,7 +777,7 @@ function MapperContent() {
                 <select
                   value={tx.id}
                   onChange={e => { const found = allTx.find(t => t.id === e.target.value); if (found) setTx(found); }}
-                  className="px-3 py-2 rounded-md text-xs outline-none flex-1"
+                  className="px-3 py-2 rounded-none text-xs outline-none flex-1"
                   style={{ background: '#fff', border: '1px solid var(--color-border)' }}
                 >
                   {allTx.map(t => (
@@ -808,16 +808,16 @@ function MapperContent() {
                 </button>
               </div>
 
-              <div className="flex bg-[#f3f4f6] rounded-md p-1" style={{ border: '1px solid var(--color-border)' }}>
+              <div className="flex bg-[#f3f4f6] rounded-none p-1" style={{ border: '1px solid var(--color-border)' }}>
                 <button
                   onClick={() => setViewMode('json')}
-                  className={`px-4 py-1.5 text-xs font-medium rounded transition-colors ${viewMode === 'json' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-none transition-colors ${viewMode === 'json' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                   JSON
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`px-4 py-1.5 text-xs font-medium rounded transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-none transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                   Comparison Table
                 </button>
@@ -827,12 +827,12 @@ function MapperContent() {
             <div className="ipaas-card p-4 mb-4">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold px-2 py-1 rounded" style={{
+                  <span className="text-xs font-semibold px-2 py-1 rounded-none" style={{
                     background: tx.source_system === 'iHOMIS' ? 'rgba(37,99,235,0.08)' : 'rgba(5,150,105,0.08)',
                     color: tx.source_system === 'iHOMIS' ? '#2563eb' : '#059669',
                   }}>{tx.source_system}</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  <span className="text-xs font-semibold px-2 py-1 rounded" style={{
+                  <span className="text-xs font-semibold px-2 py-1 rounded-none" style={{
                     background: tx.destination_system === 'iHOMIS' ? 'rgba(37,99,235,0.08)' : 'rgba(5,150,105,0.08)',
                     color: tx.destination_system === 'iHOMIS' ? '#2563eb' : '#059669',
                   }}>{tx.destination_system}</span>
@@ -841,7 +841,7 @@ function MapperContent() {
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</p>
               </div>
               {tx.error_message && (
-                <div className="mt-3 p-2.5 rounded text-xs flex items-center gap-2" style={{ background: 'rgba(220,38,38,0.05)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.15)' }}>
+                <div className="mt-3 p-2.5 rounded-none text-xs flex items-center gap-2" style={{ background: 'rgba(220,38,38,0.05)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.15)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   {tx.error_message}
                 </div>

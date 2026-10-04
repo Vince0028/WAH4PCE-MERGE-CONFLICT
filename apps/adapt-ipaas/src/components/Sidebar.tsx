@@ -15,7 +15,7 @@ export default function Sidebar() {
     <aside className="w-[240px] min-h-screen flex flex-col" style={{ background: 'var(--color-bg-sidebar)' }}>
       <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md p-1 overflow-hidden">
+          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-none p-1 overflow-hidden">
             <Image src="/WAH_logo.png" alt="WAH Logo" width={32} height={32} className="object-contain scale-[1.7]" priority />
           </div>
           <div>
@@ -51,7 +51,7 @@ export default function Sidebar() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
           }}
-          className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-[13px] font-medium text-[rgba(255,255,255,0.45)] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-all"
+          className="flex w-full items-center gap-2 px-3 py-2 rounded-none text-[13px] font-medium text-[rgba(255,255,255,0.45)] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-all"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
