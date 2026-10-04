@@ -48,12 +48,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[iPaaS Ingest] Received from ${source_system} (${sourceFormat}) → ${destination_system} (${destFormat})`);
+    console.log(`[External Microservice (ADAPT)] Received from ${source_system} (${sourceFormat}) → ${destination_system} (${destFormat})`);
 
     // --- 1b. Check patient data privacy consent ---
     if (!consent_signed) {
       const consentError = 'Patient data privacy consent form not signed or agreed. Record cannot be processed without patient consent per Republic Act 10173 (Data Privacy Act of 2012).';
-      console.warn(`[iPaaS Ingest] QUARANTINED — No consent: ${consentError}`);
+      console.warn(`[System (Internal)] QUARANTINED — No consent: ${consentError}`);
 
       const rawPayloadForDb = typeof payload === 'string'
         ? { message: payload, format: sourceFormat }
@@ -89,17 +89,37 @@ export async function POST(request: NextRequest) {
     let transactionId: string;
 
     if (ipaas_transaction_id) {
+      // First fetch to check version_etag if provided (Optimistic Locking)
+      if (body.version_etag) {
+        const { data: existingRecord } = await supabaseAdmin
+          .from('adapt_transaction_logs')
+          .select('version_etag')
+          .eq('id', ipaas_transaction_id)
+          .single();
+          
+        if (existingRecord && existingRecord.version_etag !== body.version_etag) {
+          return NextResponse.json({ success: false, message: 'Record version conflict (eTag mismatch)' }, { status: 409 });
+        }
+      }
+
       // Update the existing PENDING transaction (created during the request phase)
-      await supabaseAdmin
+      const { data: updatedData, error: updateErr } = await supabaseAdmin
         .from('adapt_transaction_logs')
         .update({
           raw_payload: rawPayloadForDb,
           status: 'PENDING',
           error_message: null,
+          version_etag: body.version_etag ? body.version_etag + 1 : undefined
         })
-        .eq('id', ipaas_transaction_id);
+        .eq('id', ipaas_transaction_id)
+        .select();
+        
+      if (updateErr || !updatedData || updatedData.length === 0) {
+        return NextResponse.json({ success: false, message: 'Transaction record not found' }, { status: 404 });
+      }
+      
       transactionId = ipaas_transaction_id;
-      console.log(`[iPaaS Ingest] Reusing existing transaction ${transactionId}`);
+      console.log(`[System (Internal)] Reusing existing transaction ${transactionId}`);
     } else {
       const { data: insertedRecord, error: insertError } = await supabaseAdmin
         .from('adapt_transaction_logs')
@@ -115,7 +135,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (insertError) {
-        console.error('[iPaaS Ingest] Supabase insert error:', insertError);
+        console.error('[System (Internal)] Supabase insert error:', insertError);
         return NextResponse.json(
           { success: false, message: 'Failed to store transaction', error: insertError.message },
           { status: 500 }
@@ -124,7 +144,7 @@ export async function POST(request: NextRequest) {
       transactionId = insertedRecord.id;
     }
 
-    console.log(`[iPaaS Ingest] Transaction ${transactionId} stored as PENDING`);
+    console.log(`[System (Internal)] Transaction ${transactionId} stored as PENDING`);
 
     // --- 3. Update to TRANSFORMING ---
     await supabaseAdmin
@@ -132,14 +152,14 @@ export async function POST(request: NextRequest) {
       .update({ status: 'TRANSFORMING' })
       .eq('id', transactionId);
 
-    console.log(`[iPaaS Ingest] Transaction ${transactionId} → TRANSFORMING`);
+    console.log(`[System (Internal)] Transaction ${transactionId} → TRANSFORMING`);
 
     // --- 4. AI Transformation & Fallback ---
     const direction = getTransformDirection(sourceFormat, destFormat);
     let transformResult = await transformWithAI(payload, direction);
 
     if (!transformResult.success || !transformResult.data) {
-      console.warn(`[iPaaS Ingest] AI failed: ${transformResult.error}. Engaging Deterministic Syntactic Fallback for Transaction ${transactionId}.`);
+      console.warn(`[System (Internal)] Automated Process AI failed: ${transformResult.error}. Engaging Deterministic Syntactic Fallback for Transaction ${transactionId}.`);
       try {
         const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
         transformResult = {
@@ -157,7 +177,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', transactionId);
 
-        console.error(`[iPaaS Ingest] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
+        console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
 
         return NextResponse.json({
           success: false,
@@ -182,14 +202,14 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', transactionId);
 
-      console.error(`[iPaaS Ingest] Transaction ${transactionId} QUARANTINED: ${errorMsg}`);
+      console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED: ${errorMsg}`);
 
       return NextResponse.json({
         success: false,
         transaction_id: transactionId,
         status: 'QUARANTINED',
         message: errorMsg,
-      }, { status: 422 });
+      }, { status: 400 });
     }
 
     // --- 6. Forward to destination system ---
@@ -227,7 +247,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (err) {
       forwardError = err instanceof Error ? err.message : 'Webhook request failed';
-      console.warn(`[iPaaS Ingest] Forward to ${destination_system} failed: ${forwardError}`);
+      console.warn(`[External Microservice (ADAPT)] Forward to ${destination_system} failed: ${forwardError}`);
     }
 
     // --- 7. Update Supabase with final status ---
@@ -241,7 +261,7 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', transactionId);
 
-    console.log(`[iPaaS Ingest] Transaction ${transactionId} → ${finalStatus} (model: ${transformResult.usedModel})`);
+    console.log(`[System (Internal)] Transaction ${transactionId} → ${finalStatus} (model: ${transformResult.usedModel})`);
 
     return NextResponse.json({
       success: true,
@@ -252,7 +272,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[iPaaS Ingest] Unexpected error:', error);
+    console.error('[System (Internal)] Unexpected error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }

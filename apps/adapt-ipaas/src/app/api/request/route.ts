@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const srcFormat = isWAHRequesting ? (destFormat || 'HL7V2') : 'FHIR_R4';
     const dstFormat = isWAHRequesting ? 'FHIR_R4' : (destFormat || 'HL7V2');
 
-    console.log(`[iPaaS Request] ${requesting_org} requesting data from ${isWAHRequesting ? target_org : 'WAH'} (PhilHealth: ${philhealth_no || 'N/A'}, Name: ${patient_name || 'N/A'})`);
+    console.log(`[External Microservice (ADAPT)] ${requesting_org} requesting data from ${isWAHRequesting ? target_org : 'WAH'} (PhilHealth: ${philhealth_no || 'N/A'}, Name: ${patient_name || 'N/A'})`);
 
     // --- Log in iPaaS transaction table as PENDING ---
     const { data: txRecord } = await supabaseAdmin
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    console.log(`[iPaaS Request] Created transaction ${txRecord?.id} as PENDING`);
+    console.log(`[System (Internal)] Created transaction ${txRecord?.id} as PENDING`);
 
     if (isWAHRequesting) {
       // === WAH → Org: Forward to Portal's incoming-requests endpoint ===
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           message: `Request forwarded to ${target_org} for approval.`,
         });
       } catch (err) {
-        console.error('[iPaaS Request] Failed to forward to Portal:', err);
+        console.error('[External Microservice (ADAPT)] Failed to forward to Portal:', err);
         if (txRecord) {
           await supabaseAdmin
             .from('adapt_transaction_logs')
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           message: 'Request forwarded to WAH for approval.',
         });
       } catch (err) {
-        console.error('[iPaaS Request] Failed to forward to WAH:', err);
+        console.error('[External Microservice (ADAPT)] Failed to forward to WAH:', err);
         if (txRecord) {
           await supabaseAdmin
             .from('adapt_transaction_logs')
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('[iPaaS Request] Error:', error);
+    console.error('[System (Internal)] Error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }

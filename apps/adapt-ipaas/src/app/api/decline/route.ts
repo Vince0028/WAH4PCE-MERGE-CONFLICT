@@ -22,14 +22,20 @@ export async function POST(request: NextRequest) {
 
     // Update the existing transaction to QUARANTINED (declined)
     if (ipaas_transaction_id) {
-      await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from('adapt_transaction_logs')
         .update({
           status: 'QUARANTINED',
           error_message: message || 'Request declined by source organization',
         })
-        .eq('id', ipaas_transaction_id);
-      console.log(`[iPaaS Decline] Updated transaction ${ipaas_transaction_id} to QUARANTINED (declined)`);
+        .eq('id', ipaas_transaction_id)
+        .select();
+
+      if (error || !data || data.length === 0) {
+        return NextResponse.json({ success: false, message: 'Transaction record not found' }, { status: 404 });
+      }
+
+      console.log(`[System (Internal)] Updated transaction ${ipaas_transaction_id} to QUARANTINED (declined)`);
     }
 
     // Forward decline notification to the appropriate system
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest) {
       // Org declined WAH's request → notify WAH by updating its local outbound request
       // WAH polls its own outbound-requests, so we just update the iPaaS transaction.
       // WAH's request-data page polls and will see the QUARANTINED status.
-      console.log(`[iPaaS Decline] Decline forwarded for WAH's outbound request ${request_id}`);
+      console.log(`[System (Internal)] Decline forwarded for WAH's outbound request ${request_id}`);
       return NextResponse.json({ success: true, message: 'Decline recorded for WAH' });
 
     } else {
@@ -62,12 +68,12 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ success: false, message: 'Failed to forward decline' }, { status: 502 });
         }
       } catch (err) {
-        console.error('[iPaaS Decline] Forward error:', err);
+        console.error('[External Microservice (ADAPT)] Forward error:', err);
         return NextResponse.json({ success: true, message: 'Decline recorded (webhook forward failed)' });
       }
     }
   } catch (error) {
-    console.error('[iPaaS Decline] Error:', error);
+    console.error('[System (Internal)] Error:', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }
