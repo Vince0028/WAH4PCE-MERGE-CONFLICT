@@ -419,7 +419,7 @@ export function fallbackTransform(
             ],
             name: [{
               family: getVal('Family Name'),
-              given: [getVal('Given Name')],
+              given: [getVal('Given Name'), getVal('Middle Name')].filter(Boolean),
               // Use direct search for Suffix as it's not in the main WAH template
               suffix: [extracted.find(f => f.label === 'Suffix')?.value || '']
             }],

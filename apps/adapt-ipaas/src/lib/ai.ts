@@ -24,9 +24,8 @@ Your task: Convert the input flat JSON patient record (representing a simplified
 
 The output FHIR Bundle MUST contain:
 1. **Patient**:
-   - name.given[0]: patient_fname
-   - name.given[1]: patient_mname
-   - name.family: patient_lname
+   - name[0].given: [patient_fname, patient_mname] (Array of strings. Omit mname if empty)
+   - name[0].family: patient_lname
    - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid") from philhealth_no
    - telecom[0]: phone (system: "phone", value: contact_no)
    - address: line[0]: address_street, line[1]: address_barangay, city: address_city, district: address_province, postalCode: address_zip
