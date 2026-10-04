@@ -122,8 +122,21 @@ export default function TransactionsPage() {
 
         <div className="ipaas-card overflow-hidden mb-5">
           {loading ? (
-            <div className="flex items-center justify-center h-48">
-              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent-bright)' }} />
+            <div className="animate-pulse bg-white">
+              <div className="h-[42px] bg-gray-50 border-b border-gray-100 flex items-center px-4">
+                <div className="w-1/4 h-3 bg-gray-200 rounded-none" />
+              </div>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-50">
+                  <div className="w-24 h-3 bg-gray-200 rounded-none" />
+                  <div className="w-32 h-3 bg-gray-200 rounded-none" />
+                  <div className="w-20 h-4 bg-gray-200 rounded-none" />
+                  <div className="w-16 h-2 bg-gray-200 rounded-none" />
+                  <div className="w-16 h-2 bg-gray-200 rounded-none" />
+                  <div className="w-20 h-5 bg-gray-200 rounded-none" />
+                  <div className="w-24 h-2 bg-gray-200 rounded-none" />
+                </div>
+              ))}
             </div>
           ) : transactions.length === 0 ? (
             <div className="p-10 text-center">

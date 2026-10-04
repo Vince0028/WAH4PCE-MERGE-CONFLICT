@@ -116,9 +116,36 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent-bright)' }} />
-          </div>
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="ipaas-card p-4 h-[104px] animate-pulse flex flex-col justify-between border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <div className="w-4 h-4 rounded-none bg-gray-200" />
+                    <div className="w-20 h-2.5 rounded-none bg-gray-200" />
+                  </div>
+                  <div className="w-12 h-8 rounded-none bg-gray-200 mt-auto" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="ipaas-card p-4 h-[104px] animate-pulse border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-none bg-gray-200" />
+                    <div className="w-24 h-3 rounded-none bg-gray-200" />
+                  </div>
+                  <div className="w-10 h-6 rounded-none bg-gray-200 mt-2" />
+                </div>
+              ))}
+            </div>
+            <div className="ipaas-card h-[360px] animate-pulse border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+              <div className="h-12 w-full bg-gray-100 border-b border-gray-200" />
+              <div className="p-4 space-y-4">
+                {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+              </div>
+            </div>
+          </>
         ) : (
           <>
             {/* Main Metrics (Asymmetric Bento Grid) */}

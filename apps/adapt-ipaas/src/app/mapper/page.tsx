@@ -674,8 +674,16 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
 export default function MapperPage() {
   return (
     <Suspense fallback={
-      <><Sidebar /><main className="flex-1 p-6 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-accent-bright)' }} />
+      <><Sidebar /><main className="flex-1 p-6 flex gap-4 h-screen overflow-hidden bg-gray-50">
+        <div className="flex-1 ipaas-card animate-pulse bg-white border-none" />
+        <div className="w-12 flex flex-col gap-2 items-center justify-center">
+          <div className="w-8 h-8 rounded-none bg-gray-200 animate-pulse" />
+          <div className="w-8 h-8 rounded-none bg-gray-200 animate-pulse" />
+        </div>
+        <div className="flex-1 flex flex-col gap-4">
+          <div className="h-1/2 ipaas-card animate-pulse bg-white border-none" />
+          <div className="h-1/2 ipaas-card animate-pulse bg-white border-none" />
+        </div>
       </main></>
     }>
       <MapperContent />
