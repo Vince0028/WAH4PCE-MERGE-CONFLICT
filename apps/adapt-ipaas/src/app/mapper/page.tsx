@@ -764,17 +764,19 @@ function MapperContent() {
               <div className="h-9 w-40 bg-gray-200 animate-pulse rounded-none" />
             </div>
             <div className="h-16 w-full bg-gray-200 animate-pulse rounded-none ipaas-card border-none" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-280px)]">
-              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col h-full">
-                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-4 bg-gray-200" /></div>
-                <div className="flex-1 p-4 space-y-2">
-                  {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col min-h-[160px]">
+                <div className="h-10 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-3 bg-gray-200" /></div>
+                <div className="p-4 space-y-2">
+                  {[...Array(3)].map((_, i) => <div key={i} className="h-3 bg-gray-100 w-full" />)}
+                  <div className="h-3 bg-gray-100 w-2/3" />
                 </div>
               </div>
-              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col h-full">
-                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-4 bg-gray-200" /></div>
-                <div className="flex-1 p-4 space-y-2">
-                  {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col min-h-[160px]">
+                <div className="h-10 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-3 bg-gray-200" /></div>
+                <div className="p-4 space-y-2">
+                  {[...Array(4)].map((_, i) => <div key={i} className="h-3 bg-gray-100 w-full" />)}
+                  <div className="h-3 bg-gray-100 w-3/4" />
                 </div>
               </div>
             </div>
