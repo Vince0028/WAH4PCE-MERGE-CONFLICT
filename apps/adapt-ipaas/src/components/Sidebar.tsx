@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
@@ -14,8 +15,8 @@ export default function Sidebar() {
     <aside className="w-[240px] min-h-screen flex flex-col" style={{ background: 'var(--color-bg-sidebar)' }}>
       <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.25)' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-md p-1">
+            <Image src="/WAH_logo.png" alt="WAH Logo" width={32} height={32} className="object-contain" priority />
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white leading-tight">ADAPT iPaaS</h1>

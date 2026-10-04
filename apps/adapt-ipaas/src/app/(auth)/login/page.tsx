@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -24,10 +25,8 @@ export default function LoginPage() {
   return (
     <div className="p-8 sm:p-10 shadow-xl rounded-2xl border border-slate-100 bg-white">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm border border-blue-100/50">
-           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-           </svg>
+        <div className="w-32 h-32 mx-auto mb-5 flex items-center justify-center">
+           <Image src="/WAH_logo.png" alt="WAH Logo" width={128} height={128} className="object-contain" priority />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-800 mb-2">Adapt System Portal</h1>
         <p className="text-sm text-slate-500 font-medium">
@@ -77,19 +76,9 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full h-11 mt-4 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
-          {loading ? "Authenticating..." : "Access System"}
+          {loading ? "Authenticating..." : "Log in"}
         </button>
       </form>
-
-      <div className="text-center text-sm text-slate-500 mt-8">
-        Need assistance?{" "}
-        <a
-          href="#"
-          className="text-blue-600 hover:text-blue-700 hover:underline transition-colors font-medium"
-        >
-          Contact IT Support
-        </a>
-      </div>
     </div>
   );
 }
