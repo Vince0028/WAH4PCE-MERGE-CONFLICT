@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devIndicators: {
+    buildActivity: false,
+    appIsrStatus: false,
+  },
   output: "standalone",
   transpilePackages: ["@adapt/shared"],
   async headers() {
