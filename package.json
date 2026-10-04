@@ -1,6 +1,7 @@
 {
   "name": "adapt-lhie-prototype",
   "version": "1.0.0",
+  "packageManager": "npm@10.9.2",
   "private": true,
   "workspaces": [
     "packages/*",
