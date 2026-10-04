@@ -115,6 +115,10 @@ export default function SavePatientPage() {
       showToast('error', 'Required: First Name, Last Name, PhilHealth No.');
       return;
     }
+    if (!consentSigned) {
+      showToast('error', 'Patient must consent to Data Privacy to proceed.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {

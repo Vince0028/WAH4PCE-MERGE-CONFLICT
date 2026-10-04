@@ -186,6 +186,10 @@ export default function SaveFHIRRecordPage() {
       showToast('error', 'Required: Given Name, Family Name, PhilHealth ID');
       return;
     }
+    if (!consentSigned) {
+      showToast('error', 'Patient must consent to Data Privacy to proceed.');
+      return;
+    }
     setSaving(true);
     try {
       const fhirBundle = buildFHIRBundle();
