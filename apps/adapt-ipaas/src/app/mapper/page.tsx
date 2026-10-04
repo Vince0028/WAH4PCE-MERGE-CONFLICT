@@ -674,15 +674,13 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
 export default function MapperPage() {
   return (
     <Suspense fallback={
-      <><Sidebar /><main className="flex-1 p-6 flex gap-4 h-screen overflow-hidden bg-gray-50">
-        <div className="flex-1 ipaas-card animate-pulse bg-white border-none" />
-        <div className="w-12 flex flex-col gap-2 items-center justify-center">
-          <div className="w-8 h-8 rounded-none bg-gray-200 animate-pulse" />
-          <div className="w-8 h-8 rounded-none bg-gray-200 animate-pulse" />
-        </div>
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="h-1/2 ipaas-card animate-pulse bg-white border-none" />
-          <div className="h-1/2 ipaas-card animate-pulse bg-white border-none" />
+      <><Sidebar /><main className="flex-1 p-6 flex flex-col gap-4 overflow-hidden bg-gray-50">
+        <div className="mb-1 h-12 w-1/3 bg-gray-200 animate-pulse rounded-none" />
+        <div className="h-10 w-full bg-gray-200 animate-pulse rounded-none" />
+        <div className="h-16 w-full bg-gray-200 animate-pulse rounded-none" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
+          <div className="ipaas-card animate-pulse bg-white border-none h-full" />
+          <div className="ipaas-card animate-pulse bg-white border-none h-full" />
         </div>
       </main></>
     }>
@@ -760,28 +758,23 @@ function MapperContent() {
         </div>
 
         {loading ? (
-          <div className="flex gap-4 h-[calc(100vh-140px)] w-full">
-            <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
-              <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-4 bg-gray-200" /></div>
-              <div className="flex-1 p-4 space-y-2">
-                {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
-              </div>
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex justify-between items-center gap-3">
+              <div className="h-9 w-64 bg-gray-200 animate-pulse rounded-none" />
+              <div className="h-9 w-40 bg-gray-200 animate-pulse rounded-none" />
             </div>
-            <div className="w-12 flex flex-col gap-2 items-center pt-20">
-              <div className="w-8 h-8 bg-gray-200 animate-pulse" />
-              <div className="w-8 h-8 bg-gray-200 animate-pulse" />
-            </div>
-            <div className="flex-1 flex flex-col gap-4">
-              <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
-                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-4 bg-gray-200" /></div>
+            <div className="h-16 w-full bg-gray-200 animate-pulse rounded-none ipaas-card border-none" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-280px)]">
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col h-full">
+                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-4 bg-gray-200" /></div>
                 <div className="flex-1 p-4 space-y-2">
-                  {[...Array(8)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+                  {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
                 </div>
               </div>
-              <div className="flex-1 ipaas-card animate-pulse bg-white border-none flex flex-col">
-                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-24 h-4 bg-gray-200" /></div>
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col h-full">
+                <div className="h-12 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-4 bg-gray-200" /></div>
                 <div className="flex-1 p-4 space-y-2">
-                  {[...Array(6)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+                  {[...Array(15)].map((_, i) => <div key={i} className="h-4 bg-gray-100 w-full" />)}
                 </div>
               </div>
             </div>
