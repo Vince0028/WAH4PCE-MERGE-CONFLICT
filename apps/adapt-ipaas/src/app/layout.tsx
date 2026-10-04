@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ADAPT iPaaS — Integration Platform Dashboard",
+  title: "WAH4PCE - Merge Conflict",
   description: "Intelligent Healthcare Data Integration Platform as a Service for the Philippine Local Health Information Exchange (LHIE)",
+  icons: {
+    icon: '/WAH_logo.png',
+  },
 };
 
 export default function RootLayout({
