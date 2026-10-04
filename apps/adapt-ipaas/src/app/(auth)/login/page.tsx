@@ -7,75 +7,57 @@ import React, { useState } from "react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed");
-      } else {
-        router.push("/");
-        router.refresh();
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login.");
-    } finally {
-      setLoading(false);
-    }
+    // Bypassing actual login as requested
+    setTimeout(() => {
+      router.push("/");
+      router.refresh();
+    }, 500);
   };
 
   return (
-    <div className="p-8 sm:p-10 shadow-2xl rounded-xl border border-white/10 bg-[#2a2a45]">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-white mb-2">Welcome back</h1>
-        <p className="text-sm text-[#a5a5c0]">
-          Enter your email or username to sign in
+    <div className="p-8 sm:p-10 shadow-xl rounded-2xl border border-slate-100 bg-white">
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm border border-blue-100/50">
+           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+           </svg>
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-800 mb-2">Adapt System Portal</h1>
+        <p className="text-sm text-slate-500 font-medium">
+          Authorized personnel access only
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-md bg-red-500/10 border border-red-500/50 text-red-500 text-sm">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div className="space-y-1">
+      <form onSubmit={handleLogin} className="space-y-5">
+        <div className="space-y-1.5">
           <label
             htmlFor="email"
-            className="text-sm font-medium leading-none text-[#e0e0f0]"
+            className="text-sm font-semibold leading-none text-slate-700"
           >
-            Email or Username
+            Staff Email or ID
           </label>
           <input
             id="email"
             type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            placeholder="e.g., staff@hospital.com"
+            className="flex h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             required
             disabled={loading}
           />
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <label
             htmlFor="password"
-            className="text-sm font-medium leading-none text-[#e0e0f0]"
+            className="text-sm font-semibold leading-none text-slate-700"
           >
             Password
           </label>
@@ -85,7 +67,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="flex h-10 w-full rounded-md border border-white/10 bg-[#1b1b2f] px-3 py-2 text-sm text-white placeholder:text-[#a5a5c0]/50 focus:outline-none focus:border-[var(--color-accent-bright)] transition-colors"
+            className="flex h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             required
             disabled={loading}
           />
@@ -93,20 +75,20 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="ipaas-btn ipaas-btn-primary w-full h-10 mt-2 text-sm shadow-[0_4px_14px_0_rgba(124,58,237,0.39)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.23)] hover:bg-[var(--color-accent-light)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-11 mt-4 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Authenticating..." : "Access System"}
         </button>
       </form>
 
-      <div className="text-center text-sm text-[#a5a5c0] mt-6">
-        Don't have an account?{" "}
-        <Link
-          href="/register"
-          className="text-[var(--color-accent-bright)] hover:text-white transition-colors font-medium"
+      <div className="text-center text-sm text-slate-500 mt-8">
+        Need assistance?{" "}
+        <a
+          href="#"
+          className="text-blue-600 hover:text-blue-700 hover:underline transition-colors font-medium"
         >
-          Sign up
-        </Link>
+          Contact IT Support
+        </a>
       </div>
     </div>
   );
