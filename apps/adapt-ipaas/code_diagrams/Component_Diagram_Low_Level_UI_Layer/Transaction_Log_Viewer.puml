@@ -1,0 +1,29 @@
+@startuml Transaction_Log_Viewer
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Transaction Log Viewer
+
+note as N1
+  Code level flow for the Transaction Log Viewer
+  File: src/app/transactions/page.tsx
+end note
+
+Container_Boundary(tx_viewer, "Transaction Log Viewer (React)") {
+    Component(page_tsx, "TransactionsPage", "React Component", "Main UI state manager for transactions, filtering, and pagination.")
+    Component(fetch_transactions, "fetchTransactions()", "Async Function", "Fetches /api/transactions with limit, offset, and filters.")
+    Component(tx_mappings, "txMappings (useMemo)", "React Hook", "Calculates mapping percentages using calculateSourceFillCount and calculateMappingPercentage.")
+    Component(ui_table, "Transactions Table", "React JSX", "Renders rows, status badges, and source/dest fill percentage bars. Links to /mapper?id=.")
+}
+
+Container_Boundary(calc_service, "Mapping Calculator (src/lib/mapping-calc.ts)") {
+    Component(calc_source, "calculateSourceFillCount()", "Function", "Calculates how many source fields are filled.")
+    Component(calc_dest, "calculateMappingPercentage()", "Function", "Calculates how many destination fields are successfully mapped.")
+}
+
+Rel(page_tsx, fetch_transactions, "Calls on mount & interval", "React useEffect")
+Rel(fetch_transactions, tx_mappings, "Triggers re-calc on data change", "React State")
+Rel(tx_mappings, calc_source, "Computes src mapping %", "Function Call")
+Rel(tx_mappings, calc_dest, "Computes dest mapping %", "Function Call")
+Rel(tx_mappings, ui_table, "Provides computed data", "Props / Render")
+
+@enduml

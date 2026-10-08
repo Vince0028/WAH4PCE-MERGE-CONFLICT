@@ -1,0 +1,24 @@
+@startuml Decline_Controller
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Decline Controller
+
+note as N1
+  Code level flow for the Decline Controller
+  File: src/app/api/decline/route.ts
+end note
+
+Container_Boundary(decline_api, "POST /api/decline (Next.js)") {
+    Component(route_handler, "POST()", "Route Handler", "Receives request_id, destination_system, and decline message.")
+    
+    Component(db_quarantine, "Update QUARANTINED", "Supabase Client", "Updates the iPaaS transaction log to QUARANTINED status with the decline message.")
+    
+    Component(wah_notify, "Return 200 (WAH)", "Logic block", "If destination is WAH, simply returns success since WAH polls iPaaS.")
+    Component(portal_notify, "Webhook (Portal)", "Fetch API", "If destination is Org, POSTs to PORTAL_API_URL/webhook to notify.")
+}
+
+Rel(route_handler, db_quarantine, "1. Updates transaction status", "Supabase")
+Rel(db_quarantine, wah_notify, "2a. If WAH is destination", "Logic")
+Rel(db_quarantine, portal_notify, "2b. If Portal is destination", "HTTP POST")
+
+@enduml

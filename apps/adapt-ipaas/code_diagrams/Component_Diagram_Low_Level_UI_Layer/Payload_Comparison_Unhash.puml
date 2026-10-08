@@ -1,0 +1,31 @@
+@startuml Payload_Comparison_Unhash
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Payload Comparison & Unhash
+
+note as N1
+  Code level flow for Mapper / Payload Comparison Viewer
+  File: src/app/mapper/page.tsx
+end note
+
+Container_Boundary(mapper_boundary, "Payload Comparison Viewer (React)") {
+    Component(page_tsx, "MapperPage", "React Component", "Fetches transaction by ID. Handles SHA-256 hashing/unhashing toggles and side-by-side view.")
+    Component(sha256, "sha256()", "Crypto API", "Generates SHA-256 hashes to anonymize PHI in demo mode.")
+    
+    Component(extract_hl7, "extractHL7Data()", "Parser", "Extracts fields from iHOMIS flat JSON or parsed HL7v2 string.")
+    Component(extract_fhir, "extractFHIRData()", "Parser", "Extracts fields from FHIR R4 Bundle resources (Patient, Encounter, Observation, Condition).")
+    Component(parse_hl7_str, "parseHL7v2String()", "Parser", "Parses raw pipe-delimited HL7v2 string segments (PID, PV1, OBX, DG1).")
+    
+    Component(extract_all, "extractDataFields()", "Router", "Auto-detects payload format and routes to correct extractor function.")
+    
+    Component(ui_grid, "Side-by-Side Grid", "React JSX", "Renders the Source vs Destination data rows matching IHOMIS_TEMPLATE and WAH_TEMPLATE.")
+}
+
+Rel(page_tsx, sha256, "Toggles Unhash / Hash", "Function Call")
+Rel(page_tsx, extract_all, "Passes raw & transformed payloads", "Function Call")
+Rel(extract_all, extract_hl7, "If flat JSON payload", "Function Call")
+Rel(extract_all, extract_fhir, "If FHIR Bundle", "Function Call")
+Rel(extract_all, parse_hl7_str, "If raw HL7v2 string", "Function Call")
+Rel(extract_all, ui_grid, "Returns formatted rows for rendering", "Data Flow")
+
+@enduml

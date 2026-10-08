@@ -1,0 +1,28 @@
+@startuml Request_Controller
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Request Controller
+
+note as N1
+  Code level flow for the Request Controller
+  File: src/app/api/request/route.ts
+end note
+
+Container_Boundary(request_api, "POST /api/request (Next.js)") {
+    Component(route_handler, "POST()", "Route Handler", "Determines data request direction (Org -> WAH or WAH -> Org).")
+    
+    Component(db_pending, "Log Request", "Supabase Client", "Inserts transaction into adapt_transaction_logs as PENDING.")
+    
+    Component(wah_forward, "fetch(WAH_API_URL)", "Fetch API", "If Org requesting, forwards request details to WAH API /requests.")
+    Component(portal_forward, "fetch(PORTAL_API_URL)", "Fetch API", "If WAH requesting, forwards request details to PORTAL /incoming-requests.")
+    
+    Component(db_quarantine, "Update QUARANTINED", "Supabase Client", "If forwarding fails, updates transaction to QUARANTINED.")
+}
+
+Rel(route_handler, db_pending, "1. Logs request", "Supabase")
+Rel(db_pending, wah_forward, "2a. If Org -> WAH", "HTTP POST")
+Rel(db_pending, portal_forward, "2b. If WAH -> Org", "HTTP POST")
+Rel(wah_forward, db_quarantine, "3a. On Fetch Error", "Supabase")
+Rel(portal_forward, db_quarantine, "3b. On Fetch Error", "Supabase")
+
+@enduml

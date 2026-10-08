@@ -1,0 +1,46 @@
+@startuml Provide_Health_Data_Pipeline_Engine
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 — Code Diagram: Provide Health Data Pipeline Engine
+
+note as N1
+  This code diagram shows the internal flow of the 
+  Next.js route handler for data ingestion and transformation.
+  File: src/app/api/ingest/route.ts
+end note
+
+Container_Boundary(nextjs_api, "Next.js App Router (src/app/api/ingest)") {
+    Component(route_post, "POST(request: NextRequest)\nroute.ts", "Next.js Route Handler", "Main entry point. Validates request, checks RA 10173 consent, determines formats, and orchestrates the Bronze/Silver/Gold data pipeline.")
+}
+
+Container_Boundary(supabase_db, "Supabase Database (src/lib/supabase.ts)") {
+    Component(supabase_insert, "supabaseAdmin.from().insert()\nsupabase.ts", "Supabase SDK Client", "Inserts incoming payload into adapt_transaction_logs as PENDING.")
+    Component(supabase_update, "supabaseAdmin.from().update()\nsupabase.ts", "Supabase SDK Client", "Updates transaction status to TRANSFORMING, SUCCESS, or QUARANTINED.")
+}
+
+Container_Boundary(ai_service, "AI Translation Service (src/lib/ai.ts)") {
+    Component(ai_transform, "transformWithAI(payload, direction)\nai.ts", "AI Engine", "Invokes Gemini/Groq to transform data. Returns {success, data, error}.")
+}
+
+Container_Boundary(fallback_service, "Deterministic Fallback (src/lib/mapping-calc.ts)") {
+    Component(fallback_transform, "fallbackTransform(payload, direction)\nmapping-calc.ts", "Algorithmic Mapper", "Maps data algorithmically if AI transformation fails.")
+}
+
+Container_Boundary(validator_service, "Validation Service (src/lib/validator.ts)") {
+    Component(validate_transform, "validateTransformation(data, direction)\nvalidator.ts", "Validator", "Validates output against FHIR R4 or HL7v2 schema constraints.")
+}
+
+Container_Boundary(webhook_dispatcher, "Webhook Dispatcher") {
+    Component(fetch_webhook, "fetch(webhookUrl, POST)\nroute.ts", "Fetch API", "Forwards the successfully transformed data to the target system.")
+}
+
+Rel(route_post, supabase_insert, "1. Store as PENDING", "Function Call")
+Rel(route_post, supabase_update, "2. Update to TRANSFORMING", "Function Call")
+Rel(route_post, ai_transform, "3. Translate Data", "Function Call")
+Rel(ai_transform, fallback_transform, "If AI fails, engage fallback", "Function Call")
+Rel(route_post, validate_transform, "4. Validate Transformed Output", "Function Call")
+Rel(route_post, supabase_update, "5. Update to QUARANTINED (on fail)", "Function Call")
+Rel(route_post, fetch_webhook, "6. Forward Output", "HTTP POST")
+Rel(route_post, supabase_update, "7. Update to SUCCESS", "Function Call")
+
+@enduml

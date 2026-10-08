@@ -1,0 +1,22 @@
+@startuml Validate_Schema_Completeness
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Validate Schema & Completeness
+
+note as N1
+  Code level flow for the Validation Service
+  File: src/lib/validator.ts
+end note
+
+Container_Boundary(validator_service, "Validation Service") {
+    Component(validate_transform, "validateTransformation()", "Router", "Reads the transform direction (e.g. HL7V2_TO_FHIR_R4) to select the correct validator.")
+    
+    Component(validate_fhir, "validateFHIRBundle()", "Validator", "Checks for Bundle resourceType, required entries (Patient, Encounter, Condition), and PhilHealth identifier.")
+    
+    Component(validate_hl7, "validateHL7V2Payload()", "Validator", "Checks for flat JSON fields: patient_fname, dob, sex, philhealth_no, and required vitals (bp, hr, temp).")
+}
+
+Rel(validate_transform, validate_fhir, "If direction is TO_FHIR_R4", "Function Call")
+Rel(validate_transform, validate_hl7, "If direction is TO_HL7V2", "Function Call")
+
+@enduml

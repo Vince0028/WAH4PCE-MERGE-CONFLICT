@@ -1,0 +1,36 @@
+@startuml Ingest_Controller
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Ingest Controller
+
+note as N1
+  Code level flow for the Ingest Controller
+  File: src/app/api/ingest/route.ts
+end note
+
+Container_Boundary(ingest_api, "POST /api/ingest (Next.js)") {
+    Component(route_handler, "POST()", "Route Handler", "Extracts payload, validates source/dest systems and formats.")
+    
+    Component(consent_check, "Consent Gatekeeper", "Logic block", "Checks if consent_signed is true. If false, stores as QUARANTINED.")
+    Component(db_pending, "Store PENDING", "Supabase Client", "Inserts into adapt_transaction_logs with status PENDING.")
+    Component(db_transforming, "Update TRANSFORMING", "Supabase Client", "Updates status to TRANSFORMING before AI execution.")
+    
+    Component(ai_transform, "transformWithAI()", "Core Service", "Calls src/lib/ai.ts to map formats.")
+    Component(fallback_transform, "fallbackTransform()", "Core Service", "Calls src/lib/mapping-calc.ts if AI fails.")
+    
+    Component(validate, "validateTransformation()", "Core Service", "Calls src/lib/validator.ts to check FHIR/HL7v2 rules.")
+    
+    Component(webhook_dispatch, "fetch(webhookUrl)", "Fetch API", "Forwards the valid gold payload to WAH or iHOMIS.")
+    Component(db_success, "Update SUCCESS", "Supabase Client", "Finalizes transaction status.")
+}
+
+Rel(route_handler, consent_check, "1. Checks RA 10173", "Logic")
+Rel(consent_check, db_pending, "2. Stores as PENDING", "Supabase")
+Rel(db_pending, db_transforming, "3. Updates status", "Supabase")
+Rel(db_transforming, ai_transform, "4. Triggers transformation", "Function Call")
+Rel(ai_transform, fallback_transform, "5. Fallback on error", "Function Call")
+Rel(ai_transform, validate, "6. Validates result", "Function Call")
+Rel(validate, webhook_dispatch, "7. Dispatches payload", "HTTP POST")
+Rel(webhook_dispatch, db_success, "8. Updates to SUCCESS", "Supabase")
+
+@enduml

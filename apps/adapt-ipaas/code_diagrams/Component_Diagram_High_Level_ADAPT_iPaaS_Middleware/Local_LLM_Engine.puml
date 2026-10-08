@@ -1,0 +1,28 @@
+@startuml Local_LLM_Engine
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 — Code Diagram: Local LLM Engine (AI Translator)
+
+note as N1
+  This code diagram shows the internal flow of the 
+  AI Translation Engine with automatic model fallback.
+  File: src/lib/ai.ts
+end note
+
+Container_Boundary(ai_service, "AI Translation Service (src/lib/ai.ts)") {
+    Component(transform_with_ai, "transformWithAI(payload, direction)\nai.ts", "Async Function", "Orchestrates AI inference. Iterates through MODEL_FALLBACKS array. Captures errors and cascades to next model.")
+    Component(get_prompt, "getPromptForDirection(direction)\nai.ts", "Helper Function", "Returns either HL7V2_TO_FHIR_PROMPT or FHIR_TO_HL7V2_PROMPT.")
+}
+
+Container_Boundary(sdk_clients, "Model SDK Clients") {
+    Component(gemini_client, "GoogleGenerativeAI Client\n@google/generative-ai", "SDK", "Interfaces with Gemini models (e.g. gemini-3.1-flash-lite).")
+    Component(groq_client, "Groq Client\ngroq-sdk", "SDK", "Interfaces with Groq LPU models (e.g. llama-3.3-70b-versatile).")
+}
+
+Rel(transform_with_ai, get_prompt, "1. Retrieves system prompt", "Function Call")
+Rel(transform_with_ai, gemini_client, "2. Try Gemini Model (First Priority)", "SDK Call")
+Rel(gemini_client, transform_with_ai, "Returns JSON / Hits Quota", "Return")
+Rel(transform_with_ai, groq_client, "3. Try Groq Model (Fallback)", "SDK Call")
+Rel(groq_client, transform_with_ai, "Returns JSON", "Return")
+
+@enduml

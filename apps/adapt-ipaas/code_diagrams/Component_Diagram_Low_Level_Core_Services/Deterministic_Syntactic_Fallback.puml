@@ -1,0 +1,21 @@
+@startuml Deterministic_Syntactic_Fallback
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Level 4 - Code Diagram: Deterministic Syntactic Fallback
+
+note as N1
+  Code level flow for the Fallback Mapper
+  File: src/lib/mapping-calc.ts
+end note
+
+Container_Boundary(fallback_service, "Fallback Mapping Engine") {
+    Component(fallback_transform, "fallbackTransform()", "Router", "Routes payload to specific algorithmic mappers if AI fails.")
+    
+    Component(hl7_to_fhir, "HL7V2_TO_FHIR_R4 Fallback", "Mapper Logic", "Iterates over flat JSON and constructs a basic FHIR Bundle. Inserts placeholders for missing mandatory data.")
+    Component(fhir_to_hl7, "FHIR_R4_TO_HL7V2 Fallback", "Mapper Logic", "Traverses Bundle.entry, extracts Patient and Encounter data using fixed object paths to build flat JSON.")
+}
+
+Rel(fallback_transform, hl7_to_fhir, "If direction is HL7V2_TO_FHIR_R4", "Function Call")
+Rel(fallback_transform, fhir_to_hl7, "If direction is FHIR_R4_TO_HL7V2", "Function Call")
+
+@enduml
