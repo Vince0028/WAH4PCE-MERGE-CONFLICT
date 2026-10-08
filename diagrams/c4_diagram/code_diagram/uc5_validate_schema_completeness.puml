@@ -2,11 +2,6 @@
 !theme plain
 title C4 Level 4 — Code Diagram: UC5 Validate Schema & Completeness
 
-note top of IngestHandler
-  This use case is an <<include>> of UC6: Translate Data.
-  Triggered automatically inside POST /api/v1/ingest after AI transformation completes.
-  On failure: HTTP 400, status set to QUARANTINED in MongoDB.
-end note
 
 package "ADAPT iPaaS Middleware (Golang)" {
     class IngestHandler <<struct>> {
@@ -64,6 +59,12 @@ note right of HL7Validator
   - MSH segment
   - PID segment
   - patient_id, patient_name, date_of_birth
+end note
+
+note top of IngestHandler
+  This use case is an <<include>> of UC6: Translate Data.
+  Triggered automatically inside POST /api/v1/ingest after AI transformation completes.
+  On failure: HTTP 400, status set to QUARANTINED in MongoDB.
 end note
 
 @enduml

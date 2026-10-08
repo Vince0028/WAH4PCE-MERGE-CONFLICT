@@ -2,13 +2,6 @@
 !theme plain
 title C4 Level 4 — Code Diagram: UC7 Validate Privacy Consent
 
-note top of IngestHandler
-  This use case is an <<include>> of UC6: Translate Data.
-  Consent is enforced at two layers:
-  1. Frontend UI: blocks form submission if checkbox is not checked.
-  2. Backend API: ADAPT iPaaS rejects and quarantines if consent_signed !== true.
-  Legal basis: Republic Act 10173 — Data Privacy Act of 2012.
-end note
 
 class Patient <<Actor>>
 
@@ -56,6 +49,14 @@ note bottom of IngestHandler
   Server-side second layer of enforcement.
   Reads consent_signed from request body.
   Error message references RA 10173 explicitly.
+end note
+
+note top of IngestHandler
+  This use case is an <<include>> of UC6: Translate Data.
+  Consent is enforced at two layers:
+  1. Frontend UI: blocks form submission if checkbox is not checked.
+  2. Backend API: ADAPT iPaaS rejects and quarantines if consent_signed !== true.
+  Legal basis: Republic Act 10173 — Data Privacy Act of 2012.
 end note
 
 @enduml
