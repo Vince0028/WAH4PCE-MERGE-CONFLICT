@@ -20,7 +20,7 @@ This README provides a definitive **1-to-1 mapping** between the architectural C
 
 ### `<<container>> Web Dashboard [Next.js, React]`
 
-**File:** [`apps/adapt-ipaas/src/app/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/page.tsx) (256 lines)
+**File:** [`apps/adapt-ipaas/src/app/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/page.tsx) (282 lines)
 
 The full dashboard is a client-side React page that fetches metrics and transaction data from the API, computes mapping percentages, and renders metric cards, direction stats, format breakdowns, and a real-time transaction activity table.
 
@@ -39,7 +39,7 @@ async function safeFetch(url: string) {
 interface Metrics {
   total_records: number; success_count: number; pending_count: number;
   quarantined_count: number; transforming_count: number; success_rate: number;
-  org_to_wah: number; wah_to_org: number;
+  ihomis_to_wah: number; wah_to_ihomis: number;
   hl7v2_count: number; fhir_count: number;
 }
 
@@ -78,9 +78,12 @@ export default function Dashboard() {
       const srcResult = calculateSourceFillCount(tx.raw_payload || null, tx.source_system);
       const destResult = calculateMappingPercentage(tx.transformed_payload || null, tx.destination_system);
       map[tx.id] = {
-        src: srcResult.percentage, dest: destResult.percentage,
-        srcFilled: srcResult.filledFields, srcTotal: srcResult.totalFields,
-        destFilled: destResult.filledFields, destTotal: destResult.totalFields,
+        src: srcResult.percentage,
+        dest: destResult.percentage,
+        srcFilled: srcResult.filledFields,
+        srcTotal: srcResult.totalFields,
+        destFilled: destResult.filledFields,
+        destTotal: destResult.totalFields,
       };
     }
     return map;
@@ -93,30 +96,255 @@ export default function Dashboard() {
     const sum = successTx.reduce((acc, tx) => acc + (txMappings[tx.id]?.dest || 0), 0);
     return Number((sum / successTx.length).toFixed(1));
   }, [recentTx, txMappings]);
-  // ... renders 5 metric cards, direction cards, format breakdown, and a full transaction table
+
+  const statusStyle = (s: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      SUCCESS: { bg: 'rgba(5,150,105,0.08)', color: '#059669' },
+      PENDING: { bg: 'rgba(217,119,6,0.08)', color: '#d97706' },
+      TRANSFORMING: { bg: 'rgba(37,99,235,0.08)', color: '#2563eb' },
+      QUARANTINED: { bg: 'rgba(220,38,38,0.08)', color: '#dc2626' },
+    };
+    return m[s] || m.PENDING;
+  };
+
+  const formatBadgeStyle = (fmt: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      HL7V2: { bg: 'rgba(59,130,246,0.08)', color: '#3b82f6' },
+      FHIR_R4: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
+    };
+    return m[fmt] || m.HL7V2;
+  };
+
+  const formatLabel = (fmt: string) => {
+    const m: Record<string, string> = { HL7V2: 'HL7v2', FHIR_R4: 'FHIR R4' };
+    return m[fmt] || fmt;
+  };
+
+  // Color for mapping percentage
+  const pctColor = (pct: number) => {
+    if (pct >= 85) return '#059669'; // green
+    if (pct >= 60) return '#d97706'; // amber
+    return '#dc2626'; // red
+  };
+
+  const pctBg = (pct: number) => {
+    if (pct >= 85) return 'rgba(5,150,105,0.08)';
+    if (pct >= 60) return 'rgba(217,119,6,0.08)';
+    return 'rgba(220,38,38,0.08)';
+  };
+
+  return (
+    <>
+      <Sidebar />
+      <main className="flex-1 p-6 overflow-auto">
+        <div className="mb-6">
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Real-time monitoring of multi-format health data transformations</p>
+        </div>
+
+        {loading ? (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="ipaas-card p-4 h-[104px] animate-pulse flex flex-col justify-between border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <div className="w-4 h-4 rounded-none bg-gray-200" />
+                    <div className="w-20 h-2.5 rounded-none bg-gray-200" />
+                  </div>
+                  <div className="w-12 h-8 rounded-none bg-gray-200 mt-auto" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="ipaas-card p-4 h-[104px] animate-pulse border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-none bg-gray-200" />
+                    <div className="w-24 h-3 rounded-none bg-gray-200" />
+                  </div>
+                  <div className="w-10 h-6 rounded-none bg-gray-200 mt-2" />
+                </div>
+              ))}
+            </div>
+            <div className="ipaas-card h-[360px] animate-pulse border-none" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+              <div className="h-12 w-full bg-gray-100 border-b border-gray-200" />
+              <div className="p-4 space-y-4">
+                {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-4 bg-gray-100 w-full" />)}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Main Metrics (Asymmetric Bento Grid) */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+              {[
+                { label: 'Total Records', value: metrics?.total_records || 0, color: '#8b5cf6', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12a9 9 0 11-6.22-8.56"/></svg> },
+                { label: 'Success Rate', value: `${metrics?.success_rate || 0}%`, color: '#059669', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg> },
+                { label: 'Avg Mapping', value: `${avgMapping}%`, color: pctColor(avgMapping), icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
+                { label: 'Pending', value: (metrics?.pending_count || 0) + (metrics?.transforming_count || 0), color: '#d97706', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                { label: 'Quarantined', value: metrics?.quarantined_count || 0, color: '#dc2626', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+              ].map(m => (
+                <div key={m.label} className="ipaas-card p-4 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 mb-2" style={{ color: m.color }}>
+                    {m.icon}
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>{m.label}</span>
+                  </div>
+                  <p className="text-3xl font-black tracking-tighter">{m.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Secondary Stats (Asymmetric Grid) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Direction Cards */}
+              <div className="ipaas-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-none flex items-center justify-center" style={{ background: 'rgba(37,99,235,0.08)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </div>
+                  <div><p className="text-xs font-medium">iHOMIS → WAH</p><p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>HL7v2 → FHIR R4</p></div>
+                </div>
+                <p className="text-2xl font-bold" style={{ color: '#2563eb' }}>{metrics?.ihomis_to_wah || 0}</p>
+              </div>
+              
+              <div className="ipaas-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-none flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.08)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  </div>
+                  <div><p className="text-xs font-medium">WAH → iHOMIS</p><p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>FHIR R4 → HL7v2</p></div>
+                </div>
+                <p className="text-2xl font-bold" style={{ color: '#8b5cf6' }}>{metrics?.wah_to_ihomis || 0}</p>
+              </div>
+
+              {/* Format Breakdown */}
+              {[
+                { label: 'HL7 v2.x', count: metrics?.hl7v2_count || 0, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+                { label: 'FHIR R4', count: metrics?.fhir_count || 0, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
+              ].map(f => (
+                <div key={f.label} className="ipaas-card p-4 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-none" style={{ background: f.bg, color: f.color }}>{f.label}</span>
+                  </div>
+                  <p className="text-2xl font-bold" style={{ color: f.color }}>{f.count}</p>
+                  <p className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>transformations</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Recent Activity */}
+            <div className="ipaas-card overflow-hidden">
+              <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+                <h2 className="text-sm font-semibold">Recent Activity</h2>
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>All transactions ({recentTx.length})</p>
+              </div>
+              {recentTx.length === 0 ? (
+                <div className="p-10 text-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1" className="mx-auto mb-3"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No transactions yet. Send data from iHOMIS or WAH.</p>
+                </div>
+              ) : (
+              <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                <table className="data-table">
+                  <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {recentTx.map(tx => {
+                      const st = statusStyle(tx.status);
+                      const srcFmt = formatBadgeStyle(tx.source_format);
+                      const dstFmt = formatBadgeStyle(tx.destination_format);
+                      const mapping = txMappings[tx.id];
+                      const hasMappingData = tx.status === 'SUCCESS' && mapping && mapping.destTotal > 0;
+                      return (
+                        <tr key={tx.id} onClick={() => window.location.href = `/mapper?id=${tx.id}`} style={{ cursor: 'pointer' }}>
+                          <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
+                          <td className="text-sm">{tx.source_system} → {tx.destination_system}</td>
+                          <td>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
+                            <span style={{ color: 'var(--color-text-muted)' }}>→</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                          </td>
+                          {/* Source mapping % */}
+                          <td>
+                            {hasMappingData ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                                  <div className="h-full rounded-full transition-all" style={{ width: `${mapping.src}%`, background: pctColor(mapping.src) }} />
+                                </div>
+                                <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.src) }}>{mapping.src}%</span>
+                                <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.srcFilled}/{mapping.srcTotal}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+                          {/* Destination mapping % */}
+                          <td>
+                            {hasMappingData ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                                  <div className="h-full rounded-full transition-all" style={{ width: `${mapping.dest}%`, background: pctColor(mapping.dest) }} />
+                                </div>
+                                <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.dest) }}>{mapping.dest}%</span>
+                                <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.destFilled}/{mapping.destTotal}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+                          <td><span className="ipaas-badge" style={{ background: st.bg, color: st.color }}>{tx.status}</span></td>
+                          <td className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+    </>
+  );
 }
 ```
 
 ### `<<container>> Interoperability Routing & ADAPT Engine [Golang, MCP]`
 
-**File:** [`apps/adapt-ipaas/src/app/api/ingest/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/ingest/route.ts) (250 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/ingest/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/ingest/route.ts) (281 lines)
 
 This is the core engine — a single 250-line route handler that orchestrates the entire pipeline: request validation → consent gatekeeper → staging → AI transformation → validation → webhook forwarding.
 
-```typescript
+```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { transformWithAI, getTransformDirection } from '@/lib/ai';
 import type { DataFormat } from '@/lib/ai';
 import { validateTransformation } from '@/lib/validator';
+import { fallbackTransform } from '@/lib/mapping-calc';
 
+/**
+ * POST /api/ingest
+ * Main ingestion endpoint — receives data from any organization or WAH,
+ * stores it in Supabase, triggers AI transformation, validates,
+ * and forwards to the destination system.
+ *
+ * Now supports dynamic organization names and 2 data formats:
+ * HL7V2, FHIR_R4
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      source_system, destination_system,
-      source_format: rawSourceFormat, destination_format: rawDestFormat,
-      payload, original_json, consent_signed, request_id, ipaas_transaction_id
+      source_system,
+      destination_system,
+      source_format: rawSourceFormat,
+      destination_format: rawDestFormat,
+      payload,
+      original_json,
+      consent_signed,
+      request_id,
+      ipaas_transaction_id
     } = body;
 
     // --- 1. Validate request ---
@@ -138,88 +366,246 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`[External Microservice (ADAPT)] Received from ${source_system} (${sourceFormat}) → ${destination_system} (${destFormat})`);
+
     // --- 1b. Check patient data privacy consent ---
     if (!consent_signed) {
       const consentError = 'Patient data privacy consent form not signed or agreed. Record cannot be processed without patient consent per Republic Act 10173 (Data Privacy Act of 2012).';
+      console.warn(`[System (Internal)] QUARANTINED — No consent: ${consentError}`);
+
+      const rawPayloadForDb = typeof payload === 'string'
+        ? { message: payload, format: sourceFormat }
+        : payload;
+
       const { data: quarantinedRecord } = await supabaseAdmin
         .from('adapt_transaction_logs')
         .insert({
-          source_system, destination_system, source_format: sourceFormat,
-          destination_format: destFormat, raw_payload: rawPayloadForDb,
-          status: 'QUARANTINED', error_message: consentError,
+          source_system,
+          destination_system,
+          source_format: sourceFormat,
+          destination_format: destFormat,
+          raw_payload: rawPayloadForDb,
+          status: 'QUARANTINED',
+          error_message: consentError,
         })
-        .select().single();
+        .select()
+        .single();
 
       return NextResponse.json({
-        success: false, transaction_id: quarantinedRecord?.id,
-        status: 'QUARANTINED', message: consentError,
+        success: false,
+        transaction_id: quarantinedRecord?.id,
+        status: 'QUARANTINED',
+        message: consentError,
       }, { status: 422 });
     }
 
-    // --- 2. Insert PENDING transaction ---
-    const { data: insertedRecord, error: insertError } = await supabaseAdmin
-      .from('adapt_transaction_logs')
-      .insert({
-        source_system, destination_system, source_format: sourceFormat,
-        destination_format: destFormat, raw_payload: rawPayloadForDb, status: 'PENDING',
-      })
-      .select().single();
+    // --- 2. Use existing transaction or insert new one as PENDING ---
+    const rawPayloadForDb = typeof payload === 'string'
+      ? { message: payload, format: sourceFormat }
+      : payload;
+
+    let transactionId: string;
+
+    if (ipaas_transaction_id) {
+      // First fetch to check version_etag if provided (Optimistic Locking)
+      if (body.version_etag) {
+        const { data: existingRecord } = await supabaseAdmin
+          .from('adapt_transaction_logs')
+          .select('version_etag')
+          .eq('id', ipaas_transaction_id)
+          .single();
+          
+        if (existingRecord && existingRecord.version_etag !== body.version_etag) {
+          return NextResponse.json({ success: false, message: 'Record version conflict (eTag mismatch)' }, { status: 409 });
+        }
+      }
+
+      // Update the existing PENDING transaction (created during the request phase)
+      const { data: updatedData, error: updateErr } = await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .update({
+          raw_payload: rawPayloadForDb,
+          status: 'PENDING',
+          error_message: null,
+          version_etag: body.version_etag ? body.version_etag + 1 : undefined
+        })
+        .eq('id', ipaas_transaction_id)
+        .select();
+        
+      if (updateErr || !updatedData || updatedData.length === 0) {
+        return NextResponse.json({ success: false, message: 'Transaction record not found' }, { status: 404 });
+      }
+      
+      transactionId = ipaas_transaction_id;
+      console.log(`[System (Internal)] Reusing existing transaction ${transactionId}`);
+    } else {
+      const { data: insertedRecord, error: insertError } = await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .insert({
+          source_system,
+          destination_system,
+          source_format: sourceFormat,
+          destination_format: destFormat,
+          raw_payload: rawPayloadForDb,
+          status: 'PENDING',
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[System (Internal)] Supabase insert error:', insertError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to store transaction', error: insertError.message },
+          { status: 500 }
+        );
+      }
+      transactionId = insertedRecord.id;
+    }
+
+    console.log(`[System (Internal)] Transaction ${transactionId} stored as PENDING`);
 
     // --- 3. Update to TRANSFORMING ---
-    await supabaseAdmin.from('adapt_transaction_logs')
-      .update({ status: 'TRANSFORMING' }).eq('id', transactionId);
+    await supabaseAdmin
+      .from('adapt_transaction_logs')
+      .update({ status: 'TRANSFORMING' })
+      .eq('id', transactionId);
 
-    // --- 4. AI Transformation ---
+    console.log(`[System (Internal)] Transaction ${transactionId} → TRANSFORMING`);
+
+    // --- 4. AI Transformation & Fallback ---
     const direction = getTransformDirection(sourceFormat, destFormat);
-    const transformResult = await transformWithAI(payload, direction);
+    let transformResult = await transformWithAI(payload, direction);
 
     if (!transformResult.success || !transformResult.data) {
-      await supabaseAdmin.from('adapt_transaction_logs')
-        .update({ status: 'QUARANTINED', error_message: transformResult.error })
-        .eq('id', transactionId);
-      return NextResponse.json({ success: false, status: 'QUARANTINED' }, { status: 422 });
+      console.warn(`[System (Internal)] Automated Process AI failed: ${transformResult.error}. Engaging Deterministic Syntactic Fallback for Transaction ${transactionId}.`);
+      try {
+        const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
+        transformResult = {
+          success: true,
+          data: fallbackData,
+          error: null,
+          usedModel: 'Algorithmic Fallback Mapper'
+        };
+      } catch (fallbackErr) {
+        await supabaseAdmin
+          .from('adapt_transaction_logs')
+          .update({
+            status: 'QUARANTINED',
+            error_message: `AI failed and fallback crashed: ${fallbackErr}`,
+          })
+          .eq('id', transactionId);
+
+        console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
+
+        return NextResponse.json({
+          success: false,
+          transaction_id: transactionId,
+          status: 'QUARANTINED',
+          message: `Transformation failed entirely`,
+        }, { status: 422 });
+      }
     }
 
     // --- 5. Validate the transformed output ---
     const validation = validateTransformation(transformResult.data, direction);
+
     if (!validation.valid) {
-      await supabaseAdmin.from('adapt_transaction_logs')
-        .update({ status: 'QUARANTINED', transformed_payload: transformResult.data, error_message: `Validation errors: ${validation.errors.join('; ')}` })
+      const errorMsg = `Validation errors: ${validation.errors.join('; ')}`;
+      await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .update({
+          status: 'QUARANTINED',
+          transformed_payload: transformResult.data,
+          error_message: errorMsg,
+        })
         .eq('id', transactionId);
-      return NextResponse.json({ success: false, status: 'QUARANTINED' }, { status: 422 });
+
+      console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED: ${errorMsg}`);
+
+      return NextResponse.json({
+        success: false,
+        transaction_id: transactionId,
+        status: 'QUARANTINED',
+        message: errorMsg,
+      }, { status: 400 });
     }
 
-    // --- 6. Forward to destination system via webhook ---
+    // --- 6. Forward to destination system ---
+    // External systems can pass `webhook_url` to receive the transformed payload.
+    // Falls back to env vars, then localhost defaults for local dev.
     const resolveWebhookUrl = (): string => {
+      // 1. Explicit webhook_url in the request body (for external integrations)
       if (body.webhook_url) return body.webhook_url;
+      // 2. Environment variable per system
       if (destination_system === 'WAH') return process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook';
+      // 3. Default to iHOMIS
       return process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook';
     };
-    const forwardResponse = await fetch(resolveWebhookUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transaction_id: transactionId, source_system, payload: transformResult.data, raw_source_payload: original_json || rawPayloadForDb, request_id }),
-    });
+    const webhookUrl = resolveWebhookUrl();
+
+    let forwardSuccess = false;
+    let forwardError = '';
+
+    try {
+      const forwardResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_id: transactionId,
+          source_system,
+          payload: transformResult.data,
+          raw_source_payload: original_json || rawPayloadForDb,
+          request_id,
+        }),
+      });
+
+      forwardSuccess = forwardResponse.ok;
+      if (!forwardSuccess) {
+        forwardError = `Webhook returned ${forwardResponse.status}`;
+      }
+    } catch (err) {
+      forwardError = err instanceof Error ? err.message : 'Webhook request failed';
+      console.warn(`[External Microservice (ADAPT)] Forward to ${destination_system} failed: ${forwardError}`);
+    }
 
     // --- 7. Update Supabase with final status ---
-    await supabaseAdmin.from('adapt_transaction_logs')
-      .update({ status: 'SUCCESS', transformed_payload: transformResult.data })
+    const finalStatus = 'SUCCESS';
+    await supabaseAdmin
+      .from('adapt_transaction_logs')
+      .update({
+        status: finalStatus,
+        transformed_payload: transformResult.data,
+        error_message: forwardSuccess ? null : `Forwarding note: ${forwardError}`,
+      })
       .eq('id', transactionId);
 
-    return NextResponse.json({ success: true, transaction_id: transactionId, status: 'SUCCESS' });
+    console.log(`[System (Internal)] Transaction ${transactionId} → ${finalStatus} (model: ${transformResult.usedModel})`);
+
+    return NextResponse.json({
+      success: true,
+      transaction_id: transactionId,
+      status: finalStatus,
+      message: `Data transformed (${sourceFormat}→${destFormat}) and ${forwardSuccess ? 'forwarded' : 'stored'} successfully`,
+      forwarded: forwardSuccess,
+    });
+
   } catch (error) {
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    console.error('[System (Internal)] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 ```
 
 ### `<<container>> Temporary Staging Database [MongoDB]`
 
-**File:** [`apps/adapt-ipaas/src/lib/supabase.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/supabase.ts) (29 lines)
+**File:** [`apps/adapt-ipaas/src/lib/supabase.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/supabase.ts) (28 lines)
 
 Uses a lazy-initialized Supabase client with a Proxy pattern for deferred credential validation.
 
-```typescript
+```ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -237,9 +623,11 @@ function getSupabase(): SupabaseClient {
   return _supabase;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const supabase = new Proxy({} as SupabaseClient, {
   get: (_, prop) => {
     const client = getSupabase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const value = (client as any)[prop as string];
     return typeof value === 'function' ? value.bind(client) : value;
   },
@@ -250,11 +638,11 @@ export const supabaseAdmin = supabase;
 
 ### `<<container>> Local LLM Engine [Inference Runtime]`
 
-**File:** [`apps/adapt-ipaas/src/lib/ai.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/ai.ts) (211 lines)
+**File:** [`apps/adapt-ipaas/src/lib/ai.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/ai.ts) (209 lines)
 
 This is the AI engine with a **multi-model fallback chain** (Gemini → Groq) and full HL7v2↔FHIR R4 system prompts.
 
-```typescript
+```ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
@@ -271,30 +659,120 @@ export const MODEL_FALLBACKS = [
   { provider: 'groq', model: 'llama3-70b-8192' }
 ];
 
-const HL7V2_TO_FHIR_PROMPT = `You are a healthcare data transformation engine for the Philippine LHIE.
-Your task: Convert the input flat JSON patient record (representing a simplified HL7 v2 payload)
-into a FULLY VALID PH Core HL7 FHIR R4 Transaction Bundle.
+// ============================================
+// System Prompts for all format pairs
+// ============================================
+
+const HL7V2_TO_FHIR_PROMPT = `You are a healthcare data transformation engine for the Philippine Local Health Information Exchange (LHIE).
+
+Your task: Convert the input flat JSON patient record (representing a simplified HL7 v2 payload) into a FULLY VALID PH Core HL7 FHIR R4 Transaction Bundle.
 
 The output FHIR Bundle MUST contain:
-1. **Patient**: name, identifier (PhilHealth system), telecom, address, gender, birthDate
-2. **Encounter**: status, class, serviceProvider, participant, reasonCode, priority
-3. **Observation**: Create a resource for EACH vital sign using LOINC codes
-   - bp_systolic: 8480-6, bp_diastolic: 8462-4, heart_rate: 8867-4,
-   - temperature: 8310-5, respiratory_rate: 9279-1, oxygen_saturation: 2708-6,
-   - weight_kg: 29463-7, height_cm: 8302-2
-4. **Condition**: ICD-10 coding from diagnosis_code, note from chief_complaint
-Bundle: type "transaction", fullUrl using "urn:uuid:" format.
-Output ONLY valid JSON. No markdown, no code fences.`;
+1. **Patient**:
+   - name[0].given: [patient_fname, patient_mname] (Array of strings. Omit mname if empty)
+   - name[0].family: patient_lname
+   - identifier: PhilHealth (system: "https://www.philhealth.gov.ph/memberid") from philhealth_no
+   - telecom[0]: phone (system: "phone", value: contact_no)
+   - address: line[0]: address_street, line[1]: address_barangay, city: address_city, district: address_province, postalCode: address_zip
+   - gender: M=male, F=female
+   - birthDate: dob
+2. **Encounter**:
+   - status: "finished", class: "AMB"
+   - serviceProvider.display: referring_facility_name
+   - participant[0].individual.display: referring_physician
+   - reasonCode[0].text: referral_reason or chief_complaint
+   - priority: ROUTINE/URGENT/EMERGENCY
+3. **Observation** (Create a resource for EACH valid numeric vital sign in the "vitals" object using these LOINC codes):
+   - bp_systolic: 8480-6 (Systolic blood pressure)
+   - bp_diastolic: 8462-4 (Diastolic blood pressure)
+   - heart_rate: 8867-4 (Heart rate)
+   - temperature: 8310-5 (Body temperature)
+   - respiratory_rate: 9279-1 (Respiratory rate)
+   - oxygen_saturation: 2708-6 (Oxygen saturation)
+   - weight_kg: 29463-7 (Body weight)
+   - height_cm: 8302-2 (Body height)
+   *Ensure each Observation includes valueQuantity with the numeric value and appropriate unit.*
+4. **Condition**:
+   - code: ICD-10 coding from diagnosis_code
+   - note[0].text: chief_complaint
 
-const FHIR_TO_HL7V2_PROMPT = `You are a healthcare data transformation engine for the Philippine LHIE.
+Bundle: type "transaction", fullUrl using "urn:uuid:" format, request with method "POST".
+Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
+
+const FHIR_TO_HL7V2_PROMPT = `You are a healthcare data transformation engine for the Philippine Local Health Information Exchange (LHIE).
+
 Your task: Convert the following PH Core HL7 FHIR R4 Bundle into a flat JSON format compatible with HL7 v2 systems.
-Extract data from the FHIR Bundle resources (Patient, Encounter, Observation, Condition).
+
+Extract data from the FHIR Bundle resources (Patient, Encounter, Observation, Condition) and map them to this EXACT structure:
+
+{
+  "patient_fname": "from Patient.name[0].given[0]",
+  "patient_lname": "from Patient.name[0].family",
+  "patient_mname": "from Patient.name[0].given[1] or empty string",
+  "patient_suffix": "from Patient.name[0].suffix[0] or empty string",
+  "dob": "Patient.birthDate in YYYY-MM-DD",
+  "sex": "M or F from Patient.gender (male=M, female=F)",
+  "civil_status": "S/M/W/D from Patient.maritalStatus",
+  "philhealth_no": "from Patient.identifier where system contains philhealth",
+  "contact_no": "from Patient.telecom where system is phone",
+  "address_street": "from Patient.address[0].line[0]",
+  "address_barangay": "from Patient.address[0].line[1] or empty",
+  "address_city": "from Patient.address[0].city",
+  "address_province": "from Patient.address[0].district",
+  "address_zip": "from Patient.address[0].postalCode",
+  "vitals": {
+    "bp_systolic": "number from BP component LOINC 8480-6",
+    "bp_diastolic": "number from BP component LOINC 8462-4",
+    "heart_rate": "number from LOINC 8867-4",
+    "temperature": "number from LOINC 8310-5",
+    "respiratory_rate": "number from LOINC 9279-1",
+    "oxygen_saturation": "number from LOINC 2708-6 or null",
+    "weight_kg": "number from LOINC 29463-7",
+    "height_cm": "number from LOINC 8302-2"
+  },
+  "chief_complaint": "from Condition.note or Encounter.reasonCode",
+  "diagnosis_code": "ICD-10 code from Condition.code.coding",
+  "diagnosis_desc": "display from Condition.code",
+  "diagnosis_type": "admitting/final/working from Condition.verificationStatus",
+  "referring_facility_code": "from Encounter.serviceProvider or generate",
+  "referring_facility_name": "from Encounter.serviceProvider display",
+  "referring_physician": "from Encounter.participant display",
+  "referring_physician_license": "from identifier or empty",
+  "referral_reason": "from Encounter.reasonCode text",
+  "priority": "ROUTINE/URGENT/EMERGENCY from Encounter.priority"
+}
+
 All numeric vitals must be numbers, not strings. Missing fields should use empty string or 0.
-Output ONLY valid JSON.`;
+Output ONLY valid JSON. No markdown, no code fences, no explanation.`;
 
+
+// ============================================
+// Format type definitions
+// ============================================
 export type DataFormat = 'HL7V2' | 'FHIR_R4';
-export type TransformDirection = 'HL7V2_TO_FHIR_R4' | 'FHIR_R4_TO_HL7V2' | 'IHOMIS_TO_FHIR' | 'FHIR_TO_IHOMIS';
+export type TransformDirection =
+  | 'HL7V2_TO_FHIR_R4'
+  | 'FHIR_R4_TO_HL7V2'
+  // Legacy aliases
+  | 'IHOMIS_TO_FHIR'
+  | 'FHIR_TO_IHOMIS';
 
+function getPromptForDirection(direction: TransformDirection): string {
+  switch (direction) {
+    case 'HL7V2_TO_FHIR_R4':
+    case 'IHOMIS_TO_FHIR':
+      return HL7V2_TO_FHIR_PROMPT;
+    case 'FHIR_R4_TO_HL7V2':
+    case 'FHIR_TO_IHOMIS':
+      return FHIR_TO_HL7V2_PROMPT;
+    default:
+      return HL7V2_TO_FHIR_PROMPT;
+  }
+}
+
+/**
+ * Determine the transformation direction from source and destination formats.
+ */
 export function getTransformDirection(sourceFormat: DataFormat, destFormat: DataFormat): TransformDirection {
   const key = `${sourceFormat}_TO_${destFormat}`;
   const validDirections: Record<string, TransformDirection> = {
@@ -304,22 +782,31 @@ export function getTransformDirection(sourceFormat: DataFormat, destFormat: Data
   return validDirections[key] || 'HL7V2_TO_FHIR_R4';
 }
 
+/**
+ * Transform data using AI with automatic model fallback juggling.
+ * If Gemini hits quota, it instantly falls back to Groq LPU models.
+ */
 export async function transformWithAI(
-  payload: unknown, direction: TransformDirection
+  payload: unknown,
+  direction: TransformDirection
 ): Promise<{ success: boolean; data: Record<string, unknown> | null; error: string | null; usedModel?: string }> {
   const systemPrompt = getPromptForDirection(direction);
-  const inputData = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
+
+  const inputData = typeof payload === 'string'
+    ? payload
+    : JSON.stringify(payload, null, 2);
+
   var prompt = systemPrompt + '\n\nInput Data:\n' + inputData;
 
   // Deduplicate model list while preserving order
-  var models = MODEL_FALLBACKS.filter(function(v, i, a) {
-    return a.findIndex(function(t) { return t.model === v.model; }) === i;
-  });
+  var models = MODEL_FALLBACKS.filter(function(v, i, a) { return a.findIndex(function(t) { return t.model === v.model; }) === i; });
 
   for (var idx = 0; idx < models.length; idx++) {
     var provider = models[idx].provider;
     var modelName = models[idx].model;
     try {
+      console.log('[AI] Trying ' + provider + ' model: ' + modelName + ' for ' + direction + '...');
+
       var responseText = '';
 
       if (provider === 'gemini' && genAI) {
@@ -335,22 +822,35 @@ export async function transformWithAI(
             { role: 'system' as const, content: systemPrompt },
             { role: 'user' as const, content: 'Input Data:\n' + inputData }
           ],
-          model: modelName, temperature: 0.1,
+          model: modelName,
+          temperature: 0.1,
           response_format: { type: 'json_object' as const },
         });
         responseText = completion.choices[0]?.message?.content || '';
-      } else { continue; }
+      } else {
+        console.warn('[AI] Provider ' + provider + ' not configured (missing API key)');
+        continue;
+      }
 
       if (!responseText) throw new Error('Empty response');
+
       var parsedData = JSON.parse(responseText);
+      console.log('[AI] Transformation successful using ' + provider + ' (' + modelName + ')');
       return { success: true, data: parsedData, error: null, usedModel: modelName };
+
     } catch (error) {
-      console.warn('[AI] ' + provider + ' (' + modelName + ') failed. Juggling to next...');
+      var errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('[AI] ' + provider + ' (' + modelName + ') failed: ' + errorMessage + '. Juggling to next...');
       continue;
     }
   }
 
-  return { success: false, data: null, error: 'All AI models exhausted or failed.' };
+  // All models exhausted
+  return {
+    success: false,
+    data: null,
+    error: 'All AI models (Gemini and Groq) exhausted or failed. Check API keys or wait for quota reset.',
+  };
 }
 ```
 
@@ -521,65 +1021,139 @@ Enforces RA 10173 (Data Privacy Act) by quarantining records without signed cons
 ```
 
 ### `<<container>> Validate Schema & Completeness Service [Golang Service]`
-**File:** [`apps/adapt-ipaas/src/lib/validator.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/validator.ts) (131 lines)
+**File:** [`apps/adapt-ipaas/src/lib/validator.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/validator.ts) (130 lines)
 
 Full validator with separate FHIR Bundle and HL7v2 flat-payload validation logic including PhilHealth ID format checks.
 
-```typescript
+```ts
+/**
+ * FHIR & HL7v2 Payload Validator
+ * Checks for mandatory fields before forwarding
+ */
+
 import type { TransformDirection } from './ai';
 
-interface ValidationResult { valid: boolean; errors: string[]; }
+interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
 
+/**
+ * Validate a FHIR Bundle output (→ FHIR R4 transformation)
+ */
 export function validateFHIRBundle(data: Record<string, unknown>): ValidationResult {
   const errors: string[] = [];
-  if (data.resourceType !== 'Bundle') errors.push('Root resourceType must be "Bundle"');
+
+  // Check it's a Bundle
+  if (data.resourceType !== 'Bundle') {
+    errors.push('Root resourceType must be "Bundle"');
+  }
+
+  // Check it has entries
   const entries = data.entry as Array<Record<string, unknown>> | undefined;
   if (!entries || !Array.isArray(entries) || entries.length === 0) {
     errors.push('Bundle must contain at least one entry');
   } else {
-    const resourceTypes = entries.map((e) => (e.resource as Record<string, unknown>)?.resourceType);
-    if (!resourceTypes.includes('Patient')) errors.push('Bundle must contain a Patient resource');
-    if (!resourceTypes.includes('Encounter')) errors.push('Bundle must contain an Encounter resource');
-    if (!resourceTypes.includes('Condition')) errors.push('Bundle must contain a Condition resource');
+    // Check for required resource types
+    const resourceTypes = entries.map(
+      (e) => (e.resource as Record<string, unknown>)?.resourceType
+    );
+
+    if (!resourceTypes.includes('Patient')) {
+      errors.push('Bundle must contain a Patient resource');
+    }
+    if (!resourceTypes.includes('Encounter')) {
+      errors.push('Bundle must contain an Encounter resource');
+    }
+    if (!resourceTypes.includes('Condition')) {
+      errors.push('Bundle must contain a Condition resource');
+    }
+
     // Check Patient has PhilHealth ID
-    const patientEntry = entries.find((e) => (e.resource as Record<string, unknown>)?.resourceType === 'Patient');
+    const patientEntry = entries.find(
+      (e) => (e.resource as Record<string, unknown>)?.resourceType === 'Patient'
+    );
     if (patientEntry) {
       const patient = patientEntry.resource as Record<string, unknown>;
       const identifiers = patient.identifier as Array<Record<string, unknown>> | undefined;
       const hasPhilHealth = identifiers?.some(
         (id) => id.system === 'https://www.philhealth.gov.ph/memberid' && id.value
       );
-      if (!hasPhilHealth) errors.push('Patient must have a PhilHealth identifier');
+      if (!hasPhilHealth) {
+        errors.push('Patient must have a PhilHealth identifier');
+      }
     }
   }
+
   return { valid: errors.length === 0, errors };
 }
 
+/**
+ * Validate an HL7v2 flat JSON output (FHIR → HL7v2 transformation)
+ */
 export function validateHL7V2Payload(data: Record<string, unknown>): ValidationResult {
   const errors: string[] = [];
-  const requiredFields = ['patient_fname', 'patient_lname', 'dob', 'sex', 'philhealth_no', 'diagnosis_code', 'referring_facility_name'];
+
+  const requiredFields = [
+    'patient_fname',
+    'patient_lname',
+    'dob',
+    'sex',
+    'philhealth_no',
+    'diagnosis_code',
+    'referring_facility_name',
+  ];
+
   for (const field of requiredFields) {
-    if (!data[field]) errors.push(`Missing required field: ${field}`);
+    if (!data[field]) {
+      errors.push(`Missing required field: ${field}`);
+    }
   }
+
+  // Check vitals object exists
   if (!data.vitals || typeof data.vitals !== 'object') {
     errors.push('Missing or invalid vitals object');
   } else {
     const vitals = data.vitals as Record<string, unknown>;
-    for (const vital of ['bp_systolic', 'bp_diastolic', 'heart_rate', 'temperature']) {
-      if (vitals[vital] === undefined || vitals[vital] === null) errors.push(`Missing vital sign: ${vital}`);
+    const requiredVitals = ['bp_systolic', 'bp_diastolic', 'heart_rate', 'temperature'];
+    for (const vital of requiredVitals) {
+      if (vitals[vital] === undefined || vitals[vital] === null) {
+        errors.push(`Missing vital sign: ${vital}`);
+      }
     }
   }
-  if (data.philhealth_no && typeof data.philhealth_no === 'string' && data.philhealth_no.length < 6) {
-    errors.push('PhilHealth number appears invalid (too short)');
+
+  // Validate PhilHealth number format (basic check)
+  if (data.philhealth_no && typeof data.philhealth_no === 'string') {
+    if (data.philhealth_no.length < 6) {
+      errors.push('PhilHealth number appears invalid (too short)');
+    }
   }
+
   return { valid: errors.length === 0, errors };
 }
 
-export function validateTransformation(data: Record<string, unknown>, direction: TransformDirection): ValidationResult {
+// Legacy alias for backward compatibility
+export function validateIHOMISPayload(data: Record<string, unknown>): ValidationResult {
+  return validateHL7V2Payload(data);
+}
+
+/**
+ * Validate based on transformation direction
+ */
+export function validateTransformation(
+  data: Record<string, unknown>,
+  direction: TransformDirection | 'IHOMIS_TO_FHIR' | 'FHIR_TO_IHOMIS'
+): ValidationResult {
   switch (direction) {
-    case 'HL7V2_TO_FHIR_R4': case 'IHOMIS_TO_FHIR': return validateFHIRBundle(data);
-    case 'FHIR_R4_TO_HL7V2': case 'FHIR_TO_IHOMIS': return validateHL7V2Payload(data);
-    default: return validateFHIRBundle(data);
+    case 'HL7V2_TO_FHIR_R4':
+    case 'IHOMIS_TO_FHIR':
+      return validateFHIRBundle(data);
+    case 'FHIR_R4_TO_HL7V2':
+    case 'FHIR_TO_IHOMIS':
+      return validateHL7V2Payload(data);
+    default:
+      return validateFHIRBundle(data);
   }
 }
 ```
@@ -1019,11 +1593,19 @@ export async function transformWithAI(
 ```
 
 ### `<<container>> Deterministic Syntactic Fallback [Algorithmic Mapping Safety Net]`
-**File:** [`apps/adapt-ipaas/src/lib/mapping-calc.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/mapping-calc.ts) (489 lines)
+**File:** [`apps/adapt-ipaas/src/lib/mapping-calc.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/mapping-calc.ts) (512 lines)
 
 Full deterministic field-mapping engine with HL7v2 and FHIR data extractors, alias tables, and percentage calculations.
 
-```typescript
+```ts
+/**
+ * Shared mapping completeness calculator.
+ * Reused by both the Data Mapper page and the Dashboard to compute
+ * how many destination fields were successfully filled by the AI transformation.
+ */
+import type { TransformDirection } from './ai';
+
+
 // ─── Templates ───
 
 const IHOMIS_TEMPLATE: { category: string; label: string }[] = [
@@ -1437,7 +2019,7 @@ export function fallbackTransform(
             ],
             name: [{
               family: getVal('Family Name'),
-              given: [getVal('Given Name')],
+              given: [getVal('Given Name'), getVal('Middle Name')].filter(Boolean),
               // Use direct search for Suffix as it's not in the main WAH template
               suffix: [extracted.find(f => f.label === 'Suffix')?.value || '']
             }],
@@ -2079,17 +2661,24 @@ export async function POST(request: NextRequest) {
 ```
 
 ### `<<component>> Decline API [API]`
-**File:** [`apps/adapt-ipaas/src/app/api/decline/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/decline/route.ts) (74 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/decline/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/decline/route.ts) (79 lines)
 
 Handles bidirectional declines (WAH → Org or Org → WAH), quarantines the transaction, and forwards to the appropriate webhook.
 
-```typescript
+```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const WAH_API_URL = process.env.WAH_API_URL || 'http://localhost:3002/api';
 const PORTAL_API_URL = process.env.PORTAL_API_URL || 'http://localhost:3001/api';
 
+/**
+ * POST /api/decline
+ * Handles declines from both directions:
+ *   - WAH declining an org's request → notify portal webhook
+ *   - Org declining WAH's request → notify WAH (update local JSON)
+ * Updates the iPaaS transaction to QUARANTINED.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -2101,98 +2690,246 @@ export async function POST(request: NextRequest) {
 
     // Update the existing transaction to QUARANTINED (declined)
     if (ipaas_transaction_id) {
-      await supabaseAdmin.from('adapt_transaction_logs')
-        .update({ status: 'QUARANTINED', error_message: message || 'Request declined by source organization' })
-        .eq('id', ipaas_transaction_id);
+      const { data, error } = await supabaseAdmin
+        .from('adapt_transaction_logs')
+        .update({
+          status: 'QUARANTINED',
+          error_message: message || 'Request declined by source organization',
+        })
+        .eq('id', ipaas_transaction_id)
+        .select();
+
+      if (error || !data || data.length === 0) {
+        return NextResponse.json({ success: false, message: 'Transaction record not found' }, { status: 404 });
+      }
+
+      console.log(`[System (Internal)] Updated transaction ${ipaas_transaction_id} to QUARANTINED (declined)`);
     }
 
     // Forward decline notification to the appropriate system
     if (destination_system === 'WAH') {
+      // Org declined WAH's request → notify WAH by updating its local outbound request
+      // WAH polls its own outbound-requests, so we just update the iPaaS transaction.
+      // WAH's request-data page polls and will see the QUARANTINED status.
+      console.log(`[System (Internal)] Decline forwarded for WAH's outbound request ${request_id}`);
       return NextResponse.json({ success: true, message: 'Decline recorded for WAH' });
+
     } else {
       // WAH declined org's request → notify portal webhook
       const webhookUrl = `${PORTAL_API_URL.replace('/api', '')}/api/webhook`;
-      const forwardResponse = await fetch(webhookUrl, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_system: 'WAH', request_id, status: 'DECLINED', payload: { message: message || 'Request declined' } }),
-      });
-      if (forwardResponse.ok) return NextResponse.json({ success: true, message: 'Decline forwarded successfully' });
-      else return NextResponse.json({ success: false, message: 'Failed to forward decline' }, { status: 502 });
+
+      try {
+        const forwardResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_system: 'WAH',
+            request_id,
+            status: 'DECLINED',
+            payload: { message: message || 'Request declined' }
+          }),
+        });
+
+        if (forwardResponse.ok) {
+          return NextResponse.json({ success: true, message: 'Decline forwarded successfully' });
+        } else {
+          return NextResponse.json({ success: false, message: 'Failed to forward decline' }, { status: 502 });
+        }
+      } catch (err) {
+        console.error('[External Microservice (ADAPT)] Forward error:', err);
+        return NextResponse.json({ success: true, message: 'Decline recorded (webhook forward failed)' });
+      }
     }
   } catch (error) {
+    console.error('[System (Internal)] Error:', error);
     return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }
 ```
 
 ### `<<component>> Request API [API]`
-**File:** [`apps/adapt-ipaas/src/app/api/request/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/request/route.ts) (157 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/request/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/request/route.ts) (156 lines)
 
 Handles bidirectional data requests. Determines direction, creates a PENDING transaction, and forwards to WAH or Portal.
 
-```typescript
+```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const WAH_API_URL = process.env.WAH_API_URL || 'http://localhost:3002/api';
 const PORTAL_API_URL = process.env.PORTAL_API_URL || 'http://localhost:3001/api';
 
+/**
+ * POST /api/request
+ * Handles bidirectional data requests:
+ *   - Org → WAH: forwards to WAH's /api/requests endpoint
+ *   - WAH → Org: forwards to Portal's /api/incoming-requests endpoint
+ * Logs a PENDING transaction in the iPaaS for both directions.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { request_id, requesting_org, requesting_org_id, target_org, target_org_id,
-            destination_format: destFormat, philhealth_no, patient_name, request_reason } = body;
+    const {
+      request_id,
+      requesting_org,
+      requesting_org_id,
+      target_org,
+      target_org_id,
+      destination_format: destFormat,
+      philhealth_no,
+      patient_name,
+      request_reason,
+    } = body;
 
     // Determine direction
     const isWAHRequesting = requesting_org === 'WAH';
     const sourceSystem = isWAHRequesting ? (target_org || 'Organization') : 'WAH';
     const destSystem = isWAHRequesting ? 'WAH' : (requesting_org || 'Organization');
+    const srcFormat = isWAHRequesting ? (destFormat || 'HL7V2') : 'FHIR_R4';
+    const dstFormat = isWAHRequesting ? 'FHIR_R4' : (destFormat || 'HL7V2');
+
+    console.log(`[External Microservice (ADAPT)] ${requesting_org} requesting data from ${isWAHRequesting ? target_org : 'WAH'} (PhilHealth: ${philhealth_no || 'N/A'}, Name: ${patient_name || 'N/A'})`);
 
     // --- Log in iPaaS transaction table as PENDING ---
-    const { data: txRecord } = await supabaseAdmin.from('adapt_transaction_logs')
+    const { data: txRecord } = await supabaseAdmin
+      .from('adapt_transaction_logs')
       .insert({
-        source_system: sourceSystem, destination_system: destSystem,
-        source_format: srcFormat, destination_format: dstFormat,
-        raw_payload: { request_id, philhealth_no, patient_name, direction: isWAHRequesting ? 'WAH_TO_ORG' : 'ORG_TO_WAH' },
+        source_system: sourceSystem,
+        destination_system: destSystem,
+        source_format: srcFormat,
+        destination_format: dstFormat,
+        raw_payload: { request_id, philhealth_no, patient_name, direction: isWAHRequesting ? 'wah_to_ihomis' : 'ihomis_to_wah' },
         status: 'PENDING',
-      }).select().single();
+      })
+      .select()
+      .single();
+
+    console.log(`[System (Internal)] Created transaction ${txRecord?.id} as PENDING`);
 
     if (isWAHRequesting) {
       // === WAH → Org: Forward to Portal's incoming-requests endpoint ===
-      const portalRes = await fetch(`${PORTAL_API_URL}/incoming-requests`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_id, requesting_system: 'WAH', target_org_id,
-          philhealth_no, patient_name, request_reason, ipaas_transaction_id: txRecord?.id }),
-      });
-      // ... error handling, quarantine on failure
+      try {
+        const portalRes = await fetch(`${PORTAL_API_URL}/incoming-requests`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            request_id,
+            requesting_system: 'WAH',
+            target_org_id,
+            philhealth_no,
+            patient_name,
+            request_reason,
+            ipaas_transaction_id: txRecord?.id,
+          }),
+        });
+
+        if (!portalRes.ok) {
+          if (txRecord) {
+            await supabaseAdmin
+              .from('adapt_transaction_logs')
+              .update({ status: 'QUARANTINED', error_message: 'Portal returned an error when receiving the request' })
+              .eq('id', txRecord.id);
+          }
+          throw new Error('Portal returned an error');
+        }
+
+        return NextResponse.json({
+          success: true,
+          transaction_id: txRecord?.id,
+          message: `Request forwarded to ${target_org} for approval.`,
+        });
+      } catch (err) {
+        console.error('[External Microservice (ADAPT)] Failed to forward to Portal:', err);
+        if (txRecord) {
+          await supabaseAdmin
+            .from('adapt_transaction_logs')
+            .update({ status: 'QUARANTINED', error_message: 'Failed to forward request to Portal' })
+            .eq('id', txRecord.id);
+        }
+        return NextResponse.json({
+          success: false,
+          transaction_id: txRecord?.id,
+          message: 'Failed to notify the organization of the request.',
+        }, { status: 502 });
+      }
+
     } else {
       // === Org → WAH: Forward to WAH's requests endpoint ===
-      const wahRes = await fetch(`${WAH_API_URL}/requests`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ request_id, requesting_org, requesting_org_id,
-          destination_format: destFormat, philhealth_no, patient_name, ipaas_transaction_id: txRecord?.id }),
-      });
-      // ... error handling, quarantine on failure
+      try {
+        const wahRes = await fetch(`${WAH_API_URL}/requests`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            request_id,
+            requesting_org,
+            requesting_org_id,
+            destination_format: destFormat,
+            philhealth_no,
+            patient_name,
+            ipaas_transaction_id: txRecord?.id,
+          }),
+        });
+
+        if (!wahRes.ok) {
+          if (txRecord) {
+            await supabaseAdmin
+              .from('adapt_transaction_logs')
+              .update({ status: 'QUARANTINED', error_message: 'WAH returned an error when receiving the request' })
+              .eq('id', txRecord.id);
+          }
+          throw new Error('WAH returned an error');
+        }
+
+        return NextResponse.json({
+          success: true,
+          transaction_id: txRecord?.id,
+          message: 'Request forwarded to WAH for approval.',
+        });
+      } catch (err) {
+        console.error('[External Microservice (ADAPT)] Failed to forward to WAH:', err);
+        if (txRecord) {
+          await supabaseAdmin
+            .from('adapt_transaction_logs')
+            .update({ status: 'QUARANTINED', error_message: 'Failed to forward request to WAH' })
+            .eq('id', txRecord.id);
+        }
+        return NextResponse.json({
+          success: false,
+          transaction_id: txRecord?.id,
+          message: 'Failed to notify WAH of the request.',
+        }, { status: 502 });
+      }
     }
+
   } catch (error) {
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    console.error('[System (Internal)] Error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 ```
 
 ### `<<component>> Metrics Service [Service]`
-**File:** [`apps/adapt-ipaas/src/app/api/metrics/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/metrics/route.ts) (69 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/metrics/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/metrics/route.ts) (68 lines)
 
 Aggregates 9 parallel Supabase count queries for dashboard metrics.
 
-```typescript
+```ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/metrics
+ * Returns aggregated dashboard metrics
+ * Updated to support dynamic org names and format tracking
+ */
 export async function GET() {
   try {
+    // Fetch all counts in parallel
     const [totalRes, successRes, pendingRes, quarantinedRes, transformingRes, toWahRes, fromWahRes] =
       await Promise.all([
         supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }),
@@ -2206,8 +2943,15 @@ export async function GET() {
 
     const total = totalRes.count || 0;
     const success = successRes.count || 0;
+    const pending = pendingRes.count || 0;
+    const quarantined = quarantinedRes.count || 0;
+    const transforming = transformingRes.count || 0;
+    const toWah = toWahRes.count || 0;
+    const fromWah = fromWahRes.count || 0;
+
     const successRate = total > 0 ? Number(((success / total) * 100).toFixed(1)) : 0;
 
+    // Fetch format-specific stats
     const [hl7v2Res, fhirRes] = await Promise.all([
       supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }).eq('source_format', 'HL7V2'),
       supabaseAdmin.from('adapt_transaction_logs').select('*', { count: 'exact', head: true }).eq('source_format', 'FHIR_R4'),
@@ -2216,14 +2960,29 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       metrics: {
-        total_records: total, success_count: success, pending_count: pendingRes.count || 0,
-        quarantined_count: quarantinedRes.count || 0, transforming_count: transformingRes.count || 0,
-        success_rate: successRate, org_to_wah: toWahRes.count || 0, wah_to_org: fromWahRes.count || 0,
-        hl7v2_count: hl7v2Res.count || 0, fhir_count: fhirRes.count || 0,
+        total_records: total,
+        success_count: success,
+        pending_count: pending,
+        quarantined_count: quarantined,
+        transforming_count: transforming,
+        success_rate: successRate,
+        // Direction stats
+        ihomis_to_wah: toWah,
+        wah_to_ihomis: fromWah,
+        // Legacy aliases
+        ihomis_to_wah: toWah,
+        wah_to_ihomis: fromWah,
+        // Format stats
+        hl7v2_count: hl7v2Res.count || 0,
+        fhir_count: fhirRes.count || 0,
       },
     });
   } catch (error) {
-    return NextResponse.json({ success: false, message: 'Failed to fetch metrics' }, { status: 500 });
+    console.error('[iPaaS Metrics] Error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to fetch metrics' },
+      { status: 500 }
+    );
   }
 }
 ```
@@ -3102,14 +3861,19 @@ export function validateTransformation(
 ```
 
 ### `<<component>> Transaction Log Service [Service]`
-**File:** [`apps/adapt-ipaas/src/app/api/transactions/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/transactions/route.ts) (58 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/transactions/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/transactions/route.ts) (57 lines)
 
-```typescript
+```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/transactions
+ * Fetch transaction logs with optional filtering
+ * Query params: ?status=SUCCESS&source=iHOMIS&limit=50&offset=0
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -3118,20 +3882,43 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    let query = supabaseAdmin.from('adapt_transaction_logs')
+    let query = supabaseAdmin
+      .from('adapt_transaction_logs')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (status) query = query.eq('status', status);
-    if (source) query = query.eq('source_system', source);
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (source) {
+      query = query.eq('source_system', source);
+    }
 
     const { data, error, count } = await query;
-    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
 
-    return NextResponse.json({ success: true, data, total: count, limit, offset });
+    if (error) {
+      console.error('[iPaaS Transactions] Query error:', error);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+      total: count,
+      limit,
+      offset,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    console.error('[iPaaS Transactions] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 ```
@@ -5214,57 +6001,41 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 ```
 
 ### `<<component>> Auth & Scope Middleware [auth_middleware.go]`
-**File:** [`apps/adapt-ipaas/src/middleware.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/middleware.ts) (50 lines)
+**File:** [`apps/adapt-ipaas/src/middleware.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/middleware.ts) (23 lines)
 
 JWT-based authentication middleware that protects all routes except auth pages and static assets.
 
-```typescript
+```ts
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'super-secret-fallback-key-replace-me-in-production'
-);
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-fallback-key-replace-me-in-production');
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth_token')?.value;
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register');
-  let isValid = false;
-
-  if (token) {
-    try {
-      await jwtVerify(token, JWT_SECRET);
-      isValid = true;
-    } catch (e) {
-      isValid = false;
-    }
-  }
-
-  if (!isValid && !isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-
-  if (isValid && isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
-
+  // Authentication completely bypassed as requested
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - api (API routes, optional if you want to protect them via middleware too)
+     * - images, public files, etc.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
 ```
 
 Also backed by the **Login API:**
 
-**File:** [`apps/adapt-ipaas/src/app/api/auth/login/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/auth/login/route.ts) (57 lines)
+**File:** [`apps/adapt-ipaas/src/app/api/auth/login/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/auth/login/route.ts) (56 lines)
 
-```typescript
+```ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
@@ -5275,25 +6046,49 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'super-sec
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
-    if (!email || !password) return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
 
-    const { data: user } = await supabaseAdmin.from('app_users').select('*')
-      .or(`email.eq.${email},username.eq.${email}`).single();
-    if (!user) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    }
 
+    // Find the user by email (or username, we can allow both)
+    const { data: user } = await supabaseAdmin
+      .from('app_users')
+      .select('*')
+      .or(`email.eq.${email},username.eq.${email}`)
+      .single();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // Generate JWT
     const token = await new SignJWT({ id: user.id, username: user.username, email: user.email })
-      .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(JWT_SECRET);
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('7d')
+      .sign(JWT_SECRET);
 
-    const response = NextResponse.json({ user: { id: user.id, username: user.username, email: user.email, name: user.name } });
+    const response = NextResponse.json({ user: { id: user.id, username: user.username, email: user.email, name: user.name } }, { status: 200 });
+    
     response.cookies.set('auth_token', token, {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
+
     return response;
   } catch (error) {
+    console.error('Login API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -6062,42 +6857,75 @@ The metric cards and health monitoring UI (5 main metrics + direction cards + fo
 
 Also supported by **MetricCard component:**
 
-**File:** [`apps/adapt-ipaas/src/components/MetricCard.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/components/MetricCard.tsx) (63 lines)
+**File:** [`apps/adapt-ipaas/src/components/MetricCard.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/components/MetricCard.tsx) (62 lines)
 
 ```tsx
 'use client';
+
 import { useEffect, useState } from 'react';
 
 interface MetricCardProps {
-  title: string; value: number; suffix?: string;
-  variant: 'purple' | 'green' | 'yellow' | 'red'; icon: React.ReactNode;
+  title: string;
+  value: number;
+  suffix?: string;
+  variant: 'purple' | 'green' | 'yellow' | 'red';
+  icon: React.ReactNode;
 }
 
 export default function MetricCard({ title, value, suffix = '', variant, icon }: MetricCardProps) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    const duration = 800; const steps = 30; const increment = value / steps;
-    let current = 0; let step = 0;
+    // Animate counter
+    const duration = 800;
+    const steps = 30;
+    const increment = value / steps;
+    let current = 0;
+    let step = 0;
+
     const timer = setInterval(() => {
-      step++; current = Math.min(Math.round(increment * step), value);
+      step++;
+      current = Math.min(Math.round(increment * step), value);
       setDisplayValue(current);
       if (step >= steps) clearInterval(timer);
     }, duration / steps);
+
     return () => clearInterval(timer);
   }, [value]);
 
   return (
     <div className={`glass-card p-6 metric-gradient-${variant} animate-fade-in`}>
-      <p className="text-sm font-medium mb-1">{title}</p>
-      <p className="text-3xl font-bold animate-count">{displayValue}{suffix}</p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-10 h-10 rounded-none flex items-center justify-center"
+          style={{
+            background: variant === 'purple' ? 'rgba(139, 92, 246, 0.15)' :
+                         variant === 'green' ? 'rgba(16, 185, 129, 0.15)' :
+                         variant === 'yellow' ? 'rgba(245, 158, 11, 0.15)' :
+                         'rgba(239, 68, 68, 0.15)',
+            color: variant === 'purple' ? 'var(--color-accent-purple)' :
+                   variant === 'green' ? 'var(--color-success)' :
+                   variant === 'yellow' ? 'var(--color-warning)' :
+                   'var(--color-error)',
+          }}
+        >
+          {icon}
+        </div>
+      </div>
+      <div>
+        <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+          {title}
+        </p>
+        <p className="text-3xl font-bold animate-count" style={{ color: 'var(--color-text-primary)' }}>
+          {displayValue}{suffix}
+        </p>
+      </div>
     </div>
   );
 }
 ```
 
 ### `<<component>> Transaction Log Viewer [React Table Component]`
-**File:** [`apps/adapt-ipaas/src/app/transactions/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/transactions/page.tsx) (214 lines)
+**File:** [`apps/adapt-ipaas/src/app/transactions/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/transactions/page.tsx) (226 lines)
 
 Full-page transaction log viewer with status/source filtering, pagination, mapping % bars, and auto-refresh.
 
@@ -6106,6 +6934,20 @@ Full-page transaction log viewer with status/source filtering, pagination, mappi
 import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calculateMappingPercentage, calculateSourceFillCount } from '@/lib/mapping-calc';
+
+async function safeFetch(url: string) {
+  const res = await fetch(url);
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { success: false, data: [], total: 0 }; }
+}
+
+interface Transaction {
+  id: string; source_system: string; destination_system: string;
+  source_format: string; destination_format: string;
+  status: string; error_message: string | null; created_at: string;
+  raw_payload?: Record<string, unknown> | null;
+  transformed_payload?: Record<string, unknown> | null;
+}
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -6128,22 +6970,188 @@ export default function TransactionsPage() {
   useEffect(() => { setLoading(true); fetchTransactions(); }, [statusFilter, sourceFilter, page]);
   useEffect(() => { const i = setInterval(fetchTransactions, 15000); return () => clearInterval(i); }, [statusFilter, sourceFilter, page]);
 
-  // Pre-compute mapping % for each transaction
-  const txMappings = useMemo(() => { /* ... calculates src/dest percentages ... */ }, [transactions]);
+  const totalPages = Math.ceil(total / limit);
+
+  const statusStyle = (s: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      SUCCESS: { bg: 'rgba(5,150,105,0.08)', color: '#059669' },
+      PENDING: { bg: 'rgba(217,119,6,0.08)', color: '#d97706' },
+      TRANSFORMING: { bg: 'rgba(37,99,235,0.08)', color: '#2563eb' },
+      QUARANTINED: { bg: 'rgba(220,38,38,0.08)', color: '#dc2626' },
+    };
+    return m[s] || m.PENDING;
+  };
+
+  const formatBadgeStyle = (fmt: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      HL7V2: { bg: 'rgba(59,130,246,0.08)', color: '#3b82f6' },
+      FHIR_R4: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
+    };
+    return m[fmt] || m.HL7V2;
+  };
+
+  const formatLabel = (fmt: string) => {
+    const m: Record<string, string> = { HL7V2: 'HL7v2', FHIR_R4: 'FHIR R4' };
+    return m[fmt] || fmt;
+  };
+
+  const pctColor = (pct: number) => {
+    if (pct >= 85) return '#059669'; // green
+    if (pct >= 60) return '#d97706'; // amber
+    return '#dc2626'; // red
+  };
+
+  const txMappings = useMemo(() => {
+    const map: Record<string, { src: number; dest: number; srcFilled: number; srcTotal: number; destFilled: number; destTotal: number }> = {};
+    for (const tx of transactions) {
+      if (tx.status !== 'SUCCESS') {
+        map[tx.id] = { src: 0, dest: 0, srcFilled: 0, srcTotal: 0, destFilled: 0, destTotal: 0 };
+        continue;
+      }
+      const srcResult = calculateSourceFillCount(tx.raw_payload || null, tx.source_system);
+      const destResult = calculateMappingPercentage(tx.transformed_payload || null, tx.destination_system);
+      map[tx.id] = {
+        src: srcResult.percentage,
+        dest: destResult.percentage,
+        srcFilled: srcResult.filledFields,
+        srcTotal: srcResult.totalFields,
+        destFilled: destResult.filledFields,
+        destTotal: destResult.totalFields,
+      };
+    }
+    return map;
+  }, [transactions]);
 
   return (
     <>
       <Sidebar />
       <main className="flex-1 p-6 overflow-auto">
-        {/* Filter dropdowns */}
-        <select value={statusFilter} onChange={...}>
-          <option value="">All Statuses</option>
-          <option value="SUCCESS">Success</option>
-          <option value="PENDING">Pending</option>
-          <option value="TRANSFORMING">Transforming</option>
-          <option value="QUARANTINED">Quarantined</option>
-        </select>
-        {/* Transaction table with mapping % bars, status badges, pagination */}
+        <div className="mb-5">
+          <h1 className="text-lg font-semibold">Transaction Logs</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Complete audit trail of all data transformations — {total} total records</p>
+        </div>
+
+        <div className="flex gap-3 mb-5 flex-wrap">
+          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+            className="px-3 py-2 rounded-none text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+            <option value="">All Statuses</option>
+            <option value="SUCCESS">Success</option>
+            <option value="PENDING">Pending</option>
+            <option value="TRANSFORMING">Transforming</option>
+            <option value="QUARANTINED">Quarantined</option>
+          </select>
+          <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(0); }}
+            className="px-3 py-2 rounded-none text-xs outline-none" style={{ background: '#fff', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}>
+            <option value="">All Sources</option>
+            <option value="iHOMIS">iHOMIS (DOH)</option>
+            <option value="WAH">WAH Hospital</option>
+          </select>
+          <button onClick={() => { setLoading(true); fetchTransactions(); }} className="ipaas-btn ipaas-btn-secondary text-xs">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+
+        <div className="ipaas-card overflow-hidden mb-5">
+          {loading ? (
+            <div className="animate-pulse bg-white">
+              <div className="h-[42px] bg-gray-50 border-b border-gray-100 flex items-center px-4">
+                <div className="w-1/4 h-3 bg-gray-200 rounded-none" />
+              </div>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-50">
+                  <div className="w-24 h-3 bg-gray-200 rounded-none" />
+                  <div className="w-32 h-3 bg-gray-200 rounded-none" />
+                  <div className="w-20 h-4 bg-gray-200 rounded-none" />
+                  <div className="w-16 h-2 bg-gray-200 rounded-none" />
+                  <div className="w-16 h-2 bg-gray-200 rounded-none" />
+                  <div className="w-20 h-5 bg-gray-200 rounded-none" />
+                  <div className="w-24 h-2 bg-gray-200 rounded-none" />
+                </div>
+              ))}
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="p-10 text-center">
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No transactions found matching your filters.</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody>
+                {transactions.map(tx => {
+                  const st = statusStyle(tx.status);
+                  const srcFmt = formatBadgeStyle(tx.source_format);
+                  const dstFmt = formatBadgeStyle(tx.destination_format);
+                  const mapping = txMappings[tx.id];
+                  const hasMappingData = tx.status === 'SUCCESS' && mapping && mapping.destTotal > 0;
+                  
+                  return (
+                    <tr key={tx.id} onClick={() => window.location.href = `/mapper?id=${tx.id}`} style={{ cursor: 'pointer' }}>
+                      <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
+                      <td className="text-sm">{tx.source_system} → {tx.destination_system}</td>
+                      <td>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none mr-1" style={{ background: srcFmt.bg, color: srcFmt.color }}>{formatLabel(tx.source_format)}</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>→</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none ml-1" style={{ background: dstFmt.bg, color: dstFmt.color }}>{formatLabel(tx.destination_format)}</span>
+                      </td>
+                      {/* Source mapping % */}
+                      <td>
+                        {hasMappingData ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                              <div className="h-full rounded-full transition-all" style={{ width: `${mapping.src}%`, background: pctColor(mapping.src) }} />
+                            </div>
+                            <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.src) }}>{mapping.src}%</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.srcFilled}/{mapping.srcTotal}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
+                      </td>
+                      {/* Destination mapping % */}
+                      <td>
+                        {hasMappingData ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                              <div className="h-full rounded-full transition-all" style={{ width: `${mapping.dest}%`, background: pctColor(mapping.dest) }} />
+                            </div>
+                            <span className="text-[10px] font-bold" style={{ color: pctColor(mapping.dest) }}>{mapping.dest}%</span>
+                            <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>{mapping.destFilled}/{mapping.destTotal}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="flex flex-col gap-1">
+                          <span className="ipaas-badge self-start" style={{ background: st.bg, color: st.color }}>{tx.status}</span>
+                          {tx.error_message && (
+                            <span className="text-[10px] max-w-[120px] truncate" style={{ color: '#dc2626' }} title={tx.error_message}>
+                              {tx.error_message}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Page {page + 1} of {totalPages}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}
+                className="ipaas-btn ipaas-btn-secondary text-xs disabled:opacity-30">Previous</button>
+              <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}
+                className="ipaas-btn ipaas-btn-secondary text-xs disabled:opacity-30">Next</button>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );
@@ -6151,11 +7159,22 @@ export default function TransactionsPage() {
 ```
 
 ### `<<component>> Payload Comparison & Unhash [React Component]`
-**File:** [`apps/adapt-ipaas/src/app/mapper/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/mapper/page.tsx) (873 lines)
+**File:** [`apps/adapt-ipaas/src/app/mapper/page.tsx`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/mapper/page.tsx) (898 lines)
 
 The most complex UI component. Features SHA-256 hashing/unhashing of payloads, HL7v2 pipe-delimited string parsing, FHIR Bundle resource extraction, side-by-side field-level comparison tables, and transaction selection dropdown.
 
 ```tsx
+'use client';
+import { Fragment, Suspense, useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Sidebar from '@/components/Sidebar';
+
+async function safeFetch(url: string) {
+  const res = await fetch(url);
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { success: false, data: [] }; }
+}
+
 // SHA-256 hash function (browser-compatible)
 async function sha256(text: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -6165,39 +7184,883 @@ async function sha256(text: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// HL7v2 pipe-delimited parser (PID, PV1, OBX, DG1, RF1 segments)
-function parseHL7v2String(hl7: string): Row[] {
+// ─── Extract meaningful data from iHOMIS flat payloads ───
+function extractHL7Data(payload: Record<string, unknown>): { category: string; label: string; value: string }[] {
+  // Helper: check top-level first, then nested under `vitals`
+  const vitalsObj = (payload.vitals && typeof payload.vitals === 'object') ? payload.vitals as Record<string, unknown> : null;
+  const g = (k: string) => {
+    if (payload[k] != null && String(payload[k]) !== '') return String(payload[k]);
+    if (vitalsObj && vitalsObj[k] != null && String(vitalsObj[k]) !== '' && String(vitalsObj[k]) !== '0') return String(vitalsObj[k]);
+    return '';
+  };
+  const rows: { category: string; label: string; value: string }[] = [];
+  const add = (cat: string, label: string, val: string) => { if (val) rows.push({ category: cat, label, value: val }); };
+
+  add('Patient', 'First Name', g('patient_fname'));
+  add('Patient', 'Last Name', g('patient_lname'));
+  add('Patient', 'Middle Name', g('patient_mname'));
+  add('Patient', 'Suffix', g('patient_suffix'));
+  add('Patient', 'Date of Birth', g('dob'));
+  add('Patient', 'Sex', g('sex'));
+  add('Patient', 'Civil Status', g('civil_status'));
+  add('Patient', 'PhilHealth No.', g('philhealth_no'));
+  add('Patient', 'Contact No.', g('contact_no'));
+  add('Patient', 'Street', g('address_street'));
+  add('Patient', 'Barangay', g('address_barangay'));
+  add('Patient', 'City', g('address_city'));
+  add('Patient', 'Province', g('address_province'));
+  add('Patient', 'Zip Code', g('address_zip'));
+
+  add('Vitals', 'BP Systolic', g('bp_systolic'));
+  add('Vitals', 'BP Diastolic', g('bp_diastolic'));
+  add('Vitals', 'Heart Rate', g('heart_rate'));
+  add('Vitals', 'Temperature', g('temperature'));
+  add('Vitals', 'Respiratory Rate', g('respiratory_rate'));
+  add('Vitals', 'SpO2', g('oxygen_saturation'));
+  add('Vitals', 'Weight (kg)', g('weight_kg'));
+  add('Vitals', 'Height (cm)', g('height_cm'));
+
+  add('Diagnosis', 'Chief Complaint', g('chief_complaint'));
+  add('Diagnosis', 'ICD-10 Code', g('diagnosis_code'));
+  add('Diagnosis', 'Description', g('diagnosis_desc'));
+  add('Diagnosis', 'Type', g('diagnosis_type'));
+  add('Diagnosis', 'Clinical Notes', g('clinical_notes'));
+
+  add('Referral', 'Priority', g('priority'));
+  add('Referral', 'Reason', g('referral_reason'));
+  add('Referral', 'Physician', g('referring_physician'));
+  add('Referral', 'Physician License', g('referring_physician_license'));
+  add('Referral', 'Facility', g('referring_facility_name'));
+
+  return rows;
+}
+
+// ─── Extract meaningful data from WAH FHIR bundles ───
+function extractFHIRData(payload: Record<string, unknown>): { category: string; label: string; value: string }[] {
+  const rows: { category: string; label: string; value: string }[] = [];
+  const add = (cat: string, label: string, val: unknown) => { if (val != null && String(val).trim()) rows.push({ category: cat, label, value: String(val).trim() }); };
+
+  // Navigate FHIR bundle
+  const entries = (payload as any)?.entry || [];
+  const resources = entries.map((e: any) => e?.resource).filter(Boolean);
+  if (resources.length === 0 && (payload as any)?.resourceType) {
+    resources.push(payload);
+  }
+
+  let chiefComplaintFound = false;
+
+  for (const res of resources) {
+    const rt = res?.resourceType;
+    if (rt === 'Patient') {
+      const name = res.name?.[0] || {};
+      const givenArr = name.given || [];
+      add('Patient', 'Given Name', givenArr[0]); // First given name only
+      add('Patient', 'Middle Name', givenArr.length > 1 ? givenArr.slice(1).join(' ') : null); // Second+ given name = middle
+      add('Patient', 'Family Name', name.family);
+      add('Patient', 'Suffix', name.suffix?.[0]);
+      add('Patient', 'Birth Date', res.birthDate);
+      add('Patient', 'Gender', res.gender);
+      add('Patient', 'Marital Status', res.maritalStatus?.text || res.maritalStatus?.coding?.[0]?.display || res.maritalStatus?.coding?.[0]?.code);
+      // PhilHealth
+      for (const id of (res.identifier || [])) {
+        if (id.system?.includes('philhealth') || id.type?.coding?.[0]?.code === 'SB') {
+          add('Patient', 'PhilHealth No.', id.value);
+        }
+      }
+      // Telecom
+      for (const t of (res.telecom || [])) {
+        add('Patient', 'Phone', t.value);
+      }
+      // Address
+      const addr = res.address?.[0] || {};
+      add('Patient', 'Address Line', (addr.line || []).join(', '));
+      add('Patient', 'City', addr.city);
+      add('Patient', 'Province/State', addr.state || addr.district);
+      add('Patient', 'Postal Code', addr.postalCode);
+    }
+    if (rt === 'Encounter') {
+      add('Encounter', 'Class', res.class?.display || res.class?.code);
+      add('Encounter', 'Priority', res.priority?.coding?.[0]?.display || res.priority?.coding?.[0]?.code || res.priority?.text || res.priority);
+      // Reason — check multiple paths
+      const reason = res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display || res.reason?.[0]?.concept?.text || res.reason?.[0]?.concept?.coding?.[0]?.display;
+      add('Encounter', 'Reason', reason);
+      // Chief complaint can also be in Encounter.reasonCode
+      if (reason && !chiefComplaintFound) {
+        // We'll use this as fallback for chief complaint later
+      }
+      // Facility — check multiple paths
+      add('Encounter', 'Facility', res.serviceProvider?.display || res.serviceProvider?.reference || res.location?.[0]?.location?.display);
+      // Physician — check multiple paths
+      add('Encounter', 'Physician', res.participant?.[0]?.individual?.display || res.participant?.[0]?.actor?.display);
+    }
+    if (rt === 'Observation') {
+      const display = res.code?.text || res.code?.coding?.[0]?.display || 'Observation';
+      if (res.component) {
+        for (const comp of res.component) {
+          const compName = comp.code?.coding?.[0]?.display || 'Component';
+          add('Vitals', compName, comp.valueQuantity?.value);
+        }
+      } else if (res.valueQuantity) {
+        add('Vitals', display, res.valueQuantity.value);
+      }
+    }
+    if (rt === 'Condition') {
+      add('Diagnosis', 'ICD-10 Code', res.code?.coding?.[0]?.code);
+      add('Diagnosis', 'Description', res.code?.coding?.[0]?.display || res.code?.text);
+      add('Diagnosis', 'Clinical Status', res.clinicalStatus?.coding?.[0]?.code);
+      // Chief complaint — check note, category text, or extension
+      const complaint = res.note?.[0]?.text || res.category?.[0]?.text;
+      if (complaint) {
+        add('Diagnosis', 'Chief Complaint', complaint);
+        chiefComplaintFound = true;
+      }
+    }
+    if (rt === 'ServiceRequest') {
+      add('Referral', 'Reason', res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display);
+      add('Referral', 'Priority', res.priority);
+      add('Referral', 'Requester', res.requester?.display);
+    }
+  }
+
+  // If chief complaint wasn't found in Condition, try Encounter reasonCode
+  if (!chiefComplaintFound) {
+    for (const res of resources) {
+      if (res?.resourceType === 'Encounter') {
+        const reason = res.reasonCode?.[0]?.text || res.reasonCode?.[0]?.coding?.[0]?.display || res.reason?.[0]?.concept?.text;
+        if (reason) {
+          add('Diagnosis', 'Chief Complaint', reason);
+          break;
+        }
+      }
+    }
+  }
+
+  return rows;
+}
+
+// ─── Parse HL7v2 pipe-delimited string into meaningful data ───
+function parseHL7v2String(hl7: string): { category: string; label: string; value: string }[] {
+  const rows: { category: string; label: string; value: string }[] = [];
+  const add = (cat: string, label: string, val: string | undefined) => {
+    if (val && val.trim()) rows.push({ category: cat, label, value: val.trim() });
+  };
+
   const segments = hl7.split(/[\r\n]+/).filter(Boolean);
   for (const seg of segments) {
     const fields = seg.split('|');
-    if (segType === 'PID') { /* PhilHealth, name, DOB, sex, address, contact */ }
-    if (segType === 'PV1') { /* Physician, priority */ }
-    if (segType === 'OBX') { /* LOINC-coded vitals */ }
-    if (segType === 'DG1') { /* ICD-10, diagnosis, chief complaint */ }
-    if (segType === 'RF1') { /* Referral reason, facility */ }
+    const segType = fields[0];
+
+    if (segType === 'PID') {
+      // PID|1||PhilHealth^^^PhilHealth^SB||LNAME^FNAME^MNAME^^^SUFFIX||DOB|SEX|||STREET^^CITY^PROVINCE^ZIP^PH|||CIVIL_STATUS|||||||||||||||CONTACT
+      const phId = fields[3]?.split('^')[0];
+      add('Patient', 'PhilHealth No.', phId);
+      const nameParts = (fields[5] || '').split('^');
+      add('Patient', 'Last Name', nameParts[0]);
+      add('Patient', 'First Name', nameParts[1]);
+      add('Patient', 'Middle Name', nameParts[2]);
+      add('Patient', 'Suffix', nameParts[5]);
+      add('Patient', 'Date of Birth', fields[7]);
+      add('Patient', 'Sex', fields[8]);
+      const addrParts = (fields[11] || '').split('^');
+      add('Patient', 'Street', addrParts[0]);
+      add('Patient', 'City', addrParts[2]);
+      add('Patient', 'Province', addrParts[3]);
+      add('Patient', 'Zip Code', addrParts[4]);
+      add('Patient', 'Civil Status', fields[16]);
+      // Contact is at end of PID
+      const contact = fields[fields.length - 1];
+      if (contact && /\d/.test(contact)) add('Patient', 'Contact No.', contact);
+    }
+
+    if (segType === 'PV1') {
+      // PV1|1|O|FACILITY|||||||PHYSICIAN^LICENSE||...|||||||...|||...|||...|||...|||PRIORITY
+      add('Referral', 'Physician', fields[9]?.split('^')[0]);
+      add('Referral', 'Priority', fields[fields.length - 1]);
+    }
+
+    if (segType === 'OBX') {
+      // OBX|seq|NM|LOINC^Display^LN||VALUE|UNIT|...
+      const display = fields[3]?.split('^')[1] || 'Vital';
+      const value = fields[5];
+      const unit = fields[6];
+      add('Vitals', display, value ? `${value}${unit ? ' ' + unit : ''}` : undefined);
+    }
+
+    if (segType === 'DG1') {
+      // DG1|1||CODE^DESC^I10|||TYPE||||||||CHIEF_COMPLAINT
+      const codeParts = (fields[3] || '').split('^');
+      add('Diagnosis', 'ICD-10 Code', codeParts[0]);
+      add('Diagnosis', 'Description', codeParts[1]);
+      add('Diagnosis', 'Type', fields[6]);
+      add('Diagnosis', 'Chief Complaint', fields[fields.length - 1]);
+    }
+
+    if (segType === 'RF1') {
+      // RF1|PRIORITY|REASON||FACILITY|TIMESTAMP
+      add('Referral', 'Reason', fields[2]);
+      add('Referral', 'Facility', fields[4]);
+    }
   }
+  return rows;
 }
 
-// Hashable payload panel with reveal/re-hash toggle
-function HashablePayload({ label, dotColor, payload }) {
-  const [revealed, setRevealed] = useState(false);
-  const [hash, setHash] = useState<string>('');
-  useEffect(() => { sha256(jsonStr).then(setHash); }, [jsonStr]);
+// ─── Auto-detect and extract data from any payload ───
+function extractDataFields(payload: Record<string, unknown>): { category: string; label: string; value: string }[] {
+  // FHIR bundle
+  if ((payload as any)?.resourceType === 'Bundle' || (payload as any)?.entry) {
+    return extractFHIRData(payload);
+  }
+  // Single FHIR resource
+  if ((payload as any)?.resourceType) {
+    return extractFHIRData(payload);
+  }
+  // iHOMIS flat payload (has patient_fname or similar)
+  if ((payload as any)?.patient_fname || (payload as any)?.patient_lname || (payload as any)?.philhealth_no || (payload as any)?.bp_systolic) {
+    return extractHL7Data(payload);
+  }
+  // HL7v2 string inside { message: ... }
+  if ((payload as any)?.message && typeof (payload as any).message === 'string') {
+    return parseHL7v2String((payload as any).message);
+  }
+  // Raw HL7v2 string directly
+  if (typeof payload === 'string' && (payload as string).startsWith('MSH|')) {
+    return parseHL7v2String(payload as string);
+  }
+  // Fallback: try both
+  const hl7 = extractHL7Data(payload);
+  if (hl7.length > 0) return hl7;
+  return extractFHIRData(payload);
+}
+
+// ─── Full field templates for each system (mirrors their actual forms) ───
+// iHOMIS = 27 fields exactly
+const IHOMIS_TEMPLATE: { category: string; label: string }[] = [
+  { category: 'Patient Demographics', label: 'First Name' },
+  { category: 'Patient Demographics', label: 'Middle Name' },
+  { category: 'Patient Demographics', label: 'Last Name' },
+  { category: 'Patient Demographics', label: 'Suffix' },
+  { category: 'Patient Demographics', label: 'Date of Birth' },
+  { category: 'Patient Demographics', label: 'Sex' },
+  { category: 'Patient Demographics', label: 'Civil Status' },
+  { category: 'Patient Demographics', label: 'PhilHealth No.' },
+  { category: 'Patient Demographics', label: 'Contact No.' },
+  { category: 'Patient Demographics', label: 'Street' },
+  { category: 'Patient Demographics', label: 'Barangay' },
+  { category: 'Patient Demographics', label: 'City' },
+  { category: 'Patient Demographics', label: 'Province' },
+  { category: 'Vital Signs', label: 'BP Systolic' },
+  { category: 'Vital Signs', label: 'BP Diastolic' },
+  { category: 'Vital Signs', label: 'Heart Rate' },
+  { category: 'Vital Signs', label: 'Temperature' },
+  { category: 'Vital Signs', label: 'Respiratory Rate' },
+  { category: 'Vital Signs', label: 'SpO2' },
+  { category: 'Vital Signs', label: 'Weight (kg)' },
+  { category: 'Vital Signs', label: 'Height (cm)' },
+  { category: 'Diagnosis & Referral', label: 'Chief Complaint' },
+  { category: 'Diagnosis & Referral', label: 'ICD-10 Code' },
+  { category: 'Diagnosis & Referral', label: 'Diagnosis Description' },
+  { category: 'Diagnosis & Referral', label: 'Priority' },
+  { category: 'Diagnosis & Referral', label: 'Referring Facility' },
+  { category: 'Diagnosis & Referral', label: 'Physician' },
+];
+
+// WAH = 26 fields exactly
+const WAH_TEMPLATE: { category: string; label: string }[] = [
+  { category: 'Patient Resource', label: 'Given Name' },
+  { category: 'Patient Resource', label: 'Middle Name' },
+  { category: 'Patient Resource', label: 'Family Name' },
+  { category: 'Patient Resource', label: 'Birth Date' },
+  { category: 'Patient Resource', label: 'Gender' },
+  { category: 'Patient Resource', label: 'PhilHealth ID' },
+  { category: 'Patient Resource', label: 'Phone' },
+  { category: 'Patient Resource', label: 'Address' },
+  { category: 'Patient Resource', label: 'City' },
+  { category: 'Encounter', label: 'Class' },
+  { category: 'Encounter', label: 'Priority' },
+  { category: 'Encounter', label: 'Facility' },
+  { category: 'Encounter', label: 'Physician' },
+  { category: 'Encounter', label: 'Reason' },
+  { category: 'Observations (Vitals)', label: 'BP Systolic' },
+  { category: 'Observations (Vitals)', label: 'BP Diastolic' },
+  { category: 'Observations (Vitals)', label: 'Heart Rate' },
+  { category: 'Observations (Vitals)', label: 'Temperature' },
+  { category: 'Observations (Vitals)', label: 'Respiratory Rate' },
+  { category: 'Observations (Vitals)', label: 'SpO2' },
+  { category: 'Observations (Vitals)', label: 'Weight (kg)' },
+  { category: 'Observations (Vitals)', label: 'Height (cm)' },
+  { category: 'Condition', label: 'ICD-10 Code' },
+  { category: 'Condition', label: 'Display' },
+  { category: 'Condition', label: 'Chief Complaint' },
+  { category: 'Condition', label: 'Clinical Status' },
+];
+
+// Map extracted labels → template labels (left = iHOMIS label, right = WAH label)
+const FIELD_MAP: [string, string][] = [
+  ['First Name', 'Given Name'],
+  ['Last Name', 'Family Name'],
+  ['Middle Name', 'Middle Name'],
+  ['Date of Birth', 'Birth Date'],
+  ['Sex', 'Gender'],
+  ['PhilHealth No.', 'PhilHealth ID'],
+  ['Contact No.', 'Phone'],
+  ['Street', 'Address'],
+  ['City', 'City'],
+  ['BP Systolic', 'BP Systolic'],
+  ['BP Diastolic', 'BP Diastolic'],
+  ['Heart Rate', 'Heart Rate'],
+  ['Temperature', 'Temperature'],
+  ['Respiratory Rate', 'Respiratory Rate'],
+  ['SpO2', 'SpO2'],
+  ['Weight (kg)', 'Weight (kg)'],
+  ['Height (cm)', 'Height (cm)'],
+  ['Chief Complaint', 'Chief Complaint'],
+  ['ICD-10 Code', 'ICD-10 Code'],
+  ['Diagnosis Description', 'Display'],
+  ['Priority', 'Priority'],
+  ['Physician', 'Physician'],
+  ['Referring Facility', 'Facility'],
+];
+
+// Also map from extractor-produced labels (which may differ from template labels)
+const EXTRACTOR_ALIASES: Record<string, string[]> = {
+  // WAH template labels ← extractFHIR labels
+  'Given Name': ['Given Name'],
+  'Family Name': ['Family Name'],
+  'Birth Date': ['Birth Date'],
+  'Gender': ['Gender'],
+  'PhilHealth ID': ['PhilHealth No.', 'PhilHealth ID'],
+  'Phone': ['Phone', 'Contact No.'],
+  'Address': ['Address Line', 'Street', 'Address'],
+  'Class': ['Class'],
+  'Reason': ['Reason'],
+  'Facility': ['Facility', 'Referring Facility'],
+  'Physician': ['Physician', 'Requester'],
+  'BP Systolic': ['BP Systolic', 'Systolic blood pressure', 'Systolic Blood Pressure'],
+  'BP Diastolic': ['BP Diastolic', 'Diastolic blood pressure', 'Diastolic Blood Pressure'],
+  'Heart Rate': ['Heart Rate', 'Heart rate'],
+  'Temperature': ['Temperature', 'Body temperature', 'Body Temperature'],
+  'Respiratory Rate': ['Respiratory Rate', 'Respiratory rate'],
+  'SpO2': ['SpO2', 'Oxygen saturation', 'Oxygen Saturation'],
+  'Weight (kg)': ['Weight (kg)', 'Body weight', 'Body Weight'],
+  'Height (cm)': ['Height (cm)', 'Body height', 'Body Height'],
+  'Display': ['Display', 'Description', 'Diagnosis Description'],
+  'Clinical Status': ['Clinical Status', 'Clinical Notes'],
+  'Chief Complaint': ['Chief Complaint'],
+  'ICD-10 Code': ['ICD-10 Code'],
+  'Middle Name': ['Middle Name'],
+  'City': ['City'],
+  'Priority': ['Priority'],
+  // iHOMIS template labels ← extractFHIR labels
+  'First Name': ['First Name', 'Given Name'],
+  'Last Name': ['Last Name', 'Family Name'],
+  'Date of Birth': ['Date of Birth', 'Birth Date'],
+  'Sex': ['Sex', 'Gender'],
+  'Civil Status': ['Civil Status', 'Marital Status'],
+  'Contact No.': ['Contact No.', 'Phone'],
+  'Street': ['Street', 'Address Line', 'Address'],
+  'Province': ['Province', 'Province/State'],
+  'Barangay': ['Barangay'],
+  'Suffix': ['Suffix'],
+  'PhilHealth No.': ['PhilHealth No.', 'PhilHealth ID'],
+  'Diagnosis Description': ['Diagnosis Description', 'Description', 'Display'],
+  'Referring Facility': ['Referring Facility', 'Facility'],
+  'Physician License': ['Physician License'],
+};
+
+function getDestTemplate(destSystem: string): { category: string; label: string }[] {
+  if (destSystem.toLowerCase().includes('wah')) return WAH_TEMPLATE;
+  return IHOMIS_TEMPLATE;
+}
+
+function findValueForTemplateField(
+  templateLabel: string,
+  extractedFields: { category: string; label: string; value: string }[],
+  isDestWAH: boolean
+): string | null {
+  // Direct match
+  const direct = extractedFields.find(f => f.label === templateLabel);
+  if (direct) return direct.value;
+
+  // Check via extractor aliases
+  const aliases = EXTRACTOR_ALIASES[templateLabel];
+  if (aliases) {
+    for (const alias of aliases) {
+      const found = extractedFields.find(f => f.label === alias);
+      if (found) return found.value;
+    }
+  }
+
+  // Case-insensitive fallback
+  const lower = templateLabel.toLowerCase();
+  const ci = extractedFields.find(f => f.label.toLowerCase() === lower);
+  if (ci) return ci.value;
+
+  // Check via FIELD_MAP
+  for (const [iLabel, wLabel] of FIELD_MAP) {
+    const destLabel = isDestWAH ? wLabel : iLabel;
+    const srcLabel = isDestWAH ? iLabel : wLabel;
+    if (destLabel === templateLabel) {
+      const found = extractedFields.find(f => f.label === srcLabel);
+      if (found) return found.value;
+    }
+  }
+  return null;
+}
+
+function ComparisonTable({ raw, transformed, source, dest }: { raw: Record<string, unknown> | null, transformed: Record<string, unknown> | null, source: string, dest: string }) {
+  const srcExtracted = useMemo(() => raw ? extractDataFields(raw) : [], [raw]);
+  const destExtracted = useMemo(() => transformed ? extractDataFields(transformed) : [], [transformed]);
+  const srcTemplate = useMemo(() => getDestTemplate(source), [source]);
+  const destTemplate = useMemo(() => getDestTemplate(dest), [dest]);
+  const isSrcWAH = source.toLowerCase().includes('wah');
+  const isDestWAH = dest.toLowerCase().includes('wah');
+
+  // Build left-side rows: ALL source template fields with values from raw payload
+  const srcRows = useMemo(() => {
+    return srcTemplate.map(tf => {
+      const val = findValueForTemplateField(tf.label, srcExtracted, isSrcWAH);
+      return { ...tf, value: val || '' };
+    });
+  }, [srcTemplate, srcExtracted, isSrcWAH]);
+
+  const srcFilledCount = srcRows.filter(r => r.value !== '').length;
+
+  // Build right-side rows: ALL dest template fields, filled or empty
+  const destRows = useMemo(() => {
+    return destTemplate.map(tf => {
+      const fromTransformed = findValueForTemplateField(tf.label, destExtracted, isDestWAH);
+      if (fromTransformed) return { ...tf, value: fromTransformed, status: 'Filled' as const };
+      return { ...tf, value: '', status: 'Empty' as const };
+    });
+  }, [destTemplate, destExtracted, isDestWAH]);
+
+  const filledCount = destRows.filter(r => r.status === 'Filled').length;
+  const emptyCount = destRows.filter(r => r.status === 'Empty').length;
+
   return (
-    <div className="ipaas-card p-4">
-      <button onClick={() => setRevealed(!revealed)}>
-        {revealed ? 'Re-hash' : 'Unhash'}
-      </button>
-      <pre>{revealed ? jsonStr : hash}</pre>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* ─── LEFT: Source system's data ─── */}
+      <div className="ipaas-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#e5e7eb] bg-[#fafafa]">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-warning)' }} />
+            <h3 className="text-xs font-semibold uppercase tracking-wide">{source} — Data Sent</h3>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-none bg-gray-100 text-gray-500 ml-auto">
+              {srcFilledCount === srcTemplate.length ? `${srcTemplate.length} fields` : `${srcFilledCount} / ${srcTemplate.length} fields`}
+            </span>
+          </div>
+        </div>
+        <div className="overflow-auto max-h-[600px]">
+          <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+            <thead className="bg-[#f9fafb] sticky top-0" style={{ zIndex: 1 }}>
+              <tr>
+                <th className="p-3 font-semibold text-gray-600 border-b border-[#e5e7eb]">Field</th>
+                <th className="p-3 font-semibold text-gray-600 border-b border-[#e5e7eb]">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => { let lastCat = ''; return srcRows.map((row, i) => {
+                const showCat = row.category !== lastCat;
+                lastCat = row.category;
+                const hasFill = row.value !== '';
+                return (
+                  <Fragment key={`src-${i}`}>{showCat && (
+                    <tr className="border-t-2 border-t-gray-200">
+                      <td colSpan={2} className="px-3 pt-3 pb-1 font-semibold text-gray-700 text-[11px] uppercase tracking-wide">{row.category}</td>
+                    </tr>
+                  )}
+                  <tr className={`hover:bg-gray-50 border-b border-[#e5e7eb] last:border-0 transition-colors ${!hasFill ? 'bg-gray-50/50' : ''}`}>
+                    <td className="px-3 py-2" style={{ color: hasFill ? 'var(--color-text-muted)' : '#d1d5db' }}>{row.label}</td>
+                    <td className="px-3 py-2 font-mono font-medium" style={{ color: hasFill ? undefined : '#d1d5db' }}>{hasFill ? row.value : '—'}</td>
+                  </tr></Fragment>
+                );
+              }); })()}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ─── RIGHT: Destination system's ALL fields ─── */}
+      <div className="ipaas-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#e5e7eb] bg-[#fafafa]">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-success)' }} />
+            <h3 className="text-xs font-semibold uppercase tracking-wide">{dest} — Data Received</h3>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-none bg-gray-100 text-gray-500 ml-auto">
+              {filledCount} filled · {emptyCount} empty
+            </span>
+          </div>
+        </div>
+        <div className="overflow-auto max-h-[600px]">
+          <table className="w-full text-left text-xs" style={{ borderCollapse: 'collapse' }}>
+            <thead className="bg-[#f9fafb] sticky top-0" style={{ zIndex: 1 }}>
+              <tr>
+                <th className="p-3 font-semibold text-gray-600 border-b border-[#e5e7eb]">Field</th>
+                <th className="p-3 font-semibold text-gray-600 border-b border-[#e5e7eb]">Value</th>
+                <th className="p-3 font-semibold text-gray-600 border-b border-[#e5e7eb] text-center w-[80px]">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => { let lastCat = ''; return destRows.map((row, i) => {
+                const showCat = row.category !== lastCat;
+                lastCat = row.category;
+                const isFilled = row.status === 'Filled';
+                return (
+                  <Fragment key={`dest-${i}`}>{showCat && (
+                    <tr className="border-t-2 border-t-gray-200">
+                      <td colSpan={3} className="px-3 pt-3 pb-1 font-semibold text-gray-700 text-[11px] uppercase tracking-wide">{row.category}</td>
+                    </tr>
+                  )}
+                  <tr className={`hover:bg-gray-50 border-b border-[#e5e7eb] last:border-0 transition-colors ${!isFilled ? 'bg-red-50/30' : ''}`}>
+                    <td className="px-3 py-2" style={{ color: isFilled ? 'var(--color-text-muted)' : '#d1d5db' }}>{row.label}</td>
+                    <td className="px-3 py-2 font-mono font-medium" style={{ color: isFilled ? undefined : '#d1d5db' }}>{isFilled ? row.value : '—'}</td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider ${isFilled ? 'bg-[#dcfce7] text-[#166534]' : 'bg-[#fee2e2] text-[#991b1b]'}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr></Fragment>
+                );
+              }); })()}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
 
-// Field-level comparison table (source template vs destination template with filled/empty status)
-function ComparisonTable({ raw, transformed, source, dest }) {
-  // 27-field iHOMIS template vs 26-field WAH template
-  // Cross-format alias resolution for matching fields
-  // Green "Filled" / Red "Empty" badges per field
+// Synchronous hash for initial display
+function simpleHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const chr = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  const hex = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hex}${hex}${hex}${hex}${hex}${hex}${hex}${hex}`.slice(0, 64);
+}
+
+interface Transaction {
+  id: string; source_system: string; destination_system: string;
+  status: string; raw_payload: Record<string, unknown>;
+  transformed_payload: Record<string, unknown> | null;
+  error_message: string | null; created_at: string;
+}
+
+// Hashable payload panel component
+function HashablePayload({ label, dotColor, payload }: { label: string; dotColor: string; payload: Record<string, unknown> | null }) {
+  const [revealed, setRevealed] = useState(false);
+  const [hash, setHash] = useState<string>('');
+
+  const jsonStr = payload ? JSON.stringify(payload, null, 2) : '';
+
+  useEffect(() => {
+    if (jsonStr) {
+      setHash(simpleHash(jsonStr));
+      sha256(jsonStr).then(setHash);
+    }
+  }, [jsonStr]);
+
+  if (!payload) {
+    return (
+      <div className="ipaas-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: dotColor }} />
+          <h3 className="text-xs font-semibold uppercase tracking-wide">{label}</h3>
+        </div>
+        <div className="p-8 text-center rounded-none" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Transformation pending or failed</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ipaas-card p-4" style={revealed ? { borderColor: 'rgba(139,92,246,0.3)' } : {}}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: dotColor }} />
+          <h3 className="text-xs font-semibold uppercase tracking-wide">{label}</h3>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-none" style={{
+            background: revealed ? 'rgba(139,92,246,0.08)' : 'rgba(245,158,11,0.08)',
+            color: revealed ? '#8b5cf6' : '#f59e0b',
+          }}>
+            {revealed ? 'REVEALED' : 'SHA-256 HASHED'}
+          </span>
+        </div>
+        <button
+          onClick={() => setRevealed(!revealed)}
+          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-none transition-all"
+          style={{
+            background: revealed ? 'rgba(220,38,38,0.06)' : 'rgba(139,92,246,0.06)',
+            color: revealed ? '#dc2626' : '#8b5cf6',
+            border: `1px solid ${revealed ? 'rgba(220,38,38,0.15)' : 'rgba(139,92,246,0.15)'}`,
+          }}
+        >
+          {revealed ? (
+            <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+              Re-hash
+            </>
+          ) : (
+            <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Unhash
+            </>
+          )}
+        </button>
+      </div>
+      <pre
+        className="p-3 rounded-none text-xs overflow-auto"
+        style={{
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border)',
+          maxHeight: '600px',
+          fontFamily: "'JetBrains Mono', monospace",
+          color: revealed ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+          wordBreak: revealed ? 'break-word' : 'break-all',
+          whiteSpace: revealed ? 'pre-wrap' : 'nowrap',
+        }}
+      >
+        {revealed ? jsonStr : hash}
+      </pre>
+    </div>
+  );
+}
+
+export default function MapperPage() {
+  return (
+    <Suspense fallback={
+      <><Sidebar /><main className="flex-1 p-6 flex flex-col gap-4 overflow-hidden bg-gray-50">
+        <div className="mb-1 h-12 w-1/3 bg-gray-200 animate-pulse rounded-none" />
+        <div className="h-10 w-full bg-gray-200 animate-pulse rounded-none" />
+        <div className="h-16 w-full bg-gray-200 animate-pulse rounded-none" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
+          <div className="ipaas-card animate-pulse bg-white border-none h-full" />
+          <div className="ipaas-card animate-pulse bg-white border-none h-full" />
+        </div>
+      </main></>
+    }>
+      <MapperContent />
+    </Suspense>
+  );
+}
+
+function MapperContent() {
+  const searchParams = useSearchParams();
+  const txId = searchParams.get('id');
+  const [tx, setTx] = useState<Transaction | null>(null);
+  const [allTx, setAllTx] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'json' | 'table'>('json');
+
+  const fetchData = async (isManualRefresh = false) => {
+    if (isManualRefresh) setRefreshing(true);
+    try {
+      const data = await safeFetch('/api/transactions?limit=50');
+      if (data.success) {
+        const list: Transaction[] = data.data || [];
+        setAllTx(list);
+        if (list.length > 0) {
+          if (isManualRefresh) {
+            const hasNewer = allTx.length > 0 && list[0]?.id !== allTx[0]?.id;
+            if (hasNewer) {
+              setTx(list[0]);
+            } else {
+              const current = list.find((t: Transaction) => t.id === tx?.id);
+              setTx(current || list[0]);
+            }
+          } else {
+            if (txId) {
+              const found = list.find((t: Transaction) => t.id === txId);
+              if (found) setTx(found);
+              else setTx(list[0]);
+            } else {
+              setTx(list[0]);
+            }
+          }
+        }
+      }
+    } finally {
+      if (isManualRefresh) setRefreshing(false);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [txId]);
+
+  const statusStyle = (s: string) => {
+    const m: Record<string, { bg: string; color: string }> = {
+      SUCCESS: { bg: 'rgba(5,150,105,0.08)', color: '#059669' },
+      PENDING: { bg: 'rgba(217,119,6,0.08)', color: '#d97706' },
+      TRANSFORMING: { bg: 'rgba(37,99,235,0.08)', color: '#2563eb' },
+      QUARANTINED: { bg: 'rgba(220,38,38,0.08)', color: '#dc2626' },
+    };
+    return m[s] || m.PENDING;
+  };
+
+  const rawLabel = (src: string) => src === 'iHOMIS' ? 'HL7 v2 Payload' : 'FHIR R4 Bundle';
+  const transformedLabel = (dest: string) => dest === 'WAH' ? 'PH Core FHIR R4' : 'iHOMIS Format';
+
+  return (
+    <>
+      <Sidebar />
+      <main className="flex-1 p-6 overflow-auto">
+        <div className="mb-5">
+          <h1 className="text-lg font-semibold">Data Mapper</h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Side-by-side view of raw input and AI-transformed output. All payloads are SHA-256 hashed by default.</p>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex justify-between items-center gap-3">
+              <div className="h-9 w-64 bg-gray-200 animate-pulse rounded-none" />
+              <div className="h-9 w-40 bg-gray-200 animate-pulse rounded-none" />
+            </div>
+            <div className="h-16 w-full bg-gray-200 animate-pulse rounded-none ipaas-card border-none" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col min-h-[160px]">
+                <div className="h-10 border-b border-gray-100 flex items-center px-4"><div className="w-32 h-3 bg-gray-200" /></div>
+                <div className="p-4 space-y-2">
+                  {[...Array(3)].map((_, i) => <div key={i} className="h-3 bg-gray-100 w-full" />)}
+                  <div className="h-3 bg-gray-100 w-2/3" />
+                </div>
+              </div>
+              <div className="ipaas-card animate-pulse bg-white border-none flex flex-col min-h-[160px]">
+                <div className="h-10 border-b border-gray-100 flex items-center px-4"><div className="w-40 h-3 bg-gray-200" /></div>
+                <div className="p-4 space-y-2">
+                  {[...Array(4)].map((_, i) => <div key={i} className="h-3 bg-gray-100 w-full" />)}
+                  <div className="h-3 bg-gray-100 w-3/4" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : !tx ? (
+          <div className="ipaas-card p-10 text-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1" className="mx-auto mb-3"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <p className="text-sm mb-3" style={{ color: 'var(--color-text-muted)' }}>No transactions to display. Send data from iHOMIS or WAH first.</p>
+            <button
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              className="ipaas-btn ipaas-btn-secondary text-xs inline-flex items-center gap-1.5"
+            >
+              <svg className={refreshing ? 'animate-spin' : ''} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-1 max-w-lg">
+                <select
+                  value={tx.id}
+                  onChange={e => { const found = allTx.find(t => t.id === e.target.value); if (found) setTx(found); }}
+                  className="px-3 py-2 rounded-none text-xs outline-none flex-1"
+                  style={{ background: '#fff', border: '1px solid var(--color-border)' }}
+                >
+                  {allTx.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.id.slice(0, 8)} — {t.source_system} → {t.destination_system} ({t.status})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => fetchData(true)}
+                  disabled={refreshing}
+                  className="ipaas-btn ipaas-btn-secondary text-xs flex items-center gap-1.5 shrink-0"
+                  title="Refresh transactions"
+                >
+                  <svg
+                    className={refreshing ? 'animate-spin' : ''}
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                  </svg>
+                  Refresh
+                </button>
+              </div>
+
+              <div className="flex bg-[#f3f4f6] rounded-none p-1" style={{ border: '1px solid var(--color-border)' }}>
+                <button
+                  onClick={() => setViewMode('json')}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-none transition-colors ${viewMode === 'json' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                  JSON
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-none transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                  Comparison Table
+                </button>
+              </div>
+            </div>
+
+            <div className="ipaas-card p-4 mb-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold px-2 py-1 rounded-none" style={{
+                    background: tx.source_system === 'iHOMIS' ? 'rgba(37,99,235,0.08)' : 'rgba(5,150,105,0.08)',
+                    color: tx.source_system === 'iHOMIS' ? '#2563eb' : '#059669',
+                  }}>{tx.source_system}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <span className="text-xs font-semibold px-2 py-1 rounded-none" style={{
+                    background: tx.destination_system === 'iHOMIS' ? 'rgba(37,99,235,0.08)' : 'rgba(5,150,105,0.08)',
+                    color: tx.destination_system === 'iHOMIS' ? '#2563eb' : '#059669',
+                  }}>{tx.destination_system}</span>
+                  <span className="ipaas-badge" style={{ ...statusStyle(tx.status) }}>{tx.status}</span>
+                </div>
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</p>
+              </div>
+              {tx.error_message && (
+                <div className="mt-3 p-2.5 rounded-none text-xs flex items-center gap-2" style={{ background: 'rgba(220,38,38,0.05)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.15)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  {tx.error_message}
+                </div>
+              )}
+            </div>
+
+            {viewMode === 'json' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <HashablePayload
+                  label={`Raw — ${rawLabel(tx.source_system)}`}
+                  dotColor="var(--color-warning)"
+                  payload={tx.raw_payload}
+                />
+                <HashablePayload
+                  label={`Transformed — ${transformedLabel(tx.destination_system)}`}
+                  dotColor="var(--color-success)"
+                  payload={tx.transformed_payload}
+                />
+              </div>
+            ) : (
+              <ComparisonTable raw={tx.raw_payload} transformed={tx.transformed_payload} source={tx.source_system} dest={tx.destination_system} />
+            )}
+          </>
+        )}
+      </main>
+    </>
+  );
 }
 ```
 
@@ -6233,29 +8096,67 @@ Also, the **Sidebar navigation component** acts as the routing client:
 ```tsx
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/transactions', label: 'Transaction Logs' },
-  { href: '/mapper', label: 'Data Mapper' },
+  { href: '/', label: 'Dashboard', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
+  { href: '/transactions', label: 'Transaction Logs', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+  { href: '/mapper', label: 'Data Mapper', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg> },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-[240px] min-h-screen flex flex-col">
-      <div className="px-5 py-4 border-b">
-        <h1 className="text-sm font-semibold text-white">ADAPT iPaaS</h1>
-        <p className="text-[11px]">Integration Platform</p>
+    <aside className="w-[240px] min-h-screen flex flex-col border-r" style={{ background: 'var(--color-bg-sidebar)', borderColor: 'var(--color-border-sidebar)' }}>
+      <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--color-border-sidebar)' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 flex items-center justify-center bg-transparent overflow-hidden">
+            <Image src="/WAH_logo.png" alt="WAH Logo" width={36} height={36} className="object-contain scale-[1.7]" priority />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold leading-tight text-white">ADAPT iPaaS</h1>
+            <p className="text-[11px] leading-tight text-slate-400">Integration Platform</p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 p-3">
+      <nav className="flex-1 p-3 flex flex-col gap-0.5">
+        <p className="text-[10px] font-bold uppercase tracking-wider px-3 py-2 text-slate-500">Menu</p>
         {navItems.map(item => {
-          const isActive = pathname === item.href;
-          return <Link key={item.href} href={item.href} className={`ipaas-sidebar-link ${isActive ? 'active' : ''}`}>{item.label}</Link>;
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          return <Link key={item.href} href={item.href} className={`ipaas-sidebar-link ${isActive ? 'active' : ''}`}>{item.icon}<span>{item.label}</span></Link>;
         })}
       </nav>
-      {/* System status indicators + logout button */}
+      <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
+        <p className="text-[10px] font-bold uppercase mb-2 text-slate-500">Systems</p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+            <span className="text-[11px] text-slate-400">iHOMIS — :3001</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+            <span className="text-[11px] text-slate-400">WAH Hospital — :3002</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-auto px-5 py-4 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
+        <button
+          onClick={async () => {
+            const { useRouter } = await import('next/navigation');
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 rounded-none text-[13px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Log Out
+        </button>
+      </div>
     </aside>
   );
 }
