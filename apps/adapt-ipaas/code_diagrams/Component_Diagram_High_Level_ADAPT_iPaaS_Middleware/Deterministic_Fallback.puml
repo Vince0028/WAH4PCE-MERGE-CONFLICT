@@ -1,6 +1,6 @@
-@startuml Deterministic_Syntactic_Fallback
+@startuml Deterministic_Fallback
 !theme plain
-title C4 Level 4 - Code Diagram: Deterministic Syntactic Fallback
+title C4 Level 4 - Code Diagram: Deterministic Fallback
 
 package "src/lib/mapping-calc.ts" {
     class MappingCalculator <<Service>> {

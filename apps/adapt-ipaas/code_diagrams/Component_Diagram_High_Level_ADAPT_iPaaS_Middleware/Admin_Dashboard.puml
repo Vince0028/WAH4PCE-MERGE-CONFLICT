@@ -1,26 +1,35 @@
 @startuml Admin_Dashboard
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-
+!theme plain
 title C4 Level 4 - Code Diagram: Admin Dashboard
 
-note as N1
-  This diagram shows the code-level internal flow 
-  for the Admin Dashboard component.
-  File: src/app/page.tsx
-end note
+package "Admin Dashboard (Next.js) - src/app/page.tsx" {
+    class "page.tsx" as PageComponent <<React Component>> {
+        + render()
+        + useEffect()
+    }
 
-Container_Boundary(dashboard_boundary, "Admin Dashboard (Next.js)") {
-    Component(page_tsx, "page.tsx", "React Component", "Main dashboard layout. Renders the UI and orchestrates data fetching.")
-    Component(metrics_fetcher, "fetchMetrics()", "TypeScript", "Calls /api/metrics to get latest system stats.")
-    Component(transactions_fetcher, "fetchTransactions()", "TypeScript", "Calls /api/transactions to get transaction logs.")
-    
-    Component(ui_metrics, "MetricsView", "React Component", "Displays system uptime and processing stats.")
-    Component(ui_table, "TransactionTable", "React Component", "Displays a table of recent transactions.")
+    class "fetchMetrics()" as MetricsFetcher <<Function>> {
+        + fetch(): Promise<Metrics>
+    }
+
+    class "fetchTransactions()" as TransactionsFetcher <<Function>> {
+        + fetch(): Promise<Transaction[]>
+    }
+
+    class MetricsView <<React Component>> {
+        + metrics: Metrics
+        + render()
+    }
+
+    class TransactionTable <<React Component>> {
+        + transactions: Transaction[]
+        + render()
+    }
 }
 
-Rel(page_tsx, metrics_fetcher, "Calls on mount", "React useEffect")
-Rel(page_tsx, transactions_fetcher, "Calls on mount", "React useEffect")
-Rel(metrics_fetcher, ui_metrics, "Updates state", "React State")
-Rel(transactions_fetcher, ui_table, "Updates state", "React State")
+PageComponent --> MetricsFetcher : calls on mount
+PageComponent --> TransactionsFetcher : calls on mount
+MetricsFetcher --> MetricsView : updates state
+TransactionsFetcher --> TransactionTable : updates state
 
 @enduml

@@ -1,11 +1,11 @@
-@startuml Validate_Schema_Completeness
+@startuml Validation_Service
 !theme plain
-title C4 Level 4 - Code Diagram: Validate Schema & Completeness
+title C4 Level 4 - Code Diagram: Validation Service
 
 package "src/lib/validator.ts" {
     class Validator <<Service>> {
-        + validateFHIRBundle(payload: JSON): ValidationResult
-        + validateHL7V2Payload(payload: JSON): ValidationResult
+        + checkStructuralIntegrity(payload: JSON): ValidationResult
+        + validateSchema(payload: JSON, schemaType: String): bool
     }
     
     class ValidationResult <<Struct>> {
