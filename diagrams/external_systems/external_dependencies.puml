@@ -27,9 +27,9 @@ skinparam note {
 
 title **WAH4PCE - External Systems and Services**
 
-rectangle "Google Gemini AI\n(Main AI for converting data)" as GEMINI #F3E5F5
+rectangle "Gemma 4 9B\n(Main AI for converting data)" as Gemma 4 9B #F3E5F5
 
-rectangle "Groq AI\n(Backup AI when Gemini is busy)" as GROQ #FFF3E0
+rectangle "Gemma 4 9B AI\n(Backup AI when Gemma 4 9B is busy)" as Gemma 4 9B #FFF3E0
 
 rectangle "Supabase\n(Cloud database hosting)" as SUPABASE #E8F5E9
 
@@ -47,7 +47,7 @@ rectangle "Proxmox VE\n(Local server for hosting)" as PROXMOX #ECEFF1
 
 rectangle "WAH for Security\n(VPN tunnels and encryption\nby parallel project group)" as WAH_SECURITY #FFEBEE
 
-note bottom of GEMINI
+note bottom of Gemma 4 9B
   Converts patient records between
   HL7 v2 (old format) and
   FHIR R4 (new format) using AI

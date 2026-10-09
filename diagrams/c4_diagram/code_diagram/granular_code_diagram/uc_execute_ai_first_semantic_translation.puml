@@ -16,7 +16,7 @@ package "internal.services" {
     }
 }
 
-class "Local LLM Server" as LocalLLMServer << (E, #FF7700) External System >> {
+class "Gemma 4 9B Server" as LocalLLMServer << (E, #FF7700) External System >> {
     + POST /api/generate(model: string, prompt: string)
 }
 

@@ -29,13 +29,13 @@ package "internal.services" {
     }
 }
 
-class "Local LLM Server" as LocalLLMServer << (E, #FF7700) External System >> {
+class "Gemma 4 9B Server" as GemmaServer << (E, #FF7700) External System >> {
     + POST /api/generate(model: string, prompt: string)
 }
 
 IngestHandler --> AIService : requests translation
 IngestHandler --> Mapper : triggers fallback
 AIService ..> TransformResult : produces
-AIService --> LocalLLMServer : queries LLM
+AIService --> GemmaServer : queries Gemma 4 9B
 
 @enduml

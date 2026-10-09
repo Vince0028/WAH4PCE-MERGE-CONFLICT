@@ -41,7 +41,7 @@ The system follows a **3-Node Hub-and-Spoke (Federated) Architecture**:
 
 | Actor | Description | Interactions |
 |-------|-------------|-------------|
-| **WAH4PCE AI Agent** (Gemini via MCP) | AI engine that automatically parses, maps, and translates health records. Operates via Model Context Protocol (MCP) using In-Context Learning (ICL). | Transforms HL7 v2 ↔ FHIR R4, validates consent flags, performs semantic terminology mapping (LOINC, ICD-10), applies PH Core profile compliance. |
+| **WAH4PCE AI Agent** (Gemma 4 9B via MCP) | AI engine that automatically parses, maps, and translates health records. Operates via Model Context Protocol (MCP) using In-Context Learning (ICL). | Transforms HL7 v2 ↔ FHIR R4, validates consent flags, performs semantic terminology mapping (LOINC, ICD-10), applies PH Core profile compliance. |
 
 ---
 
@@ -66,14 +66,14 @@ The system follows a **3-Node Hub-and-Spoke (Federated) Architecture**:
 
 ### 3.2 ADAPT iPaaS — AI-Powered Middleware (Port :3000)
 
-**Technology:** Next.js 16 | TypeScript | Supabase | Google Gemini AI SDK
+**Technology:** Next.js 16 | TypeScript | Supabase | Gemma 4 9B SDK
 
 | Component | Path/Module | Function |
 |-----------|-------------|----------|
 | Ingest API | `/api/ingest` | Entry point — receives records from iHOMIS or WAH |
 | Consent-as-Code Gatekeeper | `ingest` pipeline | Scans for `consent_signed: true` flag; blocks if missing (HTTP 422) |
-| Gemini AI Transformation Engine | `gemini.ts` | HL7 v2 → FHIR R4 and FHIR R4 → iHOMIS JSON translation |
-| Model Juggling Logic | `gemini.ts` | Fallback chain: flash-lite → 2.5-flash-lite → 2.5-flash → 3-flash → 2.0-flash |
+| Gemma 4 9B Transformation Engine | `Gemma 4 9B.ts` | HL7 v2 → FHIR R4 and FHIR R4 → iHOMIS JSON translation |
+| Model Juggling Logic | `Gemma 4 9B.ts` | Fallback chain: flash-lite → 2.5-flash-lite → 2.5-flash → 3-flash → 2.0-flash |
 | FHIR R4 Validator | `validator.ts` | Validates FHIR bundles for required resource types (Patient, Encounter, Observation, Condition) |
 | Quarantine Engine | `ingest` pipeline | Isolates rejected/invalid records for admin manual review |
 | Sanitized Audit Logger | `ingest` pipeline | Logs all transactions (no PHI — only timestamps, UUIDs, status, facility names) |
@@ -108,7 +108,7 @@ The system follows a **3-Node Hub-and-Spoke (Federated) Architecture**:
 
 | External System | Type | Relationship to WAH4PCE |
 |----------------|------|------------------------|
-| **Google Gemini AI** | Cloud AI Service | Powers the data transformation engine via `@google/generative-ai` SDK. Structured JSON output with temperature 0.1 for deterministic results. Model fallback chain for rate limit resilience. |
+| **Gemma 4 9B** | Cloud AI Service | Powers the data transformation engine via `@google/generative-ai` SDK. Structured JSON output with temperature 0.1 for deterministic results. Model fallback chain for rate limit resilience. |
 | **Supabase** (x3 projects) | Cloud Database (PostgreSQL + JSONB) | 3 isolated database projects — one per system node. Provides flexible JSONB payload storage for diverse health record formats. |
 | **DOH / NHDR** | Government Endpoint | Target national repository. Currently on hold (deployment paused post-leadership change). WAH4PCE provides a proof-of-concept for future integration. |
 | **PhilHealth** | Government Insurance | PhilHealth member ID is a mandatory field used as the patient identifier across systems. System validates PhilHealth ID presence before transmission. |
@@ -129,7 +129,7 @@ Doctor creates record in iHOMIS
     → POST to iPaaS /api/ingest
         → Consent check (consent_signed: true?)
             → ❌ No → QUARANTINED (HTTP 422)
-            → ✅ Yes → Gemini AI transforms HL7 v2 → FHIR R4 Bundle
+            → ✅ Yes → Gemma 4 9B transforms HL7 v2 → FHIR R4 Bundle
                 → FHIR Validator checks structure
                     → ❌ Invalid → QUARANTINED
                     → ✅ Valid → Log transaction → Forward to WAH /api/webhook
@@ -146,7 +146,7 @@ Doctor creates FHIR record in WAH
     → POST to iPaaS /api/ingest
         → Consent check (consent_signed: true?)
             → ❌ No → QUARANTINED (HTTP 422)
-            → ✅ Yes → Gemini AI transforms FHIR R4 → iHOMIS flat JSON
+            → ✅ Yes → Gemma 4 9B transforms FHIR R4 → iHOMIS flat JSON
                 → Structural validation
                     → ❌ Invalid → QUARANTINED
                     → ✅ Valid → Log transaction → Forward to iHOMIS /api/webhook
@@ -206,11 +206,11 @@ Doctor creates FHIR record in WAH
 | Decision | Rationale |
 |----------|-----------|
 | **Federated (not centralized) architecture** | Mitigates single-point-of-failure risk. Each hospital retains data ownership. iPaaS stores only audit logs — no patient data. |
-| **AI-powered translation (not rigid rules)** | Gemini AI handles semantic mapping between fundamentally different data formats, allowing intelligent interpretation rather than brittle field-by-field rules. |
+| **AI-powered translation (not rigid rules)** | Gemma 4 9B handles semantic mapping between fundamentally different data formats, allowing intelligent interpretation rather than brittle field-by-field rules. |
 | **In-Context Learning (ICL) over traditional ML** | No need to train models on sensitive health data. AI understands formats based on real-time prompts and context. |
 | **Ephemeral data processing** | Raw patient data is auto-purged from middleware after delivery, minimizing data exposure surface. |
 | **Consent-as-Code** | Legal compliance (DPA RA 10173) is enforced programmatically — not manually — ensuring no unauthorized transfers. |
-| **Model fallback chain** | Ensures zero-downtime during AI rate limiting by cycling through 5 Gemini models automatically. |
+| **Model fallback chain** | Ensures zero-downtime during AI rate limiting by cycling through 5 Gemma 4 9B models automatically. |
 | **Supabase with JSONB** | Flexible schema accommodates both HL7 v2 and FHIR R4 formats without rigid table structures. |
 
 ---
@@ -235,7 +235,7 @@ Doctor creates FHIR record in WAH
 | `external_actors.puml` | `diagrams/actors/` | External actors & users |
 | `adapt_ipaas_system_context_diagram.puml` | `diagrams/system_context_diagram/` | ADAPT iPaaS Middleware component |
 | `wah_hospital_system.puml` | `diagrams/system_context_diagram/` | WAH Hospital (FHIR R4) component |
-| `external_dependencies.puml` | `diagrams/external_systems/` | External systems (Gemini, Supabase, DOH, PhilHealth, etc.) |
+| `external_dependencies.puml` | `diagrams/external_systems/` | External systems (Gemma 4 9B, Supabase, DOH, PhilHealth, etc.) |
 | `data_transformation.puml` | `diagrams/functions/` | AI-powered format translation functions |
 | `validation_consent.puml` | `diagrams/functions/` | Validation engine & consent gatekeeper functions |
 | `record_management.puml` | `diagrams/functions/` | CRUD, Send Queue, Inbox workflow functions |

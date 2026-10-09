@@ -33,7 +33,7 @@ rectangle "AI AUTOMATION LAYER" as AI_LAYER
 rectangle "GETS CONVERTED TO" as CONVERT
 rectangle "HL7 FHIR" as FHIR
 rectangle "Verification Layer" as VERIFY
-rectangle "Gemini 3.1 Flash Lite or Preview" as GEMINI
+rectangle "Gemma 4 9B or Preview" as Gemma 4 9B
 rectangle "Verification of waiver form" as WAIVER
 rectangle "Verification of FHIR Format" as FORMAT
 rectangle "SENDS THE FHIR FORMAT CONVERTED DATA" as SEND_FHIR
@@ -53,14 +53,14 @@ WAH_HOSP -right-> WAH_PATIENTS : (15) Patient Data\nUpdated
 
 ' Vertical AI Flow
 PAAS -down-> TEMP_DB : (3) Consent Check & Log Transaction\n(No PHI stored permanently)
-TEMP_DB -down-> AI_LAYER : (4) Route to Gemini\nfor Transformation
+TEMP_DB -down-> AI_LAYER : (4) Route to Gemma 4 9B\nfor Transformation
 AI_LAYER -down-> CONVERT : (5) HL7 v2 → FHIR R4\nTranslation
-CONVERT -left-> GEMINI : using Google SDK
+CONVERT -left-> Gemma 4 9B : using Google SDK
 CONVERT -down-> FHIR : (6) Generates\nFHIR Transaction Bundle
 FHIR -right-> VERIFY : (7) Validate Structure\n& Mandatory Fields
-VERIFY -right-> GEMINI : using Fallback Chain\n(flash-lite to 2.0-flash)
-GEMINI -down-> WAIVER : Check consent_signed
-GEMINI -down-> FORMAT : Apply PH Core Profiles
+VERIFY -right-> Gemma 4 9B : using Fallback Chain\n(flash-lite to 2.0-flash)
+Gemma 4 9B -down-> WAIVER : Check consent_signed
+Gemma 4 9B -down-> FORMAT : Apply PH Core Profiles
 VERIFY -up-> AI_LAYER : (8) Return Validation Result
 AI_LAYER -up-> TEMP_DB : (9) Log Transformation\nSuccess/Quarantine
 TEMP_DB -up-> PAAS : (10) Return FHIR R4 Data

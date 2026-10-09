@@ -10,7 +10,7 @@
 | 🤖 **Semantic AI Translator** | [`src/lib/ai.ts`](./src/lib/ai.ts) | `transformWithAI()` execution chain. |
 | 📝 **Sanitized Transaction Logger** | [`src/app/api/ingest/route.ts`](./src/app/api/ingest/route.ts) | Final stage Supabase write operations. |
 | 🚫 **Quarantine Queue Manager** | [`src/app/api/decline/route.ts`](./src/app/api/decline/route.ts) | Logic routing failed payloads to QUARANTINED state. |
-| 🧠 **Local LLM Engine** | [`src/lib/ai.ts`](./src/lib/ai.ts) | LLM provider initialization. |
+| 🧠 **Gemma 4 9B Engine** | [`src/lib/ai.ts`](./src/lib/ai.ts) | LLM provider initialization. |
 | 💾 **MongoDB Database** | [`src/lib/supabase.ts`](./src/lib/supabase.ts) | Supabase/Postgres equivalent. |
 
 ### `<<package>> API Layer [Package]`
@@ -1213,19 +1213,19 @@ export function fallbackTransform(
 
 ```typescript
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import Groq from 'groq-sdk';
+import Gemma 4 9B from 'Gemma 4 9B-sdk';
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
-const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+const genAI = process.env.Gemma 4 9B_API_KEY ? new GoogleGenerativeAI(process.env.Gemma 4 9B_API_KEY) : null;
+const Gemma 4 9B = process.env.Gemma 4 9B_API_KEY ? new Gemma 4 9B({ apiKey: process.env.Gemma 4 9B_API_KEY }) : null;
 
-// Model fallback chain — try Gemini first, then juggle to Groq
+// Model fallback chain — try Gemma 4 9B first, then juggle to Gemma 4 9B
 export const MODEL_FALLBACKS = [
-  { provider: 'gemini', model: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite' },
-  { provider: 'gemini', model: 'gemini-2.5-flash-lite' },
-  { provider: 'gemini', model: 'gemini-2.5-flash' },
-  { provider: 'groq', model: 'llama-3.3-70b-versatile' },
-  { provider: 'groq', model: 'mixtral-8x7b-32768' },
-  { provider: 'groq', model: 'llama3-70b-8192' }
+  { provider: 'Gemma 4 9B', model: process.env.Gemma 4 9B_MODEL || 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' }
 ];
 
 // ============================================
@@ -1354,7 +1354,7 @@ export function getTransformDirection(sourceFormat: DataFormat, destFormat: Data
 
 /**
  * Transform data using AI with automatic model fallback juggling.
- * If Gemini hits quota, it instantly falls back to Groq LPU models.
+ * If Gemma 4 9B hits quota, it instantly falls back to Gemma 4 9B LPU models.
  */
 export async function transformWithAI(
   payload: unknown,
@@ -1371,7 +1371,7 @@ graph TD
     A[API Layer] -->|Routes to| B[Provide Health Data Orchestrator]
     B -->|Validates| C[Privacy Consent Gatekeeper]
     B -->|Translates| D[Semantic AI Translator]
-    D <-->|Inference| E[Local LLM Engine]
+    D <-->|Inference| E[Gemma 4 9B Engine]
     B -->|Fallback| F[Deterministic Syntactic Fallback]
     B -->|Checks Schema| G[Validate Schema & Completeness]
     B -->|Logs| H[Sanitized Transaction Logger]
@@ -1393,15 +1393,15 @@ graph TD
 
       var responseText = '';
 
-      if (provider === 'gemini' && genAI) {
+      if (provider === 'Gemma 4 9B' && genAI) {
         var model = genAI.getGenerativeModel({
           model: modelName,
           generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
         });
         var result = await model.generateContent(prompt);
         responseText = result.response.text();
-      } else if (provider === 'groq' && groq) {
-        var completion = await groq.chat.completions.create({
+      } else if (provider === 'Gemma 4 9B' && Gemma 4 9B) {
+        var completion = await Gemma 4 9B.chat.completions.create({
           messages: [
             { role: 'system' as const, content: systemPrompt },
             { role: 'user' as const, content: 'Input Data:\n' + inputData }
@@ -1433,7 +1433,7 @@ graph TD
   return {
     success: false,
     data: null,
-    error: 'All AI models (Gemini and Groq) exhausted or failed. Check API keys or wait for quota reset.',
+    error: 'All AI models (Gemma 4 9B and Gemma 4 9B) exhausted or failed. Check API keys or wait for quota reset.',
   };
 }
 
@@ -1541,24 +1541,24 @@ export async function POST(request: NextRequest) {
 
 Also triggered inline in [`api/ingest/route.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/app/api/ingest/route.ts) at Lines 140–157 and 162–181 when transformation or validation fails.
 
-### `<<component>> Local LLM Engine [Inference Runtime]`
+### `<<component>> Gemma 4 9B Engine [Inference Runtime]`
 **Same as Section 1:** [`lib/ai.ts`](file:///d:/Documents_FromC/WAH4PCE-Merge%20Conflict/apps/adapt-ipaas/src/lib/ai.ts)
 
 ```typescript
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import Groq from 'groq-sdk';
+import Gemma 4 9B from 'Gemma 4 9B-sdk';
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
-const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+const genAI = process.env.Gemma 4 9B_API_KEY ? new GoogleGenerativeAI(process.env.Gemma 4 9B_API_KEY) : null;
+const Gemma 4 9B = process.env.Gemma 4 9B_API_KEY ? new Gemma 4 9B({ apiKey: process.env.Gemma 4 9B_API_KEY }) : null;
 
-// Model fallback chain — try Gemini first, then juggle to Groq
+// Model fallback chain — try Gemma 4 9B first, then juggle to Gemma 4 9B
 export const MODEL_FALLBACKS = [
-  { provider: 'gemini', model: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite' },
-  { provider: 'gemini', model: 'gemini-2.5-flash-lite' },
-  { provider: 'gemini', model: 'gemini-2.5-flash' },
-  { provider: 'groq', model: 'llama-3.3-70b-versatile' },
-  { provider: 'groq', model: 'mixtral-8x7b-32768' },
-  { provider: 'groq', model: 'llama3-70b-8192' }
+  { provider: 'Gemma 4 9B', model: process.env.Gemma 4 9B_MODEL || 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' },
+  { provider: 'Gemma 4 9B', model: 'gemma-4-9b' }
 ];
 
 // ============================================
@@ -1687,7 +1687,7 @@ export function getTransformDirection(sourceFormat: DataFormat, destFormat: Data
 
 /**
  * Transform data using AI with automatic model fallback juggling.
- * If Gemini hits quota, it instantly falls back to Groq LPU models.
+ * If Gemma 4 9B hits quota, it instantly falls back to Gemma 4 9B LPU models.
  */
 export async function transformWithAI(
   payload: unknown,
@@ -1712,15 +1712,15 @@ export async function transformWithAI(
 
       var responseText = '';
 
-      if (provider === 'gemini' && genAI) {
+      if (provider === 'Gemma 4 9B' && genAI) {
         var model = genAI.getGenerativeModel({
           model: modelName,
           generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
         });
         var result = await model.generateContent(prompt);
         responseText = result.response.text();
-      } else if (provider === 'groq' && groq) {
-        var completion = await groq.chat.completions.create({
+      } else if (provider === 'Gemma 4 9B' && Gemma 4 9B) {
+        var completion = await Gemma 4 9B.chat.completions.create({
           messages: [
             { role: 'system' as const, content: systemPrompt },
             { role: 'user' as const, content: 'Input Data:\n' + inputData }
@@ -1752,7 +1752,7 @@ export async function transformWithAI(
   return {
     success: false,
     data: null,
-    error: 'All AI models (Gemini and Groq) exhausted or failed. Check API keys or wait for quota reset.',
+    error: 'All AI models (Gemma 4 9B and Gemma 4 9B) exhausted or failed. Check API keys or wait for quota reset.',
   };
 }
 

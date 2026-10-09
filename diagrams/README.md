@@ -20,7 +20,7 @@ diagrams/
 │   └── wah_hospital_system.puml        ← WAH Hospital (Modern FHIR System)
 │
 ├── external_systems/
-│   └── external_dependencies.puml      ← External services (Gemini AI, Supabase, DOH, etc.)
+│   └── external_dependencies.puml      ← External services (Gemma 4 9B, Supabase, DOH, etc.)
 │
 └── functions/
     ├── data_transformation.puml        ← How AI converts the health records

@@ -13,7 +13,7 @@ package "src/lib/ai.ts" {
     }
 }
 
-package "Local LLM Engine" {
+package "Gemma 4 9B Engine" {
     class LLMClient <<Engine>>
 }
 

@@ -22,7 +22,7 @@ system operating on HL7 v2 pipe-delimited message formats.")
 System_Ext(wahSystem, "WAH Hospital System", "Modern hospital platform 
 operating on HL7 FHIR R4 standard bundles.")
 
-System_Ext(geminiApi, "Google Gemini AI API", "Generative AI engine providing 
+System_Ext(Gemma 4 9BApi, "Gemma 4 9B API", "Generative AI engine providing 
 multi-model fallback data translation and mapping between HL7 v2 and FHIR R4.")
 
 Rel(dohClinician, ihomisSystem, "Uses", "HTTPS")
@@ -34,6 +34,6 @@ Rel(wahSystem, adaptIPaas, "Sends FHIR R4 bundles", "HTTPS/REST")
 Rel(adaptIPaas, ihomisSystem, "Delivers converted iHOMIS JSON", "HTTPS/REST")
 Rel(adaptIPaas, wahSystem, "Delivers converted FHIR R4 bundles", "HTTPS/REST")
 
-Rel(adaptIPaas, geminiApi, "Generates transformations and prompt mappings", 
+Rel(adaptIPaas, Gemma 4 9BApi, "Generates transformations and prompt mappings", 
 "HTTPS/REST")
 @enduml

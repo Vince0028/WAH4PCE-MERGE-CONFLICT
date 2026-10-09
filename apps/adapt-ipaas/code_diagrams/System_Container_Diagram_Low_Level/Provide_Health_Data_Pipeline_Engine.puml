@@ -19,7 +19,7 @@ Container_Boundary(supabase_db, "Supabase Database (src/lib/supabase.ts)") {
 }
 
 Container_Boundary(ai_service, "AI Translation Service (src/lib/ai.ts)") {
-    Component(ai_transform, "transformWithAI(payload, direction)\nai.ts", "AI Engine", "Invokes Gemini/Groq to transform data. Returns {success, data, error}.")
+    Component(ai_transform, "transformWithAI(payload, direction)\nai.ts", "AI Engine", "Invokes Gemma 4 9B/Gemma 4 9B to transform data. Returns {success, data, error}.")
 }
 
 Container_Boundary(fallback_service, "Deterministic Fallback (src/lib/mapping-calc.ts)") {

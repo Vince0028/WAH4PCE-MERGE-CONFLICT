@@ -4,7 +4,7 @@
 Container(ihomisApp, "iHOMIS Web App", "React / Next.js")
 Container(wahApp, "WAH Hospital Web App", "React / Next.js")
 ContainerDb(database, "iPaaS Transaction DB", "PostgreSQL / Supabase")
-System_Ext(geminiApi, "Google Gemini AI API", "External API")
+System_Ext(Gemma 4 9BApi, "Gemma 4 9B API", "External API")
 
 Container_Boundary(api, "ADAPT iPaaS Engine (Next.js)") {
  Component(ingestCtrl, "Ingest Controller", "Next.js API Route (/api/ingest)", 
@@ -14,11 +14,11 @@ Container_Boundary(api, "ADAPT iPaaS Engine (Next.js)") {
 "Validates Patient Data Privacy Consent (RA 10173 compliance).")
  
  Component(aiTransformSvc, "AI Transformation Service", "TypeScript Module 
-(gemini.ts)", "Constructs prompts and requests structured JSON conversion 
+(Gemma 4 9B.ts)", "Constructs prompts and requests structured JSON conversion 
 between HL7 v2 and FHIR R4.")
 
  Component(fallbackMgr, "Model Fallback Manager", "TypeScript Module", 
-"Cycles through backup Gemini models upon rate limit (429/503) errors.")
+"Cycles through backup Gemma 4 9B models upon rate limit (429/503) errors.")
  
  Component(fhirValidator, "FHIR R4 Bundle Validator", "TypeScript Module 
 (validator.ts)", "Validates transformed bundles against PH Core FHIR profiles 
@@ -45,7 +45,7 @@ Rel(consentSvc, quarantineSvc, "Missing Consent")
 Rel(consentSvc, aiTransformSvc, "Passed Consent")
 
 Rel(aiTransformSvc, fallbackMgr, "Invokes Fallback")
-Rel(aiTransformSvc, geminiApi, "Generates payload conversion", "HTTPS")
+Rel(aiTransformSvc, Gemma 4 9BApi, "Generates payload conversion", "HTTPS")
 
 Rel(aiTransformSvc, fhirValidator, "Validates FHIR Bundle")
 Rel(fhirValidator, quarantineSvc, "Invalid Bundle")

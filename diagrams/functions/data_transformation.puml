@@ -59,7 +59,7 @@ note right of T2
 end note
 
 note right of T5
-  If the main AI (Gemini) hits
+  If the main AI (Gemma 4 9B) hits
   its request limit, the system
   automatically tries backup
   AI models one by one

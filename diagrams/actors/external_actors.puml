@@ -74,7 +74,7 @@ note bottom of PROVIDER
 end note
 
 note bottom of AI_AGENT
-  Gemini AI via MCP
+  Gemma 4 9B via MCP
   Translates between HL7 v2
   and FHIR R4 formats
 end note

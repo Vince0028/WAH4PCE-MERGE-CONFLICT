@@ -30,8 +30,8 @@ FHIR R4 patient bundles (wah_patients) and original raw payloads.")
 error messages (adapt_transaction_logs).")
 }
 
-System_Ext(geminiApi, "Google Gemini AI API", "Multi-model fallback engine 
-(Gemini 2.5 Flash, 1.5 Pro) for structured JSON payload transformation.")
+System_Ext(Gemma 4 9BApi, "Gemma 4 9B API", "Multi-model fallback engine 
+(Gemma 4 9B 2.5 Flash, 1.5 Pro) for structured JSON payload transformation.")
 
 Rel(dohClinician, ihomisApp, "Uses", "HTTPS")
 Rel(wahClinician, wahApp, "Uses", "HTTPS")
@@ -44,7 +44,7 @@ Rel(ihomisApp, ipaasApi, "Dispatches HL7 v2 payloads", "HTTPS / REST API")
 Rel(wahApp, ipaasApi, "Dispatches FHIR R4 bundles", "HTTPS / REST API")
 
 Rel(ipaasApi, ipaasDb, "Logs transactions and status", "SQL / Supabase SDK")
-Rel(ipaasApi, geminiApi, "Triggers AI data transformation", "HTTPS / REST API")
+Rel(ipaasApi, Gemma 4 9BApi, "Triggers AI data transformation", "HTTPS / REST API")
 
 Rel(ipaasApi, wahApp, "Delivers transformed FHIR bundle", "HTTPS / REST Webhook")
 Rel(ipaasApi, ihomisApp, "Delivers transformed iHOMIS JSON", "HTTPS / REST Webhook")
