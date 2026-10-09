@@ -40,7 +40,7 @@ flowchart LR
 
     subgraph IPAAS["🔀 ADAPT iPaaS (Middleware)<br/>Port 3000"]
         IP_DB[(Supabase #3<br/>adapt_transaction_logs)]
-        IP_AI[/Gemini AI Engine/]
+        IP_AI[/Gemma 4 9B Engine/]
         IP_VAL{Validator}
         IP_APP[Next.js App]
         IP_APP --> IP_DB
@@ -160,7 +160,7 @@ flowchart TD
     O --> P["iHOMIS marks record as REJECTED<br/>Shows rejection reason"]
     N -- "✅ Yes" --> Q["Insert to adapt_transaction_logs<br/>status=PENDING"]
     Q --> R["Update status → TRANSFORMING"]
-    R --> S[/"🤖 Gemini AI transforms<br/>HL7 v2 → FHIR R4 Bundle"/]
+    R --> S[/"🤖 Gemma 4 9B transforms<br/>HL7 v2 → FHIR R4 Bundle"/]
     S --> T{AI transformation OK?}
     T -- "❌ Failed" --> U["QUARANTINED<br/>Returns error to iHOMIS"]
     U --> P
@@ -190,7 +190,7 @@ flowchart TD
 | Step | From → To | Data Sent |
 |------|-----------|-----------|
 | iHOMIS → iPaaS | `/api/send` → `/api/ingest` | `{ source_system: "iHOMIS", destination_system: "WAH", payload: "MSH\|...\|PID\|...", original_json: {patient data}, consent_signed: true }` |
-| iPaaS → Gemini AI | Internal function call | HL7 v2 pipe-delimited string + mapping instructions |
+| iPaaS → Gemma 4 9B | Internal function call | HL7 v2 pipe-delimited string + mapping instructions |
 | iPaaS → WAH | `/api/ingest` → `/api/webhook` | `{ transaction_id: "uuid", source_system: "iHOMIS", payload: {FHIR Bundle}, raw_source_payload: {original JSON} }` |
 
 ---
@@ -217,7 +217,7 @@ flowchart TD
     L --> M{iPaaS: Consent signed?}
     M -- "❌ No" --> N["QUARANTINED → REJECTED"]
     M -- "✅ Yes" --> O["Insert to adapt_transaction_logs<br/>status=PENDING → TRANSFORMING"]
-    O --> P[/"🤖 Gemini AI transforms<br/>FHIR R4 → iHOMIS flat JSON"/]
+    O --> P[/"🤖 Gemma 4 9B transforms<br/>FHIR R4 → iHOMIS flat JSON"/]
     P --> Q{AI + Validation OK?}
     Q -- "❌ Failed" --> R["QUARANTINED → REJECTED"]
     Q -- "✅ OK" --> S["Update log → SUCCESS"]
@@ -338,7 +338,7 @@ Save Page → Records Page → Send Queue Page
 
 ## 7. AI Transformation Pipeline <a name="7-ai-pipeline"></a>
 
-> **Simple explanation:** When data needs to be converted, the system sends it to Google Gemini AI with very specific instructions. If one AI model is busy or has run out of free uses, the system automatically tries the next one. Think of it like having backup translators.
+> **Simple explanation:** When data needs to be converted, the system sends it to Gemma 4 9B with very specific instructions. If one AI model is busy or has run out of free uses, the system automatically tries the next one. Think of it like having backup translators.
 
 ```mermaid
 flowchart TD
@@ -349,22 +349,22 @@ flowchart TD
 
     C & D --> E["Prepare input data<br/>(string for HL7v2, JSON for FHIR)"]
 
-    E --> F["Try Model #1<br/>gemini-3.1-flash-lite"]
+    E --> F["Try Model #1<br/>gemma-4-9b"]
     F --> G{Success?}
     G -- "✅ Yes" --> H["Parse JSON response"]
-    G -- "❌ 429/503/Error" --> I["Try Model #2<br/>gemini-2.5-flash-lite"]
+    G -- "❌ 429/503/Error" --> I["Try Model #2<br/>gemma-4-9b"]
     I --> J{Success?}
     J -- "✅ Yes" --> H
-    J -- "❌ Error" --> K["Try Model #3<br/>gemini-2.5-flash"]
+    J -- "❌ Error" --> K["Try Model #3<br/>gemma-4-9b"]
     K --> L{Success?}
     L -- "✅ Yes" --> H
-    L -- "❌ Error" --> M["Try Model #4<br/>Groq: llama-3.3-70b"]
+    L -- "❌ Error" --> M["Try Model #4<br/>Gemma 4 9B: gemma-4-9b"]
     M --> N{Success?}
     N -- "✅ Yes" --> H
-    N -- "❌ Error" --> O["Try Model #5<br/>Groq: mixtral-8x7b"]
+    N -- "❌ Error" --> O["Try Model #5<br/>Gemma 4 9B: gemma-4-9b"]
     O --> P{Success?}
     P -- "✅ Yes" --> H
-    P -- "❌ Error" --> Q["Try Model #6<br/>Groq: llama3-70b"]
+    P -- "❌ Error" --> Q["Try Model #6<br/>Gemma 4 9B: gemma-4-9b"]
     Q --> R{Success?}
     R -- "✅ Yes" --> H
     R -- "❌ All failed" --> S["Return error<br/>Record gets QUARANTINED"]
@@ -385,12 +385,12 @@ flowchart TD
 
 | Order | Provider | Model | Why it's here |
 |:---:|---------|-------|---------------|
-| 1 | Gemini | `gemini-3.1-flash-lite` | Primary — fastest, highest free quota (500 RPD) |
-| 2 | Gemini | `gemini-2.5-flash-lite` | Backup — 20 RPD |
-| 3 | Gemini | `gemini-2.5-flash` | Backup — 20 RPD |
-| 4 | Groq | `llama-3.3-70b-versatile` | Different provider — unaffected by Gemini limits |
-| 5 | Groq | `mixtral-8x7b-32768` | Alternative Groq model |
-| 6 | Groq | `llama3-70b-8192` | Last resort |
+| 1 | Gemma 4 9B | `gemma-4-9b` | Primary — fastest, highest free quota (500 RPD) |
+| 2 | Gemma 4 9B | `gemma-4-9b` | Backup — 20 RPD |
+| 3 | Gemma 4 9B | `gemma-4-9b` | Backup — 20 RPD |
+| 4 | Gemma 4 9B | `gemma-4-9b` | Different provider — unaffected by Gemma 4 9B limits |
+| 5 | Gemma 4 9B | `gemma-4-9b` | Alternative Gemma 4 9B model |
+| 6 | Gemma 4 9B | `gemma-4-9b` | Last resort |
 
 ### AI Configuration:
 
@@ -716,7 +716,7 @@ sequenceDiagram
     participant Doc as 👨‍⚕️ Doctor
     participant Hospital as 🏛️ iHOMIS/WAH
     participant iPaaS as 🔀 iPaaS
-    participant AI as 🤖 Gemini AI
+    participant AI as 🤖 Gemma 4 9B
     participant Dest as 🏥 Destination Hospital
 
     Doc->>Hospital: Click "Send"

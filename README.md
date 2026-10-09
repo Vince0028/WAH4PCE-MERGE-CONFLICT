@@ -21,7 +21,7 @@
     <img src="https://img.shields.io/badge/-Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
     <img src="https://img.shields.io/badge/-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
     <img src="https://img.shields.io/badge/-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-    <img src="https://img.shields.io/badge/-Gemini_AI-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini AI">
+    <img src="https://img.shields.io/badge/-Gemma 4 9B_AI-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemma 4 9B">
     <img src="https://img.shields.io/badge/-HL7_FHIR_R4-DC382D?style=for-the-badge&logo=data:image/svg+xml;base64,&logoColor=white" alt="FHIR R4">
     <img src="https://img.shields.io/badge/-Turborepo-EF4444?style=for-the-badge&logo=turborepo&logoColor=white" alt="Turborepo">
   </p>
@@ -36,7 +36,7 @@
 The Philippines Department of Health (DOH) mandates the use of **iHOMIS** (Integrated Hospital Operations & Management Information System) — a system built on the legacy **HL7 v2** pipe-delimited format from the 1990s. Meanwhile, modern hospital systems like **WAH** (Wireless Access for Health) operate on the international **HL7 FHIR R4** standard.
 
 This platform provides an **AI-powered integration middleware (iPaaS)** that:
-- Transforms HL7 v2 messages into FHIR R4 Bundles (and vice versa) using **Google Gemini AI**
+- Transforms HL7 v2 messages into FHIR R4 Bundles (and vice versa) using **Gemma 4 9B**
 - Validates transformed payloads against **PH Core FHIR profiles**
 - Provides **real-time data comparison visualizers** for clinical auditability
 - Supports full **CRUD lifecycle management** for patient records on both systems
@@ -55,7 +55,7 @@ The system follows a **3-node hub-and-spoke architecture** with the iPaaS acting
 │   iHOMIS (DOH)  │──HL7v2──▶│    ADAPT iPaaS      │──FHIR──▶│  WAH Hospital   │
 │   Port :3001    │          │    Port :3000        │          │   Port :3002    │
 │                 │◀─iHOMIS──│                     │◀─FHIR───│                 │
-│   Supabase #1   │  JSON    │  Gemini AI Engine   │  R4     │   Supabase #2   │
+│   Supabase #1   │  JSON    │  Gemma 4 9B Engine   │  R4     │   Supabase #2   │
 │                 │          │  + FHIR Validator    │          │                 │
 └─────────────────┘          │  + Transaction Logs  │          └─────────────────┘
                              │                     │
@@ -69,14 +69,14 @@ The system follows a **3-node hub-and-spoke architecture** with the iPaaS acting
 1. Clinician saves patient record in iHOMIS (flat JSON with vitals, demographics, diagnosis)
 2. iHOMIS converts the record to a pipe-delimited **HL7 v2 message** (MSH, PID, PV1, OBX, DG1, RF1 segments)
 3. HL7 v2 message + original JSON are sent to **iPaaS `/api/ingest`**
-4. iPaaS uses **Gemini AI** to transform HL7 v2 → **FHIR R4 Transaction Bundle** (Patient, Encounter, Observation, Condition resources)
+4. iPaaS uses **Gemma 4 9B** to transform HL7 v2 → **FHIR R4 Transaction Bundle** (Patient, Encounter, Observation, Condition resources)
 5. iPaaS validates the bundle, logs the transaction, and forwards to **WAH webhook**
 6. WAH stores both the transformed FHIR bundle and the original source for comparison
 
 **WAH → iHOMIS (FHIR R4 → iHOMIS JSON):**
 1. Clinician saves a FHIR R4 Bundle in WAH
 2. WAH sends the bundle + original JSON to **iPaaS `/api/ingest`**
-3. iPaaS uses **Gemini AI** to flatten the FHIR Bundle into **iHOMIS-compatible JSON** (demographics, vitals, diagnosis fields)
+3. iPaaS uses **Gemma 4 9B** to flatten the FHIR Bundle into **iHOMIS-compatible JSON** (demographics, vitals, diagnosis fields)
 4. iPaaS validates, logs, and forwards to **iHOMIS webhook**
 5. iHOMIS stores the transformed record with the original FHIR source for comparison
 
@@ -87,8 +87,8 @@ The system follows a **3-node hub-and-spoke architecture** with the iPaaS acting
 ### 🔄 Bi-Directional Data Transformation
 - **HL7 v2 → FHIR R4**: Converts pipe-delimited legacy messages into structured FHIR Transaction Bundles
 - **FHIR R4 → iHOMIS JSON**: Flattens rich FHIR resources back into iHOMIS-compatible flat records
-- **AI-Powered**: Uses Google Gemini for intelligent semantic mapping (not rigid field-by-field rules)
-- **Model Fallback Chain**: Automatically cycles through 5+ Gemini models if one hits rate limits (429/503)
+- **AI-Powered**: Uses Google Gemma 4 9B for intelligent semantic mapping (not rigid field-by-field rules)
+- **Model Fallback Chain**: Automatically cycles through 5+ Gemma 4 9B models if one hits rate limits (429/503)
 
 ### 📊 Data Comparison Visualizer
 Each inbox provides a **4-mode visualizer** for auditing transformation accuracy:
@@ -130,7 +130,7 @@ The system is built as a **Turborepo monorepo** with three independent Next.js a
 | **Framework** | ![Next.js](https://img.shields.io/badge/-Next.js_16-000000?logo=next.js&logoColor=white) | React framework with App Router, API Routes, and Turbopack |
 | **Language** | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white) | Type-safe development across all services |
 | **Database** | ![Supabase](https://img.shields.io/badge/-Supabase-3ECF8E?logo=supabase&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-4169E1?logo=postgresql&logoColor=white) | 3 isolated Supabase projects (one per system) with JSONB payload storage |
-| **AI Engine** | ![Google](https://img.shields.io/badge/-Gemini_AI-8E75B2?logo=google&logoColor=white) | Data transformation via `@google/generative-ai` SDK with structured JSON output |
+| **AI Engine** | ![Google](https://img.shields.io/badge/-Gemma 4 9B_AI-8E75B2?logo=google&logoColor=white) | Data transformation via `@google/generative-ai` SDK with structured JSON output |
 | **Styling** | ![CSS3](https://img.shields.io/badge/-CSS3-1572B6?logo=css3&logoColor=white) | Custom design system per app (light mode, hospital-standard typography) |
 | **Shared** | ![npm](https://img.shields.io/badge/-Internal_Package-CB3837?logo=npm&logoColor=white) | `@adapt/shared` — TypeScript types, constants, and FHIR system URIs |
 
@@ -145,7 +145,7 @@ adapt-lhie-prototype/
 │   │   │   ├── transactions/ # GET  — Transaction log viewer
 │   │   │   └── metrics/      # GET  — Dashboard metrics
 │   │   └── src/lib/
-│   │       ├── gemini.ts     # AI transformation with model fallback
+│   │       ├── Gemma 4 9B.ts     # AI transformation with model fallback
 │   │       ├── validator.ts  # FHIR R4 bundle validator
 │   │       └── supabase.ts   # Database client with env guard
 │   │
@@ -193,7 +193,7 @@ adapt-lhie-prototype/
 - **Node.js** 18+ (LTS recommended)
 - **npm** 9+
 - **3 Supabase projects** (free tier works) — one for each system
-- **Google Gemini API key** — [Get one at aistudio.google.com](https://aistudio.google.com/apikey)
+- **Google Gemma 4 9B API key** — [Get one at aistudio.google.com](https://aistudio.google.com/apikey)
 
 ### 1. Clone the Repository
 
@@ -228,8 +228,8 @@ Create `.env.local` in each app directory:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-ipaas-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-ipaas-anon-key
-GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-3.1-flash-lite
+Gemma 4 9B_API_KEY=your-Gemma 4 9B-api-key
+Gemma 4 9B_MODEL=gemma-4-9b
 IHOMIS_WEBHOOK_URL=http://localhost:3001/api/webhook
 WAH_WEBHOOK_URL=http://localhost:3002/api/webhook
 ```
@@ -327,9 +327,9 @@ The modern international standard. Data is structured as a **Transaction Bundle*
 }
 ```
 
-### AI Transformation (Gemini)
+### AI Transformation (Gemma 4 9B)
 
-The iPaaS uses **Google Gemini** with structured JSON output (`responseMimeType: 'application/json'`) and low temperature (`0.1`) for deterministic results. The AI is prompted with:
+The iPaaS uses **Google Gemma 4 9B** with structured JSON output (`responseMimeType: 'application/json'`) and low temperature (`0.1`) for deterministic results. The AI is prompted with:
 
 - **Field mapping instructions** (e.g., `PID.5 → Patient.name.family`)
 - **Code system URIs** (LOINC, ICD-10, PhilHealth)
@@ -337,11 +337,11 @@ The iPaaS uses **Google Gemini** with structured JSON output (`responseMimeType:
 - **Output schema constraints** (exact JSON structure expected)
 
 **Model Fallback Chain:** If the primary model hits rate limits (429) or is unavailable (503), the system automatically cycles through:
-1. `gemini-3.1-flash-lite` (500 RPD — primary)
-2. `gemini-2.5-flash-lite` (20 RPD)
-3. `gemini-2.5-flash` (20 RPD)
-4. `gemini-3-flash` (20 RPD)
-5. `gemini-2.0-flash` (fallback)
+1. `gemma-4-9b` (500 RPD — primary)
+2. `gemma-4-9b` (20 RPD)
+3. `gemma-4-9b` (20 RPD)
+4. `gemma-4-9b` (20 RPD)
+5. `gemma-4-9b` (fallback)
 
 ---
 
@@ -401,7 +401,7 @@ Each system uses a **Metadata + JSONB Payload** pattern for flexible data storag
 | **Next.js 16** | [nextjs.org/docs](https://nextjs.org/docs) |
 | **Turborepo** | [turbo.build/repo/docs](https://turbo.build/repo/docs) |
 | **Supabase** | [supabase.com/docs](https://supabase.com/docs) |
-| **Google Gemini API** | [ai.google.dev/docs](https://ai.google.dev/docs) |
+| **Google Gemma 4 9B API** | [ai.google.dev/docs](https://ai.google.dev/docs) |
 | **@google/generative-ai** | [npmjs.com/package/@google/generative-ai](https://www.npmjs.com/package/@google/generative-ai) |
 
 ### Philippine Health IT Context
@@ -604,8 +604,8 @@ flowchart TD
 
 - **Prototype Only**: This system is built for academic/capstone demonstration purposes
 - **No Authentication**: RLS policies are set to `ALLOW ALL` — production use requires proper RBAC
-- **AI Accuracy**: Gemini transformations are non-deterministic — clinical validation is mandatory
-- **Free Tier**: Gemini API free tier has rate limits (RPM/RPD) — the fallback chain mitigates but doesn't eliminate this
+- **AI Accuracy**: Gemma 4 9B transformations are non-deterministic — clinical validation is mandatory
+- **Free Tier**: Gemma 4 9B API free tier has rate limits (RPM/RPD) — the fallback chain mitigates but doesn't eliminate this
 - **No PHI**: Do not use real patient data — all sample data is synthetic
 
 ---
@@ -622,6 +622,6 @@ flowchart TD
     <strong>ADAPT LHIE</strong> — Advancing Philippine Health Interoperability
   </p>
   <p>
-    <sub>Built with Next.js, Supabase, and Gemini AI</sub>
+    <sub>Built with Next.js, Supabase, and Gemma 4 9B</sub>
   </p>
 </div>
