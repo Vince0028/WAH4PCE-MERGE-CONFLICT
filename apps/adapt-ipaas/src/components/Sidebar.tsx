@@ -31,19 +31,6 @@ export default function Sidebar() {
           return <Link key={item.href} href={item.href} className={`ipaas-sidebar-link ${isActive ? 'active' : ''}`}>{item.icon}<span>{item.label}</span></Link>;
         })}
       </nav>
-      <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
-        <p className="text-[10px] font-bold uppercase mb-2 text-slate-500">Systems</p>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
-            <span className="text-[11px] text-slate-400">iHOMIS — :3001</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
-            <span className="text-[11px] text-slate-400">WAH Hospital — :3002</span>
-          </div>
-        </div>
-      </div>
       <div className="mt-auto px-5 py-4 border-t" style={{ borderColor: 'var(--color-border-sidebar)' }}>
         <button
           onClick={async () => {
