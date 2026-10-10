@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
         try {
           const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
           transformResult = { success: true, data: fallbackData, error: null, usedModel: 'TS Algorithmic Mapper (Go offline)' };
-          transformEngine = 'Algorithm (TS)';
+          transformEngine = 'Algorithm';
         } catch (fallbackErr) {
           await supabaseAdmin.from('adapt_transaction_logs').update({ status: 'QUARANTINED', transform_engine: 'Algorithm', error_message: `Algorithm crashed: ${fallbackErr}` }).eq('id', transactionId);
           return NextResponse.json({ success: false, transaction_id: transactionId, status: 'QUARANTINED', message: 'Transformation failed' }, { status: 422 });
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
         try {
           const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
           transformResult = { success: true, data: fallbackData, error: null, usedModel: 'Algorithmic Fallback Mapper' };
-          transformEngine = 'Fallback';
+          transformEngine = 'Algorithm';
         } catch (fallbackErr) {
           await supabaseAdmin
             .from('adapt_transaction_logs')
