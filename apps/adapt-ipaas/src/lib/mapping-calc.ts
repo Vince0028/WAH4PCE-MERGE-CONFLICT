@@ -480,12 +480,19 @@ export function fallbackTransform(
     return bundle;
   } else {
     // FHIR_R4_TO_HL7V2 or FHIR_TO_IHOMIS
+    const mapSex = (s: string) => {
+      const lower = s.toLowerCase();
+      if (lower.startsWith('m')) return 'M';
+      if (lower.startsWith('f')) return 'F';
+      return s ? s.charAt(0).toUpperCase() : '';
+    };
+
     return {
       patient_fname: getVal('First Name'),
       patient_lname: getVal('Last Name'),
       patient_mname: getVal('Middle Name'),
       dob: getVal('Date of Birth'),
-      sex: getVal('Sex'),
+      sex: mapSex(getVal('Sex')),
       civil_status: getVal('Civil Status'),
       philhealth_no: getVal('PhilHealth No.'),
       contact_no: getVal('Contact No.'),
