@@ -30,7 +30,11 @@ async function callGoMapper(
   payload: unknown,
   direction: string
 ): Promise<{ success: boolean; data: Record<string, unknown> | null; error: string | null; usedModel: string }> {
-  const goMapperUrl = process.env.GO_MAPPER_URL || 'http://localhost:4000/transform';
+  const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+  const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
+  const goMapperUrl = isVercel
+    ? `${vercelUrl}/api/transform`
+    : (process.env.GO_MAPPER_URL || 'http://localhost:4000/transform');
   try {
     const res = await fetch(goMapperUrl, {
       method: 'POST',
