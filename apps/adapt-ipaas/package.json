@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "concurrently -n \"next,go-mapper\" -c \"blue,green\" \"next dev --port 3000\" \"go run ./go-mapper/main.go\"",
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint"
@@ -26,6 +26,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.6",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

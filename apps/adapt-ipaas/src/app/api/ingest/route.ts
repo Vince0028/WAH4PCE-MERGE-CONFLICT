@@ -6,6 +6,48 @@ import { validateTransformation } from '@/lib/validator';
 import { fallbackTransform } from '@/lib/mapping-calc';
 
 /**
+ * Check the AI toggle setting from Supabase.
+ * Returns true if AI is enabled, false if we should use the Go deterministic mapper.
+ */
+async function isAIEnabled(): Promise<boolean> {
+  try {
+    const { data } = await supabaseAdmin
+      .from('adapt_settings')
+      .select('value')
+      .eq('key', 'ai_enabled')
+      .single();
+    if (!data) return true; // default: AI on
+    return data.value === 'true';
+  } catch {
+    return true; // fail open — default to AI
+  }
+}
+
+/**
+ * Call the Go deterministic mapper microservice.
+ */
+async function callGoMapper(
+  payload: unknown,
+  direction: string
+): Promise<{ success: boolean; data: Record<string, unknown> | null; error: string | null; usedModel: string }> {
+  const goMapperUrl = process.env.GO_MAPPER_URL || 'http://localhost:4000/transform';
+  try {
+    const res = await fetch(goMapperUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload, direction }),
+    });
+    if (!res.ok) throw new Error(`Go mapper returned ${res.status}`);
+    const json = await res.json();
+    return { success: true, data: json.data, error: null, usedModel: 'Go Deterministic Mapper v1.0' };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Go mapper unreachable';
+    console.warn('[Go Mapper] Unreachable, falling back to TS algorithm:', msg);
+    return { success: false, data: null, error: msg, usedModel: '' };
+  }
+}
+
+/**
  * POST /api/ingest
  * Main ingestion endpoint — receives data from any organization or WAH,
  * stores it in Supabase, triggers AI transformation, validates,
@@ -154,37 +196,49 @@ export async function POST(request: NextRequest) {
 
     console.log(`[System (Internal)] Transaction ${transactionId} → TRANSFORMING`);
 
-    // --- 4. AI Transformation & Fallback ---
+    // --- 4. Transform: AI or Go Deterministic Mapper ---
     const direction = getTransformDirection(sourceFormat, destFormat);
-    let transformResult = await transformWithAI(payload, direction);
+    const aiEnabled = await isAIEnabled();
+    let transformResult: { success: boolean; data: Record<string, unknown> | null; error: string | null; usedModel?: string };
+    let transformEngine: string;
 
-    if (!transformResult.success || !transformResult.data) {
-      console.warn(`[System (Internal)] Automated Process AI failed: ${transformResult.error}. Engaging Deterministic Syntactic Fallback for Transaction ${transactionId}.`);
-      try {
-        const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
-        transformResult = {
-          success: true,
-          data: fallbackData,
-          error: null,
-          usedModel: 'Algorithmic Fallback Mapper'
-        };
-      } catch (fallbackErr) {
-        await supabaseAdmin
-          .from('adapt_transaction_logs')
-          .update({
-            status: 'QUARANTINED',
-            error_message: `AI failed and fallback crashed: ${fallbackErr}`,
-          })
-          .eq('id', transactionId);
+    if (!aiEnabled) {
+      // ── Algorithm Mode: call Go mapper (perfect deterministic accuracy) ──
+      console.log(`[System (Internal)] AI DISABLED — using Go Deterministic Mapper for Transaction ${transactionId}`);
+      transformResult = await callGoMapper(payload, direction);
+      transformEngine = 'Algorithm';
 
-        console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
+      if (!transformResult.success || !transformResult.data) {
+        // Go mapper unreachable — fall back to TS algorithm
+        console.warn('[System (Internal)] Go mapper unreachable, using TS fallback algorithm');
+        try {
+          const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
+          transformResult = { success: true, data: fallbackData, error: null, usedModel: 'TS Algorithmic Mapper (Go offline)' };
+          transformEngine = 'Algorithm (TS)';
+        } catch (fallbackErr) {
+          await supabaseAdmin.from('adapt_transaction_logs').update({ status: 'QUARANTINED', transform_engine: 'Algorithm', error_message: `Algorithm crashed: ${fallbackErr}` }).eq('id', transactionId);
+          return NextResponse.json({ success: false, transaction_id: transactionId, status: 'QUARANTINED', message: 'Transformation failed' }, { status: 422 });
+        }
+      }
+    } else {
+      // ── AI Mode: try AI with deterministic fallback ──
+      transformResult = await transformWithAI(payload, direction);
+      transformEngine = 'AI';
 
-        return NextResponse.json({
-          success: false,
-          transaction_id: transactionId,
-          status: 'QUARANTINED',
-          message: `Transformation failed entirely`,
-        }, { status: 422 });
+      if (!transformResult.success || !transformResult.data) {
+        console.warn(`[System (Internal)] AI failed: ${transformResult.error}. Engaging Deterministic Fallback for Transaction ${transactionId}.`);
+        try {
+          const fallbackData = fallbackTransform(payload as Record<string, unknown>, direction);
+          transformResult = { success: true, data: fallbackData, error: null, usedModel: 'Algorithmic Fallback Mapper' };
+          transformEngine = 'Fallback';
+        } catch (fallbackErr) {
+          await supabaseAdmin
+            .from('adapt_transaction_logs')
+            .update({ status: 'QUARANTINED', transform_engine: 'AI', error_message: `AI failed and fallback crashed: ${fallbackErr}` })
+            .eq('id', transactionId);
+          console.error(`[System (Internal)] Transaction ${transactionId} QUARANTINED (Fallback failed)`);
+          return NextResponse.json({ success: false, transaction_id: transactionId, status: 'QUARANTINED', message: 'Transformation failed entirely' }, { status: 422 });
+        }
       }
     }
 
@@ -198,6 +252,7 @@ export async function POST(request: NextRequest) {
         .update({
           status: 'QUARANTINED',
           transformed_payload: transformResult.data,
+          transform_engine: transformEngine,
           error_message: errorMsg,
         })
         .eq('id', transactionId);
@@ -257,6 +312,7 @@ export async function POST(request: NextRequest) {
       .update({
         status: finalStatus,
         transformed_payload: transformResult.data,
+        transform_engine: transformEngine,
         error_message: forwardSuccess ? null : `Forwarding note: ${forwardError}`,
       })
       .eq('id', transactionId);

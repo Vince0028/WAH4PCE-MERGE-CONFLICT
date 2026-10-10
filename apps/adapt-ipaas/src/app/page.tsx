@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calculateMappingPercentage, calculateSourceFillCount } from '@/lib/mapping-calc';
 
@@ -20,6 +20,7 @@ interface Transaction {
   id: string; source_system: string; destination_system: string;
   source_format: string; destination_format: string;
   status: string; created_at: string;
+  transform_engine?: string | null;
   raw_payload?: Record<string, unknown> | null;
   transformed_payload?: Record<string, unknown> | null;
 }
@@ -28,6 +29,28 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
+
+  const fetchToggleState = useCallback(async () => {
+    const res = await safeFetch('/api/ai-toggle');
+    if (res.ai_enabled !== undefined) setAiEnabled(res.ai_enabled);
+  }, []);
+
+  const handleToggleAI = async () => {
+    if (toggleLoading || aiEnabled === null) return;
+    setToggleLoading(true);
+    const newState = !aiEnabled;
+    const res = await safeFetch('/api/ai-toggle');
+    await fetch('/api/ai-toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ai_enabled: newState }),
+    });
+    setAiEnabled(newState);
+    setToggleLoading(false);
+    void res;
+  };
 
   const fetchData = async () => {
     const [metricsData, txData] = await Promise.all([
@@ -38,7 +61,12 @@ export default function Dashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); const i = setInterval(fetchData, 10000); return () => clearInterval(i); }, []);
+  useEffect(() => {
+    fetchToggleState();
+    fetchData();
+    const i = setInterval(fetchData, 10000);
+    return () => clearInterval(i);
+  }, [fetchToggleState]);
 
   // Pre-compute mapping percentages for all transactions
   const txMappings = useMemo(() => {
@@ -110,9 +138,25 @@ export default function Dashboard() {
     <>
       <Sidebar />
       <main className="flex-1 p-6 overflow-auto">
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Real-time monitoring of multi-format health data transformations</p>
+        <div className="mb-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div>
+            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Real-time monitoring of multi-format health data transformations</p>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Algorithm</span>
+            <input
+              type="checkbox"
+              checked={aiEnabled === true}
+              onChange={handleToggleAI}
+              disabled={toggleLoading || aiEnabled === null}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>AI</span>
+            <span className="text-xs font-semibold" style={{ color: aiEnabled ? '#8b5cf6' : '#10b981', minWidth: '80px' }}>
+              {aiEnabled === null ? '' : aiEnabled ? '(AI active)' : '(Algo active)'}
+            </span>
+          </label>
         </div>
 
         {loading ? (
@@ -219,7 +263,7 @@ export default function Dashboard() {
               ) : (
               <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                 <table className="data-table">
-                  <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Status</th><th>Date</th></tr></thead>
+                  <thead><tr><th>Transaction ID</th><th>Direction</th><th>Formats</th><th>Sent</th><th>Received</th><th>Engine</th><th>Status</th><th>Date</th></tr></thead>
                   <tbody>
                     {recentTx.map(tx => {
                       const st = statusStyle(tx.status);
@@ -227,6 +271,9 @@ export default function Dashboard() {
                       const dstFmt = formatBadgeStyle(tx.destination_format);
                       const mapping = txMappings[tx.id];
                       const hasMappingData = tx.status === 'SUCCESS' && mapping && mapping.destTotal > 0;
+                      const engineColor = tx.transform_engine === 'AI' ? '#8b5cf6'
+                        : tx.transform_engine === 'Fallback' ? '#d97706'
+                        : tx.transform_engine ? '#10b981' : 'var(--color-text-muted)';
                       return (
                         <tr key={tx.id} onClick={() => window.location.href = `/mapper?id=${tx.id}`} style={{ cursor: 'pointer' }}>
                           <td className="font-mono text-xs" style={{ color: 'var(--color-accent-bright)' }}>{tx.id.slice(0, 8)}...</td>
@@ -263,6 +310,11 @@ export default function Dashboard() {
                             ) : (
                               <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>—</span>
                             )}
+                          </td>
+                          <td>
+                            <span className="text-[10px] font-semibold" style={{ color: engineColor }}>
+                              {tx.transform_engine || '—'}
+                            </span>
                           </td>
                           <td><span className="ipaas-badge" style={{ background: st.bg, color: st.color }}>{tx.status}</span></td>
                           <td className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleString()}</td>
