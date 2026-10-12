@@ -13,6 +13,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    const trimmedIdentifier = typeof email === 'string' ? email.trim() : '';
+    const cleanLower = trimmedIdentifier.toLowerCase();
+
+    // Prototype presentation test administrator credentials
+    if (cleanLower === 'admin-test-001' || cleanLower.startsWith('admin-test-001@')) {
+      if (password !== 'admin') {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      }
+
+      const mockAdmin = {
+        id: 'admin-test-001',
+        username: 'admin-test-001',
+        email: cleanLower.includes('@') ? cleanLower : 'admin-test-001@wah4pce.gov.ph',
+        name: 'WAH Administrator',
+      };
+
+      const token = await new SignJWT({ id: mockAdmin.id, username: mockAdmin.username, email: mockAdmin.email })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('7d')
+        .sign(JWT_SECRET);
+
+      const response = NextResponse.json({ user: mockAdmin }, { status: 200 });
+
+      response.cookies.set('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
+
+      return response;
+    }
+
     // Find the user by email (or username, we can allow both)
     const { data: user } = await supabaseAdmin
       .from('app_users')
