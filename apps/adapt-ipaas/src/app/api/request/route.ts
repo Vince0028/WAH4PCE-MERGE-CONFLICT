@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
-const WAH_API_URL = process.env.WAH_API_URL || 'http://localhost:3002/api';
-const PORTAL_API_URL = process.env.PORTAL_API_URL || 'http://localhost:3001/api';
+const WAH_API_URL = (
+  process.env.WAH_API_URL ||
+  (process.env.VERCEL || process.env.NODE_ENV === 'production'
+    ? 'https://wah4pce-wah4h-merge-conflictvercela.vercel.app/api'
+    : 'http://localhost:3002/api')
+).replace(/\/+$/, '');
+
+const PORTAL_API_URL = (
+  process.env.PORTAL_API_URL ||
+  process.env.IHOMIS_API_URL ||
+  (process.env.VERCEL || process.env.NODE_ENV === 'production'
+    ? 'https://wah4pce-ihomis-merge-conflict.vercel.app/api'
+    : 'http://localhost:3001/api')
+).replace(/\/+$/, '');
 
 /**
  * POST /api/request

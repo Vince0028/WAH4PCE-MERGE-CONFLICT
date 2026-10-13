@@ -7,7 +7,14 @@ async function safeFetch(url: string, opts?: RequestInit) {
   try { return JSON.parse(text); } catch { return { success: false, data: [] }; }
 }
 
-const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api';
+function getIpaasUrl() {
+  const raw =
+    process.env.NEXT_PUBLIC_IPAAS_API_URL ||
+    (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? 'https://wah4pce-merge-conflict.vercel.app/api'
+      : 'http://localhost:3000/api');
+  return raw.replace(/\/+$/, '');
+}
 
 interface IncomingRequest {
   id: string;
@@ -66,7 +73,7 @@ export default function IncomingRequestsPage() {
       }
 
       // Send data to iPaaS for transformation and delivery to WAH
-      const ipaasRes = await fetch(`${IPAAS_URL}/ingest`, {
+      const ipaasRes = await fetch(`${getIpaasUrl()}/ingest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,7 +117,7 @@ export default function IncomingRequestsPage() {
 
     // Notify iPaaS of decline
     try {
-      await fetch(`${IPAAS_URL}/decline`, {
+      await fetch(`${getIpaasUrl()}/decline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

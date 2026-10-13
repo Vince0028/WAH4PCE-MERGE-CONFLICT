@@ -8,6 +8,15 @@ async function safeFetch(url: string, opts?: RequestInit) {
   try { return JSON.parse(text); } catch { return { success: false, data: [] }; }
 }
 
+function getIpaasUrl() {
+  const raw =
+    process.env.NEXT_PUBLIC_IPAAS_API_URL ||
+    (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+      ? 'https://wah4pce-merge-conflict.vercel.app/api'
+      : 'http://localhost:3000/api');
+  return raw.replace(/\/+$/, '');
+}
+
 interface DataRequest {
   id: string;
   requesting_org: string;
@@ -58,7 +67,7 @@ export default function RequestsPage() {
       const fhirData = patientData.fhir_bundle || patientData;
 
       // 2. Send to iPaaS for ingestion
-      const ipaasRes = await fetch(`${process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api'}/ingest`, {
+      const ipaasRes = await fetch(`${getIpaasUrl()}/ingest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,7 +114,7 @@ export default function RequestsPage() {
 
     // 2. Notify Portal via iPaaS
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api'}/decline`, {
+      await fetch(`${getIpaasUrl()}/decline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

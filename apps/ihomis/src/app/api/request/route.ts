@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const IPAAS_URL = process.env.NEXT_PUBLIC_IPAAS_API_URL || 'http://localhost:3000/api';
+const rawIpaasUrl =
+  process.env.IPAAS_API_URL ||
+  process.env.NEXT_PUBLIC_IPAAS_API_URL ||
+  (process.env.VERCEL || process.env.NODE_ENV === 'production'
+    ? 'https://wah4pce-merge-conflict.vercel.app/api'
+    : 'http://localhost:3000/api');
+
+const IPAAS_URL = rawIpaasUrl.replace(/\/+$/, '');
 
 /**
  * POST /api/request — Submit a data request to WAH via iPaaS

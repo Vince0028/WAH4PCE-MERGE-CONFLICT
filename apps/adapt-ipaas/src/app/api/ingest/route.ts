@@ -272,11 +272,23 @@ export async function POST(request: NextRequest) {
     // Falls back to env vars, then localhost defaults for local dev.
     const resolveWebhookUrl = (): string => {
       // 1. Explicit webhook_url in the request body (for external integrations)
-      if (body.webhook_url) return body.webhook_url;
-      // 2. Environment variable per system
-      if (destination_system === 'WAH') return process.env.WAH_WEBHOOK_URL || 'http://localhost:3002/api/webhook';
-      // 3. Default to iHOMIS
-      return process.env.IHOMIS_WEBHOOK_URL || 'http://localhost:3001/api/webhook';
+      if (body.webhook_url) return body.webhook_url.replace(/\/+$/, '');
+      // 2. Environment variable per system with smart production fallback
+      if (destination_system === 'WAH') {
+        const url =
+          process.env.WAH_WEBHOOK_URL ||
+          (process.env.VERCEL || process.env.NODE_ENV === 'production'
+            ? 'https://wah4pce-wah4h-merge-conflictvercela.vercel.app/api/webhook'
+            : 'http://localhost:3002/api/webhook');
+        return url.replace(/\/+$/, '');
+      }
+      // 3. Default to iHOMIS with smart production fallback
+      const url =
+        process.env.IHOMIS_WEBHOOK_URL ||
+        (process.env.VERCEL || process.env.NODE_ENV === 'production'
+          ? 'https://wah4pce-ihomis-merge-conflict.vercel.app/api/webhook'
+          : 'http://localhost:3001/api/webhook');
+      return url.replace(/\/+$/, '');
     };
     const webhookUrl = resolveWebhookUrl();
 

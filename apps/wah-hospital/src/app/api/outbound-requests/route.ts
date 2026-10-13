@@ -3,7 +3,14 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-const IPAAS_URL = process.env.IPAAS_API_URL || 'http://localhost:3000/api';
+const rawIpaasUrl =
+  process.env.IPAAS_API_URL ||
+  process.env.NEXT_PUBLIC_IPAAS_API_URL ||
+  (process.env.VERCEL || process.env.NODE_ENV === 'production'
+    ? 'https://wah4pce-merge-conflict.vercel.app/api'
+    : 'http://localhost:3000/api');
+
+const IPAAS_URL = rawIpaasUrl.replace(/\/+$/, '');
 
 export async function GET() {
   try {
