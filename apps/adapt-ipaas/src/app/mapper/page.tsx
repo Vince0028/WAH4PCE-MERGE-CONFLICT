@@ -621,7 +621,7 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
             background: revealed ? 'rgba(139,92,246,0.08)' : 'rgba(245,158,11,0.08)',
             color: revealed ? '#8b5cf6' : '#f59e0b',
           }}>
-            {revealed ? 'REVEALED' : 'SHA-256 HASHED'}
+            {revealed ? 'DECRYPTED' : 'ENCRYPTED'}
           </span>
         </div>
         <button
@@ -636,19 +636,18 @@ function HashablePayload({ label, dotColor, payload }: { label: string; dotColor
           {revealed ? (
             <>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                <line x1="1" y1="1" x2="23" y2="23" />
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              Re-hash
+              Encrypt
             </>
           ) : (
             <>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
               </svg>
-              Unhash
+              Decrypt
             </>
           )}
         </button>
