@@ -1,6 +1,5 @@
-@startuml UC5_Validate_Schema_Completeness
-!theme plain
-title C4 Level 4 — Code Diagram: UC5 Validate Schema & Completeness
+@startuml UC_Validate_Schema_Completeness
+title C4 Level 4 - Code Diagram: Validate Schema & Completeness
 
 package "ADAPT iPaaS Middleware (Golang)" {
     class IngestHandler <<struct>> {
@@ -25,7 +24,7 @@ package "ADAPT iPaaS Middleware (Golang)" {
 
     class ValidationResult <<struct>> {
         + Valid: bool
-        + Errors: []string
+        + Errors: List<String>
     }
 
     class MongoDBRepository <<struct>> {

@@ -1,6 +1,5 @@
 @startuml UC_Fallback_To_Deterministic_Mapping
-!theme plain
-title C4 Level 4 — Code Diagram: Fallback to Deterministic Mapping
+title C4 Level 4 - Code Diagram: Fallback to Deterministic Mapping
 
 package "internal.handlers" {
     class IngestHandler <<struct>> {
@@ -15,7 +14,7 @@ package "internal.services" {
     }
 
     class Mapper <<struct>> {
-        + FallbackTransform(payload: String, direction: String): map[string]interface{}
+        + FallbackTransform(payload: String, direction: String): Map
     }
 }
 

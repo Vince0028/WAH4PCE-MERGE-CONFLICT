@@ -1,6 +1,5 @@
 @startuml UC_Execute_AI_First_Semantic_Translation
-!theme plain
-title C4 Level 4 — Code Diagram: Execute AI-First Semantic Translation
+title C4 Level 4 - Code Diagram: Execute AI-First Semantic Translation
 
 package "internal.services" {
     class AIService <<struct>> {
@@ -16,8 +15,8 @@ package "internal.services" {
     }
 }
 
-class "Gemma 4 9B Server" as LocalLLMServer << (E, #FF7700) External System >> {
-    + POST /api/generate(model: string, prompt: string)
+class "Gemma 4 9B Server" as LocalLLMServer <<ExternalSystem>> {
+    + POST /api/generate(model: String, prompt: String)
 }
 
 AIService --> LocalLLMServer : sends formatted prompt

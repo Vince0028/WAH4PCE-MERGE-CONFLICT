@@ -1,6 +1,5 @@
-@startuml UC8_Administer_System
-!theme plain
-title C4 Level 4 — Code Diagram: UC8 Administer System
+@startuml UC_Administer_System
+title C4 Level 4 - Code Diagram: Administer System
 
 class "System Admin" as Admin <<Actor>>
 
@@ -39,7 +38,7 @@ package "ADAPT iPaaS Middleware (Golang)" {
     class MongoRepository <<struct>> {
         + VerifyCredentials(user: String, hash: String): User
         + GetMetricsAggregation(): Metrics
-        + GetTransactions(filters: Map): []Transaction
+        + GetTransactions(filters: Map): List<Transaction>
     }
 }
 

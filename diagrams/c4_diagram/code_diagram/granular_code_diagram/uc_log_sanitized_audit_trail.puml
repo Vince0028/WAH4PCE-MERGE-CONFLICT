@@ -1,6 +1,5 @@
 @startuml UC_Log_Sanitized_Audit_Trail
-!theme plain
-title C4 Level 4 — Code Diagram: Log Sanitized Audit Trail (Zero-PHI Compliance)
+title C4 Level 4 - Code Diagram: Log Sanitized Audit Trail (Zero-PHI Compliance)
 
 package "ADAPT iPaaS Middleware (Golang)" {
     class AuditLogger <<struct>> {

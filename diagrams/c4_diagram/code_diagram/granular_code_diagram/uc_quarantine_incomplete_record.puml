@@ -1,6 +1,5 @@
 @startuml UC_Quarantine_Incomplete_Record
-!theme plain
-title C4 Level 4 — Code Diagram: Quarantine Incomplete Record
+title C4 Level 4 - Code Diagram: Quarantine Incomplete Record
 
 package "ADAPT iPaaS Middleware (Golang)" {
     class IngestHandler <<struct>> {

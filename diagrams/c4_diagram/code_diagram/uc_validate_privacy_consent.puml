@@ -1,18 +1,17 @@
-@startuml UC7_Validate_Privacy_Consent
-!theme plain
-title C4 Level 4 — Code Diagram: UC7 Validate Privacy Consent
+@startuml UC_Validate_Privacy_Consent
+title C4 Level 4 - Code Diagram: Validate Privacy Consent
 
 class Patient <<Actor>>
 
 package "iHOMIS Portal (React/Next.js)" {
-    class "SavePage (Consent Section)" as iHOMISConsent <<React Component>> {
+    class iHOMISConsent <<ReactComponent>> {
         + consentSigned: boolean
         + handleSave()
     }
 }
 
 package "WAH Hospital (React/Next.js)" {
-    class "SavePage (Consent Section)" as WAHConsent <<React Component>> {
+    class WAHConsent <<ReactComponent>> {
         + consentSigned: boolean
         + handleSave()
     }
